@@ -1,5 +1,5 @@
-from pytorch_grad_cam import GradCAM, EigenCAM
-from pytorch_grad_cam import GuidedBackpropReLUModel
+from libs.pytorch_grad_cam.grad_cam import GradCAM
+from libs.pytorch_grad_cam.guided_backprop import GuidedBackpropReLUModel
 
 import cv2
 import torch
@@ -10,8 +10,9 @@ from torch import nn
 
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
-from pytorch_grad_cam.utils.image import deprocess_image, preprocess_image
+from libs.pytorch_grad_cam.utils.image import deprocess_image, preprocess_image
 
 
 ## Load the CIFAR Dataset
@@ -33,6 +34,11 @@ classes = ('plane', 'car', 'bird', 'cat',
            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 
+
+CHECK_FOLDER = os.path.isdir("saved_figs")
+if not CHECK_FOLDER:
+    os.makedirs(MYDIR)
+    print("Made Saved_Figs folder")
 
 # functions to show an image
 

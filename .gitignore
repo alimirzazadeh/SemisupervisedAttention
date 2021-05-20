@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+
+# Specific to this project
+/data/*
+/saved_figs/*

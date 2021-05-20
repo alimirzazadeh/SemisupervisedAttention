@@ -1,5 +1,7 @@
 from libs.pytorch_grad_cam.grad_cam import GradCAM
 from libs.pytorch_grad_cam.guided_backprop import GuidedBackpropReLUModel
+# import sys
+# sys.path.append("libs/pytorch_grad_cam")
 
 import cv2
 import torch
@@ -37,7 +39,7 @@ classes = ('plane', 'car', 'bird', 'cat',
 
 CHECK_FOLDER = os.path.isdir("saved_figs")
 if not CHECK_FOLDER:
-    os.makedirs(MYDIR)
+    os.makedirs("saved_figs")
     print("Made Saved_Figs folder")
 
 # functions to show an image
@@ -93,7 +95,7 @@ def show_cam_on_image(img: np.ndarray,
 
 # replace the classifier layer with CAM Image Generation
 
-model = models.resnet50(pretrained = True, progress = True)
+model = models.resnet50(pretrained = True)
 
 target_layer = model.layer4[-1] ##this is the layer before the pooling
 

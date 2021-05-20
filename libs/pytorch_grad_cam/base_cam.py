@@ -4,6 +4,7 @@ import torch
 import ttach as tta
 from libs.pytorch_grad_cam.activations_and_gradients import ActivationsAndGradients
 from libs.pytorch_grad_cam.utils.svd_on_activations import get_2d_projection
+import json
 
 
 class BaseCAM:
@@ -20,6 +21,9 @@ class BaseCAM:
         self.reshape_transform = reshape_transform
         self.activations_and_grads = ActivationsAndGradients(self.model, 
             target_layer, reshape_transform)
+        f = open("Data/imagenet_class_index.json",)
+        class_idx = json.load(f)
+        self.idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
 
     def forward(self, input_img):
         return self.model(input_img)
@@ -62,7 +66,11 @@ class BaseCAM:
             target_category = [target_category] * input_tensor.size(0)
 
         if target_category is None:
+            # print("Category shapes: ", output.cpu().data.numpy().shape)
             target_category = np.argmax(output.cpu().data.numpy(), axis=-1)
+            # print(target_category)
+            print("Labels: ", self.idx2label[target_category[0]])
+            print(target_category)
         else:
             assert(len(target_category) == input_tensor.size(0))
 

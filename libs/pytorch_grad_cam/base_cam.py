@@ -69,8 +69,8 @@ class BaseCAM:
             # print("Category shapes: ", output.cpu().data.numpy().shape)
             target_category = np.argmax(output.cpu().data.numpy(), axis=-1)
             # print(target_category)
-            print("Labels: ", self.idx2label[target_category[0]])
-            print(target_category)
+            # print("Labels: ", self.idx2label[target_category[0]])
+            # print(target_category)
         else:
             assert(len(target_category) == input_tensor.size(0))
 

@@ -18,6 +18,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 from data_loader.cifar_data_loader import loadCifarData
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 from model.loss import calculateLoss
+from train import train
 
 if __name__ == '__main__':
     ## Load the CIFAR Dataset
@@ -28,6 +29,11 @@ if __name__ == '__main__':
     if not CHECK_FOLDER:
         os.makedirs("saved_figs")
         print("Made Saved_Figs folder")
+    
+    CHECK_FOLDER = os.path.isdir("saved_checkpoints")
+    if not CHECK_FOLDER:
+        os.makedirs("saved_checkpoints")
+        print("Made Saved_Checkpoints folder")
 
     # replace the classifier layer with CAM Image Generation
 
@@ -38,20 +44,24 @@ if __name__ == '__main__':
 
     # load a few images from CIFAR and save
 
-    dataiter = iter(trainloader)
+    dataiter = iter(testloader)
 
     images, labels = dataiter.next()
 
     visualizeImageBatch(images, labels)
 
-    print("Labels: ", labels)
-    
-    input_tensor = images
-
     use_cuda = torch.cuda.is_available()
     
     target_category = None
     
-    l1, l2 = calculateLoss(input_tensor, model, target_layer, target_category, use_cuda=use_cuda, visualize=False)
-
+    #need to set params?
+    optimizer = torch.optim.Adam(model.parameters(),lr=0.001)
+    
+    numEpochs = 2
+    
+    train(model, numEpochs, trainloader, optimizer, target_layer, target_category, use_cuda)
+    
+    
+    
+    
 

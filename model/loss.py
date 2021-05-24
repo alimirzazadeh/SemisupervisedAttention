@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
+import torch
+
 
 def calculateLoss(input_tensor, model, target_layer, target_category, use_cuda=False, logs=False, visualize=False):
     cam_model = GradCAM(model=model, target_layer=target_layer, use_cuda=use_cuda)
@@ -39,7 +41,9 @@ def calculateLoss(input_tensor, model, target_layer, target_category, use_cuda=F
         thisImg = cv2.resize(thisImg, (256, 256))
         
             
-        
+        ##we have to keep the gradients that are calculated, from the cam_model forward method
+        ####could either rerun the model or use the already calculated values i think
+        ###post processing has to be done with torch operations
         thisImgPreprocessed = preprocess_image(thisImg, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         grayscale_cam = cam_model(input_tensor=thisImgPreprocessed, target_category=target_category)
         
@@ -87,4 +91,8 @@ def calculateLoss(input_tensor, model, target_layer, target_category, use_cuda=F
         cv2.imwrite('./saved_figs/sampleImage_GradCAM.jpg', final_frame)
         final_hmp_frame = cv2.hconcat(hmps)
         cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
-    return correlation_pearson, correlation_cross
+    aa = torch.Tensor(correlation_pearson)
+    aa.requires_grad=True
+    aab = torch.Tensor(correlation_cross)
+    aab.requires_grad=True
+    return aa, aab

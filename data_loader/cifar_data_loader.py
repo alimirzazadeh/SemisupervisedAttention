@@ -18,7 +18,7 @@ def loadCifarData(batch_size=4, num_workers=2,shuffle=True):
     testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                            download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-                                             shuffle=shuffle, num_workers=num_workers)
+                                             shuffle=False, num_workers=num_workers)
     return trainloader, testloader
 
 def getLabelWord(arr):

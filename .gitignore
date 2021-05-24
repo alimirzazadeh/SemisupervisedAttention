@@ -133,3 +133,4 @@ dmypy.json
 # Specific to this project
 /data/*
 /saved_figs/*
+/saved_checkpoints/*

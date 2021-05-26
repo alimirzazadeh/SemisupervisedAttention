@@ -36,15 +36,19 @@ def calculateLoss(input_tensor, model, target_layer, target_category, use_cuda=F
     
     for i in range(input_tensor.shape[0]):
 
-        thisImg = rgb_img[i,:,:,:]
-        thisImg = np.moveaxis(thisImg, 0, -1)
-        thisImg = cv2.resize(thisImg, (256, 256))
+        # thisImg = rgb_img[i,:,:,:]
+        # thisImg = np.moveaxis(thisImg, 0, -1)
+        # thisImg = cv2.resize(thisImg, (256, 256))
         
+        thisImgTensor = input_tensor[i,:,:,:]
+        thisImgPreprocessed = torch.moveaxis(thisImgTensor, 0, 2)
+        thisImgPreprocessed = thisImgPreprocessed.unsqueeze(0)
+        # preprocessing(img.copy()).unsqueeze(0)
             
         ##we have to keep the gradients that are calculated, from the cam_model forward method
         ####could either rerun the model or use the already calculated values i think
         ###post processing has to be done with torch operations
-        thisImgPreprocessed = preprocess_image(thisImg, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        # thisImgPreprocessed = preprocess_image(thisImg, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         grayscale_cam = cam_model(input_tensor=thisImgPreprocessed, target_category=target_category)
         
         cam_result = grayscale_cam[0, :]

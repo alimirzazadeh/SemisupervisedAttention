@@ -6,10 +6,15 @@ Created on Fri May 21 10:29:04 2021
 """
 import torch
 import torchvision
-import torchvision.transforms as transforms
+from torchvision.transforms import Compose, Normalize, ToTensor, Resize
 
 def loadCifarData(batch_size=4, num_workers=2,shuffle=True):
-    transform = transforms.ToTensor()
+    # transform = transforms.ToTensor()
+    transform = Compose([
+        Resize(256),
+        ToTensor(),
+        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
     batch_size = 4
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                             download=True, transform=transform)

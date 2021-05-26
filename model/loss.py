@@ -23,7 +23,7 @@ def calculateLoss(input_tensor, model, target_layer, target_category, use_cuda=F
 
     assert(len(input_tensor.shape) > 3)
     
-    rgb_img = np.float32(input_tensor.numpy()) 
+    
     correlation_pearson = np.zeros(input_tensor.shape[0])
     correlation_cross = np.zeros(input_tensor.shape[0])
     
@@ -36,14 +36,11 @@ def calculateLoss(input_tensor, model, target_layer, target_category, use_cuda=F
     
     for i in range(input_tensor.shape[0]):
 
-        # thisImg = rgb_img[i,:,:,:]
-        # thisImg = np.moveaxis(thisImg, 0, -1)
+
         # thisImg = cv2.resize(thisImg, (256, 256))
         
         thisImgTensor = input_tensor[i,:,:,:]
-        thisImgPreprocessed = torch.moveaxis(thisImgTensor, 0, 2)
-        thisImgPreprocessed = thisImgPreprocessed.unsqueeze(0)
-        # preprocessing(img.copy()).unsqueeze(0)
+        thisImgPreprocessed = thisImgTensor.unsqueeze(0)
             
         ##we have to keep the gradients that are calculated, from the cam_model forward method
         ####could either rerun the model or use the already calculated values i think
@@ -73,6 +70,9 @@ def calculateLoss(input_tensor, model, target_layer, target_category, use_cuda=F
             
         
         if visualize:
+            rgb_img = np.float32(input_tensor.numpy()) 
+            thisImg = rgb_img[i,:,:,:]
+            thisImg = np.moveaxis(thisImg, 0, -1)
             axs[0,i].imshow(thisImg)
             axs[0,i].axis('off')    
             hmp, visualization = show_cam_on_image(thisImg, cam_result)

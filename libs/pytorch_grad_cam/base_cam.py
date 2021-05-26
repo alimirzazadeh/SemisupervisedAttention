@@ -52,7 +52,7 @@ class BaseCAM:
         if eigen_smooth:
             cam = get_2d_projection(weighted_activations)
         else:
-            cam = weighted_activations.sum(axis=1)
+            cam = torch.sum(weighted_activations, axis=1)
         return cam
 
     def forward(self, input_tensor, target_category=None, eigen_smooth=False):
@@ -78,13 +78,14 @@ class BaseCAM:
         loss = self.get_loss(output, target_category)
         loss.backward(retain_graph=True)
 
-        activations = self.activations_and_grads.activations[-1].cpu().data.numpy()
-        grads = self.activations_and_grads.gradients[-1].cpu().data.numpy()
+        activations = self.activations_and_grads.activations[-1].cpu().data
+        grads = self.activations_and_grads.gradients[-1].cpu().data
 
         cam = self.get_cam_image(input_tensor, target_category, 
             activations, grads, eigen_smooth)
-
-        cam = np.maximum(cam, 0)
+        print("got here!")
+        print(cam)
+        cam = torch.max(cam, 0)
 
         result = []
         for img in cam:

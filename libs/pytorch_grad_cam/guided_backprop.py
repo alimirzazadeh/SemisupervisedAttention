@@ -67,10 +67,10 @@ class GuidedBackpropReLUModel:
 
         loss = output[0, target_category]
         loss.backward(retain_graph=True)
-
-        output = input_img.grad.cpu().data.numpy()
+        # print(input_img.grad.cpu().data.shape)
+        output = input_img.grad.cpu().data
         output = output[0, :, :, :]
-        output = output.transpose((1, 2, 0))
+        output = torch.moveaxis(output, 0, 2)
 
         # replace GuidedBackpropReLU back with ReLU
         self.recursive_replace_guidedrelu_with_relu(self.model)

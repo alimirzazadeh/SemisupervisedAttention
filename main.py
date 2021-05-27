@@ -17,7 +17,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 from data_loader.cifar_data_loader import loadCifarData
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
-from model.loss import calculateLoss
+# from model.loss import calculateLoss
 from train import train
 
 if __name__ == '__main__':

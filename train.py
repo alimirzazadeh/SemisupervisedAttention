@@ -10,7 +10,7 @@ Created on Fri May 21 16:27:39 2021
 import torch
 import numpy as np
 import torchvision.models as models
-from model.loss import calculateLoss
+from model.loss import CAMLoss
 
 def train(model, numEpochs, trainloader, optimizer, target_layer, target_category, use_cuda):
     for epoch in range(numEpochs):
@@ -30,7 +30,9 @@ def train(model, numEpochs, trainloader, optimizer, target_layer, target_categor
             optimizer.zero_grad()
             
             with torch.set_grad_enabled(True):
-                l1 = calculateLoss(inputs, model, target_layer, target_category, use_cuda=use_cuda, visualize=False)
+                # l1 = CAMLoss()(2,1,1)
+                l1 = CAMLoss()(inputs, model, target_layer, target_category, use_cuda = use_cuda)
+                # l1 = calculateLoss
                 l1.backward()
                 optimizer.step()
     

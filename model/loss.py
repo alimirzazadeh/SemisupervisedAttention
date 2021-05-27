@@ -24,8 +24,11 @@ def calculateLoss(input_tensor, model, target_layer, target_category, use_cuda=F
     assert(len(input_tensor.shape) > 3)
     
     
-    correlation_pearson = np.zeros(input_tensor.shape[0])
-    correlation_cross = np.zeros(input_tensor.shape[0])
+    # correlation_pearson = torch.zeros(input_tensor.shape[0])
+    # correlation_pearson.requires_grad=True
+    correlation_pearson = torch.zeros(1)
+    correlation_pearson.requires_grad = True
+    # correlation_cross = tor.zeros(input_tensor.shape[0])
     
     if visualize:
         fig, axs = plt.subplots(3, input_tensor.shape[0])
@@ -47,26 +50,36 @@ def calculateLoss(input_tensor, model, target_layer, target_category, use_cuda=F
         ###post processing has to be done with torch operations
         # thisImgPreprocessed = preprocess_image(thisImg, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         grayscale_cam = cam_model(input_tensor=thisImgPreprocessed, target_category=target_category)
-        
-        cam_result = grayscale_cam[0, :]
+        # print(len(grayscale_cam))
+        cam_result = grayscale_cam[0]  #####WHY IS THERE 2? and we're taking the first one?
+        # print(cam_result.shape)
         gb_result = gb_model(thisImgPreprocessed, target_category=target_category)
 
 
         
         hmp_correlate = cam_result
-        hmp_correlate = (hmp_correlate - np.mean(hmp_correlate)) / np.std(hmp_correlate)
+        hmp_correlate = (hmp_correlate - torch.mean(hmp_correlate)) / torch.std(hmp_correlate)
         
         gb_correlate = gb_result
-        gb_correlate = (gb_correlate - np.mean(gb_correlate)) / np.std(gb_correlate)
-        gb_correlate = np.abs(gb_correlate)
-        gb_correlate = np.sum(gb_correlate, axis = 2)
-        correlation_pearson[i] = np.corrcoef(hmp_correlate.flatten(), gb_correlate.flatten())[0,1]
+        gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / torch.std(gb_correlate)
+        gb_correlate = torch.abs(gb_correlate)
+        gb_correlate = torch.sum(gb_correlate, axis = 2)
+        # print(gb_correlate.shape)
+        # print(hmp_correlate.shape)
         
-        correlation_cross[i] = np.correlate(hmp_correlate.flatten(), gb_correlate.flatten())[0]
+        #calculate pearson's
+        vx = gb_correlate - torch.mean(gb_correlate)
+        vy = hmp_correlate - torch.mean(hmp_correlate)
+        cost = torch.sum(vx * vy) / (torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2)))
+        correlation_pearson2 = correlation_pearson.clone() 
+        correlation_pearson = correlation_pearson2 + cost * -1
+        # correlation_pearson[i] = np.corrcoef(hmp_correlate.flatten(), gb_correlate.flatten())[0,1]
+        
+        # correlation_cross[i] = np.correlate(hmp_correlate.flatten(), gb_correlate.flatten())[0]
         
         if logs:
             print("The Pearson output loss is: ", correlation_pearson[i])
-            print("The Cross Corr output loss is: ", correlation_cross[i])
+            # print("The Cross Corr output loss is: ", correlation_cross[i])
             
         
         if visualize:
@@ -95,8 +108,9 @@ def calculateLoss(input_tensor, model, target_layer, target_category, use_cuda=F
         cv2.imwrite('./saved_figs/sampleImage_GradCAM.jpg', final_frame)
         final_hmp_frame = cv2.hconcat(hmps)
         cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
-    aa = torch.Tensor(correlation_pearson)
-    aa.requires_grad=True
-    aab = torch.Tensor(correlation_cross)
-    aab.requires_grad=True
-    return aa, aab
+    # aa = torch.Tensor(correlation_pearson)
+    # aa.requires_grad=True
+    # aab = torch.Tensor(correlation_cross)
+    # aab.requires_grad=True
+    # print(correlation_pearson)
+    return correlation_pearson #/ input_tensor.shape[0]

@@ -83,17 +83,22 @@ class BaseCAM:
 
         cam = self.get_cam_image(input_tensor, target_category, 
             activations, grads, eigen_smooth)
-        print("got here!")
-        print(cam)
+        # print("cam shape!")
+        # print(cam)
         cam = torch.max(cam, 0)
-
+        # print(cam)
         result = []
         for img in cam:
-            img = cv2.resize(img, input_tensor.shape[-2:][::-1])
-            img = img - np.min(img)
-            img = img / np.max(img)
-            result.append(img)
-        result = np.float32(result)
+            # print(input_tensor.shape[-2:][::-1])
+            # img = cv2.resize(img, input_tensor.shape[-2:][::-1])
+            # print(img.shape)
+            img = img.reshape((1,1,img.shape[0],img.shape[1]))
+            img = torch.nn.functional.upsample_bilinear(img.double(),size=list(input_tensor.shape[-2:][::-1]))
+            # print(img.shape)
+            img = img - torch.min(img)
+            img = img / torch.max(img)
+            result.append(img[0,0,:,:])
+        # result = np.float32(result)
         return result
 
     def forward_augmentation_smoothing(self,

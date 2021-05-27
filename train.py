@@ -30,14 +30,15 @@ def train(model, numEpochs, trainloader, optimizer, target_layer, target_categor
             optimizer.zero_grad()
             
             with torch.set_grad_enabled(True):
-                l1, l2 = calculateLoss(inputs, model, target_layer, target_category, use_cuda=use_cuda, visualize=False)
-                l1.mean().backward()
+                l1 = calculateLoss(inputs, model, target_layer, target_category, use_cuda=use_cuda, visualize=False)
+                l1.backward()
                 optimizer.step()
     
-            running_loss += l1.mean().item()
-            if i % 2000 == 1999:    # print every 2000 mini-batches
+            running_loss += l1.item()
+            print(l1.item(), running_loss)
+            if i % 20 == 19:    # print every 2000 mini-batches
                 print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 2000))
+                      (epoch + 1, i + 1, running_loss / 20))
                 running_loss = 0.0
         if epoch % 2 == 1:
             saveCheckpoint(epoch, l1.mean(), model, optimizer)

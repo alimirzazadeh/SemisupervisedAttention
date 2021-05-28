@@ -21,9 +21,9 @@ class BaseCAM:
         self.reshape_transform = reshape_transform
         self.activations_and_grads = ActivationsAndGradients(self.model, 
             target_layer, reshape_transform)
-        f = open("Data/imagenet_class_index.json",)
-        class_idx = json.load(f)
-        self.idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
+        # f = open("Data/imagenet_class_index.json",)
+        # class_idx = json.load(f)
+        # self.idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
 
     def forward(self, input_img):
         return self.model(input_img)

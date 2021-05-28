@@ -16,16 +16,16 @@ import cv2
 import torch
 
 class CAMLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, model, target_layer, use_cuda):
         super(CAMLoss, self).__init__()
+        self.use_cuda = use_cuda
+        self.model = model
+        self.cam_model = GradCAM(model=model, target_layer=target_layer, use_cuda=use_cuda)
+        self.gb_model = GuidedBackpropReLUModel(model=model, use_cuda=use_cuda)
         
     def forward(self, predict, target):
         print("hey")
-    def forward(self, input_tensor, model, target_layer, target_category, use_cuda=False, logs=False, visualize=False):
-        cam_model = GradCAM(model=model, target_layer=target_layer, use_cuda=use_cuda)
-        gb_model = GuidedBackpropReLUModel(model=model, use_cuda=use_cuda)
-    
-    
+    def forward(self, input_tensor,  target_category, logs=False, visualize=False):
         assert(len(input_tensor.shape) > 3)
         
         
@@ -54,11 +54,11 @@ class CAMLoss(nn.Module):
             ####could either rerun the model or use the already calculated values i think
             ###post processing has to be done with torch operations
             # thisImgPreprocessed = preprocess_image(thisImg, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            grayscale_cam = cam_model(input_tensor=thisImgPreprocessed, target_category=target_category)
+            grayscale_cam = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category)
             # print(len(grayscale_cam))
             cam_result = grayscale_cam[0]  #####WHY IS THERE 2? and we're taking the first one?
             # print(cam_result.shape)
-            gb_result = gb_model(thisImgPreprocessed, target_category=target_category)
+            gb_result = self.gb_model(thisImgPreprocessed, target_category=target_category)
     
     
             

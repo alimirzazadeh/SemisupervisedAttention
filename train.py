@@ -13,6 +13,8 @@ import torchvision.models as models
 from model.loss import CAMLoss
 
 def train(model, numEpochs, trainloader, optimizer, target_layer, target_category, use_cuda):
+    CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
+    
     for epoch in range(numEpochs):
         print('Epoch {}/{}'.format(epoch, numEpochs - 1))
             
@@ -31,7 +33,7 @@ def train(model, numEpochs, trainloader, optimizer, target_layer, target_categor
             
             with torch.set_grad_enabled(True):
                 # l1 = CAMLoss()(2,1,1)
-                l1 = CAMLoss()(inputs, model, target_layer, target_category, use_cuda = use_cuda)
+                l1 = CAMLossInstance(inputs, target_category)
                 # l1 = calculateLoss
                 l1.backward()
                 optimizer.step()

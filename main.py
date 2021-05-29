@@ -57,7 +57,7 @@ if __name__ == '__main__':
     #need to set params?
     optimizer = torch.optim.Adam(model.parameters(),lr=0.001)
     
-    numEpochs = 2
+    numEpochs = 200
     
     train(model, numEpochs, trainloader, optimizer, target_layer, target_category, use_cuda)
     

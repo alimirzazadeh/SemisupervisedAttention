@@ -63,21 +63,32 @@ class CAMLoss(nn.Module):
     
             
             hmp_correlate = cam_result
-            hmp_correlate = (hmp_correlate - torch.mean(hmp_correlate)) / torch.std(hmp_correlate)
+            hmp_correlate_std = torch.std(hmp_correlate)
+            if (hmp_correlate_std > 0):
+                hmp_correlate = (hmp_correlate - torch.mean(hmp_correlate)) / hmp_correlate_std
             
             gb_correlate = gb_result
-            gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / torch.std(gb_correlate)
+            gb_correlate_std = torch.std(gb_correlate)
+            if (gb_correlate_std > 0):
+                gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
             gb_correlate = torch.abs(gb_correlate)
             gb_correlate = torch.sum(gb_correlate, axis = 2)
+            # print(torch.sum(gb_correlate))
             # print(gb_correlate.shape)
             # print(hmp_correlate.shape)
             
             #calculate pearson's
             vx = gb_correlate - torch.mean(gb_correlate)
             vy = hmp_correlate - torch.mean(hmp_correlate)
-            cost = torch.sum(vx * vy) / (torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2)))
+            denominator = torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2))
+            if denominator > 0:
+                cost = torch.sum(vx * vy) / denominator
+            else:
+                cost = 0
             correlation_pearson2 = correlation_pearson.clone() 
             correlation_pearson = correlation_pearson2 + cost * -1
+
+            # print(torch.sum(hmp_correlate), torch.sum(gb_correlate), cost)
             # correlation_pearson[i] = np.corrcoef(hmp_correlate.flatten(), gb_correlate.flatten())[0,1]
             
             # correlation_cross[i] = np.correlate(hmp_correlate.flatten(), gb_correlate.flatten())[0]
@@ -118,5 +129,5 @@ class CAMLoss(nn.Module):
         # aab = torch.Tensor(correlation_cross)
         # aab.requires_grad=True
         # print(correlation_pearson)
-        print(correlation_pearson)
+        # print(correlation_pearson)
         return correlation_pearson #/ input_tensor.shape[0]

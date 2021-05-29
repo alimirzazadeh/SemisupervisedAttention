@@ -21,7 +21,10 @@ def train(model, numEpochs, trainloader, optimizer, target_layer, target_categor
         running_loss = 0.0
         
         model.train()
-        
+        print("Total Dataset: ", len(trainloader.dataset))
+        if epoch % 50 == 49:
+            saveCheckpoint(epoch, l1.mean(), model, optimizer)
+            print("saved checkpoint successfully")
         for i, data in enumerate(trainloader, 0):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
@@ -39,13 +42,12 @@ def train(model, numEpochs, trainloader, optimizer, target_layer, target_categor
                 optimizer.step()
     
             running_loss += l1.item()
-            print(l1.item(), running_loss)
-            if i % 20 == 19:    # print every 2000 mini-batches
+            # print(l1.item(), running_loss)
+            if i % 200 == 199:    # print every 2000 mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 20))
                 running_loss = 0.0
-        if epoch % 2 == 1:
-            saveCheckpoint(epoch, l1.mean(), model, optimizer)
+
 def saveCheckpoint(EPOCH, LOSS, net, optimizer):
     PATH = "saved_checkpoints/model_"+str(EPOCH)+".pt"
     torch.save({

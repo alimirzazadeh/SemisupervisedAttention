@@ -25,7 +25,7 @@ class CAMLoss(nn.Module):
         
     def forward(self, predict, target):
         print("hey")
-    def forward(self, input_tensor,  target_category, logs=False, visualize=False):
+    def forward(self, input_tensor,  target_category, logs=False, visualize=False, imgTitle="epoch_0_batchNum_0"):
         assert(len(input_tensor.shape) > 3)
         
         
@@ -101,13 +101,17 @@ class CAMLoss(nn.Module):
             if visualize:
                 rgb_img = np.float32(input_tensor.numpy()) 
                 thisImg = rgb_img[i,:,:,:]
+                print(np.max(thisImg))
+                thisImg = thisImg / np.max(thisImg)
+                print(np.max(thisImg))
                 thisImg = np.moveaxis(thisImg, 0, -1)
                 axs[0,i].imshow(thisImg)
                 axs[0,i].axis('off')    
                 hmp, visualization = show_cam_on_image(thisImg, cam_result)
                 imgs.append(visualization)
                 hmps.append(hmp)
-                gb_visualization = deprocess_image(gb_result)
+                print(gb_result.shape)
+                gb_visualization = deprocess_image(gb_result.numpy())
                 gbimgs.append(gb_visualization)
                 axs[1,i].imshow(hmp_correlate)
                 axs[1,i].set_title("Grad CAM",fontsize=6)
@@ -115,19 +119,21 @@ class CAMLoss(nn.Module):
                 axs[2,i].set_title("Backprop",fontsize=6)
                 axs[1,i].axis('off')
                 axs[2,i].axis('off')
-                axs[0,i].set_title("Pearson Corr: " + str(round(correlation_pearson[i],3)),fontsize=8)
+                axs[0,i].set_title("Pearson Corr: " + str(round(cost.item(),3)),fontsize=8)
         
         if visualize:
-            final_gb_frame = cv2.hconcat(gbimgs)
-            cv2.imwrite('./saved_figs/sampleImage_GuidedBackprop.jpg', final_gb_frame)
-            final_frame = cv2.hconcat(imgs)
-            cv2.imwrite('./saved_figs/sampleImage_GradCAM.jpg', final_frame)
-            final_hmp_frame = cv2.hconcat(hmps)
-            cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
+            # final_gb_frame = cv2.hconcat(gbimgs)
+            # cv2.imwrite('./saved_figs/sampleImage_GuidedBackprop.jpg', final_gb_frame)
+            # final_frame = cv2.hconcat(imgs)
+            # cv2.imwrite('./saved_figs/sampleImage_GradCAM.jpg', final_frame)
+            # final_hmp_frame = cv2.hconcat(hmps)
+            # cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
+            fig.savefig('./saved_figs/unsupervised_viz_'+imgTitle+'.png')
         # aa = torch.Tensor(correlation_pearson)
         # aa.requires_grad=True
         # aab = torch.Tensor(correlation_cross)
         # aab.requires_grad=True
         # print(correlation_pearson)
+
         # print(correlation_pearson)
         return correlation_pearson #/ input_tensor.shape[0]

@@ -47,8 +47,9 @@ if __name__ == '__main__':
     epoch = 0
     
     if len(all_checkpoints) > 0:
-        print('Loading Saved Model')
+        
         PATH = 'saved_checkpoints/' + all_checkpoints[-1]
+        print('Loading Saved Model', PATH)
         checkpoint = torch.load(PATH, map_location=torch.device('cpu'))
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])

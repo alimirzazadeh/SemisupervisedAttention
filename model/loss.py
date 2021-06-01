@@ -84,7 +84,7 @@ class CAMLoss(nn.Module):
             if denominator > 0:
                 cost = torch.sum(vx * vy) / denominator
             else:
-                cost = 0
+                cost = torch.zeros(1)
             correlation_pearson2 = correlation_pearson.clone() 
             correlation_pearson = correlation_pearson2 + cost * -1
 

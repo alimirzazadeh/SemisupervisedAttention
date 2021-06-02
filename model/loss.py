@@ -25,7 +25,7 @@ class CAMLoss(nn.Module):
         
     def forward(self, predict, target):
         print("hey")
-    def forward(self, input_tensor,  target_category, logs=False, visualize=False, imgTitle="epoch_0_batchNum_0"):
+    def forward(self, input_tensor,  target_category, logs=False, visualize=False):
         assert(len(input_tensor.shape) > 3)
         
         
@@ -40,6 +40,7 @@ class CAMLoss(nn.Module):
             gbimgs = []
             imgs = []
             hmps = []
+            correlations = []
             
         
         for i in range(input_tensor.shape[0]):
@@ -99,6 +100,7 @@ class CAMLoss(nn.Module):
                 
             
             if visualize:
+                correlations.append(cost)
                 rgb_img = np.float32(input_tensor.numpy()) 
                 thisImg = rgb_img[i,:,:,:]
                 print(np.max(thisImg))
@@ -122,13 +124,14 @@ class CAMLoss(nn.Module):
                 axs[0,i].set_title("Pearson Corr: " + str(round(cost.item(),3)),fontsize=8)
         
         if visualize:
+            return fig, correlations
             # final_gb_frame = cv2.hconcat(gbimgs)
             # cv2.imwrite('./saved_figs/sampleImage_GuidedBackprop.jpg', final_gb_frame)
             # final_frame = cv2.hconcat(imgs)
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM.jpg', final_frame)
             # final_hmp_frame = cv2.hconcat(hmps)
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
-            fig.savefig('./saved_figs/unsupervised_viz_'+imgTitle+'.png')
+            
         # aa = torch.Tensor(correlation_pearson)
         # aa.requires_grad=True
         # aab = torch.Tensor(correlation_cross)

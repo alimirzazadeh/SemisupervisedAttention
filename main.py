@@ -46,15 +46,15 @@ if __name__ == '__main__':
     all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0
     
-    if len(all_checkpoints) > 0:
+    # if len(all_checkpoints) > 0:
         
-        PATH = 'saved_checkpoints/' + all_checkpoints[-1]
-        print('Loading Saved Model', PATH)
-        checkpoint = torch.load(PATH, map_location=torch.device('cpu'))
-        model.load_state_dict(checkpoint['model_state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        epoch = checkpoint['epoch']
-        loss = checkpoint['loss']
+    #     PATH = 'saved_checkpoints/' + all_checkpoints[-1]
+    #     print('Loading Saved Model', PATH)
+    #     checkpoint = torch.load(PATH, map_location=torch.device('cpu'))
+    #     model.load_state_dict(checkpoint['model_state_dict'])
+    #     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    #     epoch = checkpoint['epoch']
+    #     loss = checkpoint['loss']
     
     target_layer = model.layer4[-1] ##this is the layer before the pooling
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     
     print("done")
     
-    train(model, numEpochs, trainloader, optimizer, target_layer, target_category, use_cuda)
+    train(model, numEpochs, trainloader, testloader, optimizer, target_layer, target_category, use_cuda)
     
     
     

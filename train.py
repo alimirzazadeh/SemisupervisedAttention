@@ -11,8 +11,11 @@ import torch
 import numpy as np
 import torchvision.models as models
 from model.loss import CAMLoss
+import pandas as pd
 
-def train(model, numEpochs, trainloader, optimizer, target_layer, target_category, use_cuda):
+from metrics.UnsupervisedMetrics import visualizeLossPerformance
+
+def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=False):
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
     
     for epoch in range(numEpochs):
@@ -25,11 +28,24 @@ def train(model, numEpochs, trainloader, optimizer, target_layer, target_categor
         if epoch % 50 == 49:
             saveCheckpoint(epoch, l1.mean(), model, optimizer)
             print("saved checkpoint successfully")
+        
+        counter = 0
+        
+        if trackLoss:
+            df = pd.DataFrame({'loss': [],'img': []})
+            df.to_csv('saved_figs/track_loss.csv', header=False)
+        
         for i, data in enumerate(trainloader, 0):
+            
+            if trackLoss and counter % 10 == 0:
+                dataiter = iter(testloader)
+                images, labels = dataiter.next()
+                thisLoss, thisFig = visualizeLossPerformance(model, target_layer, images, saveFig=False)
+                df = pd.DataFrame({'loss': thisLoss,'img': thisFig})
+                df.to_csv('saved_figs/track_loss.csv', mode='a', header=False)
+                
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
-            # inputs = inputs.to(device)
-            # labels = labels.to(device)
     
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -47,6 +63,8 @@ def train(model, numEpochs, trainloader, optimizer, target_layer, target_categor
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 20))
                 running_loss = 0.0
+            
+            counter += 1
 
 def saveCheckpoint(EPOCH, LOSS, net, optimizer):
     PATH = "saved_checkpoints/model_"+str(EPOCH)+".pt"

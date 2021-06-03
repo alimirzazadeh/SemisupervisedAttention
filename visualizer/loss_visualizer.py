@@ -28,20 +28,21 @@ def visualizeLosses():
 
             self.X = X
             self.slices, rows, cols = X.shape
-            self.ind = self.slices//2
-
+            self.ind = 1
             self.im = ax.imshow(self.X[self.ind,:, :])
             self.update()
 
         def on_scroll(self, event):
             # print("%s" % (event.key))
             # print(self.slices)
-            if event.key == 'j':
+            if event.key == 'right':
                 if (self.ind + 1) < self.slices:
                     self.ind = (self.ind + 1) % self.slices
-            elif event.key == 'k':
-                if (self.ind - 1) >= 0:
+            elif event.key == 'left':
+                if (self.ind - 1) > 0:
                     self.ind = (self.ind - 1) % self.slices
+            else:
+                print(event.key)
             self.update()
 
         def update(self):
@@ -59,4 +60,4 @@ def visualizeLosses():
     # print(pdFile.iloc[0,1])
     # plt.show()
     # print(pdFile)
-# visualizeLosses()
+visualizeLosses()

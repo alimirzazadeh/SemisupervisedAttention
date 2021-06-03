@@ -38,10 +38,11 @@ if __name__ == '__main__':
 
     # replace the classifier layer with CAM Image Generation
 
+    learning_rate = 0.00001
     
 
     model = models.resnet50(pretrained = True)
-    optimizer = torch.optim.Adam(model.parameters(),lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
     
     all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0

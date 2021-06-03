@@ -32,8 +32,8 @@ def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, ta
         counter = 0
         
         if trackLoss:
-            imgPath = 'saved_figs/track_lossImg.npy'
-            lossPath = 'saved_figs/track_lossNum.npy'
+            imgPath = 'loss_figs/track_lossImg.npy'
+            lossPath = 'loss_figs/track_lossNum.npy'
             np.save(imgPath, np.zeros((1,512,1024)))
             np.save(lossPath, np.zeros((1,4)))
             # df = pd.DataFrame({'loss': []})

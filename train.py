@@ -32,17 +32,32 @@ def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, ta
         counter = 0
         
         if trackLoss:
-            df = pd.DataFrame({'loss': [],'img': []})
-            df.to_csv('saved_figs/track_loss.csv', header=False)
+            imgPath = 'saved_figs/track_lossImg.npy'
+            lossPath = 'saved_figs/track_lossNum.npy'
+            np.save(imgPath, np.zeros((1,512,1024)))
+            np.save(lossPath, np.zeros((1,4)))
+            # df = pd.DataFrame({'loss': []})
+            # df.to_csv('saved_figs/track_lossNum.csv', header=False)
+            # df = pd.DataFrame({'img': []})
+            # df.to_csv('saved_figs/track_lossImg.csv', header=False)
         
         for i, data in enumerate(trainloader, 0):
             
             if trackLoss and counter % 10 == 0:
                 dataiter = iter(testloader)
                 images, labels = dataiter.next()
-                thisLoss, thisFig = visualizeLossPerformance(model, target_layer, images, saveFig=False)
-                df = pd.DataFrame({'loss': thisLoss,'img': thisFig})
-                df.to_csv('saved_figs/track_loss.csv', mode='a', header=False)
+                thisLoss, thisFig = visualizeLossPerformance(model, target_layer, images,use_cuda=use_cuda, saveFig=False)
+                allLossNum = np.load(lossPath)
+                allLossImg = np.load(imgPath)
+                # print(thisFig.shape)
+                # print(allLossImg.shape)
+                np.save(imgPath, np.append(allLossImg,np.expand_dims(thisFig,0).astype(int), axis=0))
+                np.save(lossPath, np.append(allLossNum,np.expand_dims(thisLoss,0), axis=0))
+                print('saved')
+                # df = pd.DataFrame({'loss': thisLoss})
+                # df.to_csv('saved_figs/track_lossNum.csv', mode='a', header=False)
+                # df = pd.DataFrame({'img': thisFig.flatten()})
+                # df.to_csv('saved_figs/track_lossImg.csv', mode='a', header=False)
                 
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data

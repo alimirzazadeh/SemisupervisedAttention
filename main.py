@@ -60,11 +60,11 @@ if __name__ == '__main__':
 
 
     # load a few images from CIFAR and save
-    dataiter = iter(testloader)
-    for i in range(3):
-        images, labels = dataiter.next()
-        imgTitle = "epoch_" + str(epoch) + "_batchNum_" + str(i)
-        visualizeLossPerformance(model, target_layer, images, imgTitle)
+    #dataiter = iter(testloader)
+    #for i in range(3):
+    #    images, labels = dataiter.next()
+    #    imgTitle = "epoch_" + str(epoch) + "_batchNum_" + str(i)
+    #    visualizeLossPerformance(model, target_layer, images, imgTitle)
     
     # visualizeImageBatch(images, labels)
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     
     print("done")
     
-    train(model, numEpochs, trainloader, testloader, optimizer, target_layer, target_category, use_cuda)
+    train(model, numEpochs, trainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=True)
     
     
     

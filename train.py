@@ -25,7 +25,7 @@ def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, ta
         
         model.train()
         print("Total Dataset: ", len(trainloader.dataset))
-        if epoch % 50 == 49:
+        if epoch % 2 == 1:
             saveCheckpoint(epoch, l1.mean(), model, optimizer)
             print("saved checkpoint successfully")
         
@@ -43,10 +43,10 @@ def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, ta
         
         for i, data in enumerate(trainloader, 0):
             
-            if trackLoss and counter % 10 == 0:
+            if trackLoss and counter % 100 == 0:
                 dataiter = iter(testloader)
                 images, labels = dataiter.next()
-                thisLoss, thisFig = visualizeLossPerformance(model, target_layer, images,use_cuda=use_cuda, saveFig=False)
+                thisLoss, thisFig = visualizeLossPerformance(CAMLossInstance, images,use_cuda=use_cuda, saveFig=False)
                 allLossNum = np.load(lossPath)
                 allLossImg = np.load(imgPath)
                 # print(thisFig.shape)

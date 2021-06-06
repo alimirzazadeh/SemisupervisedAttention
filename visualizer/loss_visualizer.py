@@ -15,6 +15,12 @@ def visualizeLosses():
     data = data.astype(int)
     # thisData = data[2,:,:]
     data2 = np.load('track_lossNum.npy')
+
+    for i in range(data2.shape[1]):
+        plt.plot(data2[:,i],label='Image '+str(i))
+    plt.legend()
+
+    # plt.figure()
     # print(np.max(thisData), np.min(thisData), np.mean(thisData))
     # print(thisData.shape)
     # plt.imshow(thisData)

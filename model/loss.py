@@ -99,7 +99,8 @@ class CAMLoss(nn.Module):
                 
             
             if visualize:
-                correlations.append(cost.item())
+                costLoss = -1 * cost
+                correlations.append(costLoss.item())
                 rgb_img = np.float32(input_tensor.numpy()) 
                 thisImg = rgb_img[i,:,:,:]
                 # print(np.max(thisImg))

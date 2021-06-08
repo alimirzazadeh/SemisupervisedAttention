@@ -28,6 +28,6 @@ def loadCifarData(batch_size=4, num_workers=2,shuffle=True):
 
 def getLabelWord(arr):
     classes = ('plane', 'car', 'bird', 'cat','deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-    arrList = arr.numpy().astype(int)
+    arrList = arr.cpu().numpy().astype(int)
     arrList = list(arrList)
     return [classes[a] for a in arrList]

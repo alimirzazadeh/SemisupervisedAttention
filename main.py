@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     # replace the classifier layer with CAM Image Generation
 
-    learning_rate = 0.00001
+    learning_rate = 0.000001
     
 
     model = models.resnet50(pretrained = True)
@@ -48,9 +48,10 @@ if __name__ == '__main__':
     epoch = 0
     
     if sys.argv[1] == 'loadCheckpoint':
+        whichCheckpoint = int(input('Which Checkpoint to Load: \n'))
         if len(all_checkpoints) > 0:
             
-            PATH = 'saved_checkpoints/' + all_checkpoints[1]
+            PATH = 'saved_checkpoints/' + all_checkpoints[whichCheckpoint]
             print('Loading Saved Model', PATH)
             checkpoint = torch.load(PATH, map_location=torch.device('cpu'))
             model.load_state_dict(checkpoint['model_state_dict'])
@@ -78,10 +79,31 @@ if __name__ == '__main__':
         from model.loss import CAMLoss
         CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
         dataiter = iter(testloader)
+
+        device = torch.device("cuda:0" if use_cuda else "cpu")
+        model.eval()
+        import json
+        f = open("imagenet_class_index.json",)
+        class_idx = json.load(f)
+        idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
+
         for i in range(3):
-           images, labels = dataiter.next()
-           imgTitle = "epoch_" + str(epoch) + "_batchNum_" + str(i)
-           visualizeLossPerformance(CAMLossInstance, images, labels=labels, imgTitle=imgTitle)
+            images, labels = dataiter.next()
+            images = images.cuda()
+            labels = labels.cuda()
+            # images.to("cpu")
+            # model.to(device)
+            with torch.no_grad():
+                # calculate outputs by running images through the network
+                outputs = model(images)
+                # the class with the highest energy is what we choose as prediction
+                _, predicted = torch.max(outputs.data, 1)
+                predicted = predicted.tolist()
+                # print(predicted)
+                predictedNames = [idx2label[p] for p in predicted]
+                # print(predictedNames)
+            imgTitle = "epoch_" + str(epoch) + "_batchNum_" + str(i)
+            visualizeLossPerformance(CAMLossInstance, images, labels=labels, imgTitle=imgTitle, imgLabels=predictedNames)
         
     # visualizeImageBatch(images, labels)
 

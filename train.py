@@ -17,7 +17,13 @@ from metrics.UnsupervisedMetrics import visualizeLossPerformance
 
 def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=False):
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
-    
+
+    if trackLoss:
+        imgPath = 'saved_figs/track_lossImg.npy'
+        lossPath = 'saved_figs/track_lossNum.npy'
+        np.save(imgPath, np.zeros((1,512,1024)))
+        np.save(lossPath, np.zeros((1,4)))
+            
     for epoch in range(numEpochs):
         print('Epoch {}/{}'.format(epoch, numEpochs - 1))
             
@@ -31,11 +37,6 @@ def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, ta
         
         counter = 0
         
-        if trackLoss:
-            imgPath = 'saved_figs/track_lossImg.npy'
-            lossPath = 'saved_figs/track_lossNum.npy'
-            np.save(imgPath, np.zeros((1,512,1024)))
-            np.save(lossPath, np.zeros((1,4)))
             # df = pd.DataFrame({'loss': []})
             # df.to_csv('saved_figs/track_lossNum.csv', header=False)
             # df = pd.DataFrame({'img': []})

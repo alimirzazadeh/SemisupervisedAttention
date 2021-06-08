@@ -72,7 +72,9 @@ class CAMLoss(nn.Module):
             gb_correlate_std = torch.std(gb_correlate)
             if (gb_correlate_std > 0):
                 gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
-            gb_correlate = torch.abs(gb_correlate)
+
+            # gb_correlate = torch.abs(gb_correlate) ################################################################################# 
+
             gb_correlate = torch.sum(gb_correlate, axis = 2)
             # print(gb_correlate.shape)
             # print(hmp_correlate.shape)
@@ -101,7 +103,7 @@ class CAMLoss(nn.Module):
             if visualize:
                 costLoss = -1 * cost
                 correlations.append(costLoss.item())
-                rgb_img = np.float32(input_tensor.numpy()) 
+                rgb_img = np.float32(input_tensor.cpu().numpy()) 
                 thisImg = rgb_img[i,:,:,:]
                 # print(np.max(thisImg))
                 thisImg = (thisImg - np.min(thisImg))
@@ -123,7 +125,7 @@ class CAMLoss(nn.Module):
                 imgs.append(thisImg)
                 hmps.append(hmp_correlate.numpy())
                 gbimgs.append(gb_correlate.numpy())
-                print(np.max(thisImg), np.min(thisImg))
+                # print(np.max(thisImg), np.min(thisImg))
                 axs[0,i].imshow(thisImg)
                 axs[0,i].axis('off')    
                 axs[1,i].imshow(hmp_correlate)
@@ -133,7 +135,7 @@ class CAMLoss(nn.Module):
                 axs[1,i].axis('off')
                 axs[2,i].axis('off')
                 axs[0,i].set_title("Pearson Corr: " + str(round(cost.item(),3)),fontsize=8)
-                print('d')
+                print('.')
         
         if visualize:
             fig.canvas.draw()
@@ -161,9 +163,9 @@ class CAMLoss(nn.Module):
             final_gb_frame = normalize(final_gb_frame)
             final_hmp_frame = normalize(final_hmp_frame)
 
-            print(np.min(final_hmp_frame), np.max(final_hmp_frame), np.median(final_hmp_frame))
-            print(np.min(final_gb_frame), np.max(final_gb_frame), np.median(final_gb_frame))
-            print(final_gb_frame.dtype, final_hmp_frame.dtype)
+            # print(np.min(final_hmp_frame), np.max(final_hmp_frame), np.median(final_hmp_frame))
+            # print(np.min(final_gb_frame), np.max(final_gb_frame), np.median(final_gb_frame))
+            # print(final_gb_frame.dtype, final_hmp_frame.dtype)
 
             data = np.array(cv2.vconcat([final_hmp_frame, final_gb_frame.astype('float64')]))
             return correlations, data

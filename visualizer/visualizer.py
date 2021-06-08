@@ -10,10 +10,10 @@ import torchvision
 from data_loader.cifar_data_loader import getLabelWord
 import cv2
 
-def visualizeImageBatch(images, labels):
+def visualizeImageBatch(images, labels, resnetLabels=""):
     def imshow(img, labels):
         # img = img / 2 + 0.5     # unnormalize
-        npimg = img.numpy()
+        npimg = img.cpu().numpy()
         npimg -= np.min(npimg)
         npimg = npimg / np.max(npimg)
         # print("Image Characteristics:")
@@ -21,7 +21,7 @@ def visualizeImageBatch(images, labels):
         plt.imshow(np.transpose(npimg, (1, 2, 0)))
         classes = getLabelWord(labels)
         titleString = ' '.join('%5s' % classes)
-        plt.title(titleString)
+        plt.title(titleString + '\n' + resnetLabels)
         # plt.savefig('./saved_figs/sampleImages.jpg')
 
     imshow(torchvision.utils.make_grid(images), labels)

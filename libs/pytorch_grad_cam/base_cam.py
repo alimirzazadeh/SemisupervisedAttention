@@ -2,8 +2,9 @@ import cv2
 import numpy as np
 import torch
 import ttach as tta
-from pytorch_grad_cam.activations_and_gradients import ActivationsAndGradients
-from pytorch_grad_cam.utils.svd_on_activations import get_2d_projection
+from libs.pytorch_grad_cam.activations_and_gradients import ActivationsAndGradients
+from libs.pytorch_grad_cam.utils.svd_on_activations import get_2d_projection
+import json
 
 
 class BaseCAM:
@@ -20,6 +21,9 @@ class BaseCAM:
         self.reshape_transform = reshape_transform
         self.activations_and_grads = ActivationsAndGradients(self.model, 
             target_layer, reshape_transform)
+        # f = open("Data/imagenet_class_index.json",)
+        # class_idx = json.load(f)
+        # self.idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
 
     def forward(self, input_img):
         return self.model(input_img)
@@ -48,7 +52,7 @@ class BaseCAM:
         if eigen_smooth:
             cam = get_2d_projection(weighted_activations)
         else:
-            cam = weighted_activations.sum(axis=1)
+            cam = torch.sum(weighted_activations, axis=1)
         return cam
 
     def forward(self, input_tensor, target_category=None, eigen_smooth=False):
@@ -62,7 +66,11 @@ class BaseCAM:
             target_category = [target_category] * input_tensor.size(0)
 
         if target_category is None:
+            # print("Category shapes: ", output.cpu().data.numpy().shape)
             target_category = np.argmax(output.cpu().data.numpy(), axis=-1)
+            # print(target_category)
+            # print("Labels: ", self.idx2label[target_category[0]])
+            # print(target_category)
         else:
             assert(len(target_category) == input_tensor.size(0))
 
@@ -70,21 +78,27 @@ class BaseCAM:
         loss = self.get_loss(output, target_category)
         loss.backward(retain_graph=True)
 
-        activations = self.activations_and_grads.activations[-1].cpu().data.numpy()
-        grads = self.activations_and_grads.gradients[-1].cpu().data.numpy()
+        activations = self.activations_and_grads.activations[-1].cpu().data
+        grads = self.activations_and_grads.gradients[-1].cpu().data
 
         cam = self.get_cam_image(input_tensor, target_category, 
             activations, grads, eigen_smooth)
-
-        cam = np.maximum(cam, 0)
-
+        # print("cam shape!")
+        # print(cam)
+        cam = torch.max(cam, 0)
+        # print(cam)
         result = []
         for img in cam:
-            img = cv2.resize(img, input_tensor.shape[-2:][::-1])
-            img = img - np.min(img)
-            img = img / np.max(img)
-            result.append(img)
-        result = np.float32(result)
+            # print(input_tensor.shape[-2:][::-1])
+            # img = cv2.resize(img, input_tensor.shape[-2:][::-1])
+            # print(img.shape)
+            img = img.reshape((1,1,img.shape[0],img.shape[1]))
+            img = torch.nn.functional.upsample_bilinear(img.double(),size=list(input_tensor.shape[-2:][::-1]))
+            # print(img.shape)
+            img = img - torch.min(img)
+            img = img / torch.max(img)
+            result.append(img[0,0,:,:])
+        # result = np.float32(result)
         return result
 
     def forward_augmentation_smoothing(self,

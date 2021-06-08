@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import torch
 import tqdm
-from pytorch_grad_cam.base_cam import BaseCAM
+from libs.pytorch_grad_cam.base_cam import BaseCAM
 
 class ScoreCAM(BaseCAM):
     def __init__(self, model, target_layer, use_cuda=False, reshape_transform=None):

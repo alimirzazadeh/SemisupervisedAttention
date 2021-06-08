@@ -134,3 +134,5 @@ dmypy.json
 /data/*
 /saved_figs/*
 /saved_checkpoints/*
+/saved_iterations/*
+

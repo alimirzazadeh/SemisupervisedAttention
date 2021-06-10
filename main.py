@@ -114,6 +114,7 @@ if __name__ == '__main__':
     
     
     numEpochs = 5
+    model.fc = nn.Linear(int(model.fc.in_features), 10)
     
     print("done")
     if sys.argv[3] == 'train':

@@ -73,6 +73,8 @@ class CAMLoss(nn.Module):
             if (gb_correlate_std > 0):
                 gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
 
+            ####now zeroing negatives
+            gb_correlate[gb_correlate < 0] = 0
             # gb_correlate = torch.abs(gb_correlate) ################################################################################# 
 
             gb_correlate = torch.sum(gb_correlate, axis = 2)
@@ -150,6 +152,11 @@ class CAMLoss(nn.Module):
             final_hmp_frame = cv2.hconcat(hmps)
 
 
+            # print(np.min(final_hmp_frame), np.max(final_hmp_frame), np.median(final_hmp_frame))
+            # print(np.min(final_gb_frame), np.max(final_gb_frame), np.median(final_gb_frame))
+            # print(final_gb_frame.dtype, final_hmp_frame.dtype)
+
+
             def normalize(arr):
                 # arr = arr / np.linalg.norm(arr)
                 arr -= np.min(arr)
@@ -157,6 +164,7 @@ class CAMLoss(nn.Module):
                 arr_threshold = np.mean(arr) + 2*np.std(arr)
                 cont = np.greater(arr, arr_threshold)
                 arr[cont] = arr_threshold
+                arr[arr < 0] = 0
                 # arr = arr / np.max(arr)
                 return arr
 

@@ -23,6 +23,8 @@ def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, ta
         lossPath = 'saved_figs/track_lossNum.npy'
         np.save(imgPath, np.zeros((1,512,1024)))
         np.save(lossPath, np.zeros((1,4)))
+        allLossNum = np.load(lossPath)
+        allLossImg = np.load(imgPath)
             
     for epoch in range(numEpochs):
         print('Epoch {}/{}'.format(epoch, numEpochs - 1))
@@ -36,6 +38,10 @@ def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, ta
             print("saved checkpoint successfully")
         
         counter = 0
+
+        if trackLoss:
+            np.save(imgPath, allLossImg)
+            np.save(lossPath, allLossNum)
         
             # df = pd.DataFrame({'loss': []})
             # df.to_csv('saved_figs/track_lossNum.csv', header=False)
@@ -48,12 +54,12 @@ def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, ta
                 dataiter = iter(testloader)
                 images, labels = dataiter.next()
                 thisLoss, thisFig = visualizeLossPerformance(CAMLossInstance, images,use_cuda=use_cuda, saveFig=False)
-                allLossNum = np.load(lossPath)
-                allLossImg = np.load(imgPath)
                 # print(thisFig.shape)
                 # print(allLossImg.shape)
-                np.save(imgPath, np.append(allLossImg,np.expand_dims(thisFig,0).astype(int), axis=0))
-                np.save(lossPath, np.append(allLossNum,np.expand_dims(thisLoss,0), axis=0))
+                allLossImg = np.append(allLossImg,np.expand_dims(thisFig,0).astype(int), axis=0)
+                allLossNum = np.append(allLossNum,np.expand_dims(thisLoss,0), axis=0)
+                # np.save(imgPath, )
+                # np.save(lossPath, )
                 print('saved')
                 # df = pd.DataFrame({'loss': thisLoss})
                 # df.to_csv('saved_figs/track_lossNum.csv', mode='a', header=False)

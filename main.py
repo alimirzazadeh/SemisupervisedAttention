@@ -42,6 +42,7 @@ if __name__ == '__main__':
     
 
     model = models.resnet50(pretrained = True)
+    model.fc = nn.Linear(int(model.fc.in_features), 10)
     optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
     
     all_checkpoints = os.listdir('saved_checkpoints')
@@ -53,11 +54,12 @@ if __name__ == '__main__':
             
             PATH = 'saved_checkpoints/' + all_checkpoints[whichCheckpoint]
             print('Loading Saved Model', PATH)
-            checkpoint = torch.load(PATH, map_location=torch.device('cpu'))
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            checkpoint = torch.load(PATH, map_location=device)
             model.load_state_dict(checkpoint['model_state_dict'])
-            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             epoch = checkpoint['epoch']
-            loss = checkpoint['loss']
+            # loss = checkpoint['loss']
         
     target_layer = model.layer4[-1] ##this is the layer before the pooling
 
@@ -83,9 +85,10 @@ if __name__ == '__main__':
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
         import json
-        f = open("imagenet_class_index.json",)
-        class_idx = json.load(f)
-        idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
+        # f = open("imagenet_class_index.json",)
+        # class_idx = json.load(f)
+        # idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
+        idx2label = ['airplane','automobile','bird','cat','deer','dog','frog','horse','ship','truck']
 
         for i in range(3):
             images, labels = dataiter.next()
@@ -114,13 +117,18 @@ if __name__ == '__main__':
     
     
     numEpochs = 5
-    model.fc = nn.Linear(int(model.fc.in_features), 10)
+    # model.fc = nn.Linear(int(model.fc.in_features), 10)
     
     print("done")
+
+    whichTraining = sys.argv[5]
+    if whichTraining not in ['supervised', 'unsupervised', 'alternating']:
+        print('invalid Training. will alternate')
+        whichTraining = 'alternating'
     if sys.argv[3] == 'train':
         trackLoss = sys.argv[4] == 'trackLoss'
         print(trackLoss)
-        train(model, numEpochs, trainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss)
+        train(model, numEpochs, trainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss, training=whichTraining)
     
     
     

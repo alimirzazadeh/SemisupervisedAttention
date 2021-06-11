@@ -7,9 +7,21 @@ class ActivationsAndGradients:
         self.gradients = []
         self.activations = []
         self.reshape_transform = reshape_transform
+        self.target_layer = target_layer
+        self.a = target_layer.register_forward_hook(self.save_activation)
+        self.b = target_layer.register_backward_hook(self.save_gradient)
+        self.hooks_enabled = True
+    def remove_hooks(self):
+        if self.hooks_enabled:
+            self.a.remove()
+            self.b.remove()
+            self.hooks_enabled = False
+    def register_hooks(self):
+        if not self.hooks_enabled:
+            self.a = self.target_layer.register_forward_hook(self.save_activation)
+            self.b = self.target_layer.register_backward_hook(self.save_gradient)
+            self.hooks_enabled = True
 
-        target_layer.register_forward_hook(self.save_activation)
-        target_layer.register_backward_hook(self.save_gradient)
 
     def save_activation(self, module, input, output):
         activation = output

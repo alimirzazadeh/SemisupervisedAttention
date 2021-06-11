@@ -3,7 +3,7 @@ For Hospital Video.
 
 
 How To Run:
-python3 main.py [loadCheckpoint/noLoadCheckpoint] [visualLoss/noVisualLoss] [train/noTrain] [trackLoss/noTrackLoss]
+python3 main.py [loadCheckpoint/noLoadCheckpoint] [visualLoss/noVisualLoss] [train/noTrain] [trackLoss/noTrackLoss] [supervised/unsupervised/alternating]
 
 How To Train:
 run main with either Checkpoint, noVisualLoss, train, noTrackLoss

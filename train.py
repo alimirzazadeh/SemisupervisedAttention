@@ -12,12 +12,14 @@ import numpy as np
 import torchvision.models as models
 from model.loss import CAMLoss
 import pandas as pd
+import random
 
-from metrics.SupervisedMetrics import evaluateModelPerformance
+from metrics.SupervisedMetrics import Evaluator
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 
-def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=False, training='alternating'):
+def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=False, training='alternating'):
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
+    LossEvaluator = Evaluator()
     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
     device = torch.device("cuda:0" if use_cuda else "cpu")
     model.to(device)
@@ -32,23 +34,27 @@ def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, ta
         allLossImg = np.load(imgPath)
     
     print('evaluating')
-    # evaluateModelPerformance(model, testloader, criteron, device, optimizer)
+    LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer)
     print('finished evaluating')
-
+        
+    supdatasetSize = len(suptrainloader.dataset)
+    print("\n\nTotal Supervised Dataset: ", supdatasetSize)
+    unsupdatasetSize = len(unsuptrainloader.dataset)
+    print("Total Unsupervised Dataset: ", unsupdatasetSize)
+    trainingRatio = supdatasetSize / (supdatasetSize + unsupdatasetSize)
+    
     for epoch in range(numEpochs):
-        
-        
         
         print('Epoch {}/{}'.format(epoch, numEpochs - 1))
         
         running_corrects = 0
         running_loss = 0.0
+
+        supiter = iter(suptrainloader)
+        unsupiter = iter(unsuptrainloader)
         
         model.train()
-        
-        datasetSize = len(trainloader.dataset)
-        print("Total Dataset: ", datasetSize)
-        
+
         if epoch % 2 == 1:
             saveCheckpoint(epoch, model, optimizer)
             print("saved checkpoint successfully")
@@ -68,13 +74,25 @@ def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, ta
         elif training == 'alternating':
             alternating = True
 
-        for i, data in enumerate(trainloader, 0):
+        # for i, data in enumerate(trainloader, 0):
+        for i in range(supdatasetSize + unsupdatasetSize):
 
             if alternating:
-                if i % 2 == 0:
+                # if i % 2 == 0:
+                if random.random() <= trainingRatio:
                     supervised = True
+                    data = supiter.next()
+                    print('s')
                 else:
                     supervised = False
+                    data = unsupiter.next()
+                    print('u')
+            elif supervised:
+                data = supiter.next()
+                print('s')
+            elif unsupervised:
+                data = unsupiter.next()
+                print('u')
 
             if trackLoss and counter % 100 == 0:
                 dataiter = iter(testloader)
@@ -119,18 +137,18 @@ def train(model, numEpochs, trainloader, testloader, optimizer, target_layer, ta
 
             
             if i % 200 == 199:    # print every 200 mini-batches
-                # print('[%d, %5d] loss: %.3f' %
-                      # (epoch + 1, i + 1, running_loss / 200))
+                print('[%d, %5d] loss: %.3f' %
+                      (epoch + 1, i + 1, running_loss / 200))
                 running_loss = 0.0
-                # print('[%d, %5d] accuracy: %.3f' %
-                      # (epoch + 1, i + 1, running_corrects / 200))
+                print('[%d, %5d] accuracy: %.3f' %
+                      (epoch + 1, i + 1, running_corrects / 200))
                 running_corrects = 0
             
             counter += 1
             
-        CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
-        evaluateModelPerformance(model, testloader, criteron, device, optimizer)
-
+        # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
+        LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer)
+    LossEvaluator.plotLosses()
 def saveCheckpoint(EPOCH, net, optimizer):
     PATH = "saved_checkpoints/model_"+str(EPOCH)+".pt"
     torch.save({

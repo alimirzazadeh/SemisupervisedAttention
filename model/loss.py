@@ -58,28 +58,29 @@ class CAMLoss(nn.Module):
             grayscale_cam = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category)
             # print(len(grayscale_cam))
             cam_result = grayscale_cam[0]  #####WHY IS THERE 2? and we're taking the first one?
-            # print(cam_result.shape)
-            gb_result = self.gb_model(thisImgPreprocessed, target_category=target_category)
-    
-    
-            
             hmp_correlate = cam_result
             hmp_correlate_std = torch.std(hmp_correlate)
             if (hmp_correlate_std > 0):
                 hmp_correlate = (hmp_correlate - torch.mean(hmp_correlate)) / hmp_correlate_std
             
-            gb_correlate = gb_result
+            if visualize:
+                hmps.append(hmp_correlate.numpy())
+
+            # print(cam_result.shape)
+            gb_correlate = self.gb_model(thisImgPreprocessed, target_category=target_category)
             gb_correlate_std = torch.std(gb_correlate)
             if (gb_correlate_std > 0):
                 gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
 
             ####now zeroing negatives
-            gb_correlate[gb_correlate < 0] = 0
-            # gb_correlate = torch.abs(gb_correlate) ################################################################################# 
-
+            # gb_correlate[gb_correlate > 0] = 0
+            # gb_correlate = -1 * gb_correlate
+            gb_correlate = torch.abs(gb_correlate) ################################################################################# 
             gb_correlate = torch.sum(gb_correlate, axis = 2)
-            # print(gb_correlate.shape)
-            # print(hmp_correlate.shape)
+
+            if visualize:
+                gbimgs.append(gb_correlate.numpy())
+
             
             #calculate pearson's
             vx = gb_correlate - torch.mean(gb_correlate)
@@ -105,49 +106,14 @@ class CAMLoss(nn.Module):
             if visualize:
                 costLoss = -1 * cost
                 correlations.append(costLoss.item())
-                rgb_img = np.float32(input_tensor.cpu().numpy()) 
-                thisImg = rgb_img[i,:,:,:]
-                # print(np.max(thisImg))
-                thisImg = (thisImg - np.min(thisImg))
-                thisImg = thisImg / np.max(thisImg)
-                # print(np.max(thisImg))
-                thisImg = np.moveaxis(thisImg, 0, -1)
-
-                ##if you want the original cams and gradients use these
-                # print('a')
-                # hmp, visualization = show_cam_on_image(thisImg, cam_result)
-                # print('b')
-                # imgs.append(visualization)
-                # hmps.append(hmp)
-                
-                # gb_visualization = deprocess_image(gb_result.numpy())
-                # print('c')
-                # gbimgs.append(gb_visualization)
-
-                imgs.append(thisImg)
-                hmps.append(hmp_correlate.numpy())
-                gbimgs.append(gb_correlate.numpy())
-                # print(np.max(thisImg), np.min(thisImg))
-                axs[0,i].imshow(thisImg)
-                axs[0,i].axis('off')    
-                axs[1,i].imshow(hmp_correlate)
-                axs[1,i].set_title("Grad CAM",fontsize=6)
-                axs[2,i].imshow(gb_correlate)
-                axs[2,i].set_title("Backprop",fontsize=6)
-                axs[1,i].axis('off')
-                axs[2,i].axis('off')
-                axs[0,i].set_title("Pearson Corr: " + str(round(cost.item(),3)),fontsize=8)
                 print('.')
         
         if visualize:
-            fig.canvas.draw()
-            # # Now we can save it to a numpy array.
-            # data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-            # data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-            
+            # fig.canvas.draw()
+
             final_gb_frame = cv2.hconcat(gbimgs)
             # cv2.imwrite('./saved_figs/sampleImage_GuidedBackprop.jpg', final_gb_frame)
-            final_frame = cv2.hconcat(imgs)
+            # final_frame = cv2.hconcat(imgs)
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM.jpg', final_frame)
             final_hmp_frame = cv2.hconcat(hmps)
 
@@ -165,10 +131,18 @@ class CAMLoss(nn.Module):
                 cont = np.greater(arr, arr_threshold)
                 arr[cont] = arr_threshold
                 arr[arr < 0] = 0
-                # arr = arr / np.max(arr)
+                arr = arr / np.max(arr)
                 return arr
 
-            final_gb_frame = normalize(final_gb_frame)
+            def gb_normalize(arr):
+                im_max = np.percentile(arr, 99)
+                im_min = np.min(arr)
+                arr = (np.clip((arr - im_min) / (im_max - im_min), 0, 1))
+                arr = arr / np.max(arr)
+                # arr = np.expand_dims(arr, axis=0)
+                return arr
+
+            final_gb_frame = gb_normalize(final_gb_frame)
             final_hmp_frame = normalize(final_hmp_frame)
 
             # print(np.min(final_hmp_frame), np.max(final_hmp_frame), np.median(final_hmp_frame))
@@ -179,11 +153,4 @@ class CAMLoss(nn.Module):
             return correlations, data
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
             
-        # aa = torch.Tensor(correlation_pearson)
-        # aa.requires_grad=True
-        # aab = torch.Tensor(correlation_cross)
-        # aab.requires_grad=True
-        # print(correlation_pearson)
-
-        # print(correlation_pearson)
         return correlation_pearson #/ input_tensor.shape[0]

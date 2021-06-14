@@ -23,7 +23,7 @@ from train import train
 
 if __name__ == '__main__':
     ## Load the CIFAR Dataset
-    trainloader, testloader = loadCifarData()
+    suptrainloader,unsuptrainloader, testloader = loadCifarData()
 
 
     CHECK_FOLDER = os.path.isdir("saved_figs")
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     if sys.argv[3] == 'train':
         trackLoss = sys.argv[4] == 'trackLoss'
         print(trackLoss)
-        train(model, numEpochs, trainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss, training=whichTraining)
+        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss, training=whichTraining)
     
     
     

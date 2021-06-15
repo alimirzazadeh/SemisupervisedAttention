@@ -41,8 +41,16 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
     print("\n\nTotal Supervised Dataset: ", supdatasetSize)
     unsupdatasetSize = len(unsuptrainloader.dataset)
     print("Total Unsupervised Dataset: ", unsupdatasetSize)
-    trainingRatio = supdatasetSize / (supdatasetSize + unsupdatasetSize)
+
+    if training == 'supervised':
+        totalDatasetSize = int(0.25 * supdatasetSize)
+    elif training == 'unsupervised':
+        totalDatasetSize = int(0.25 * unsupdatasetSize)
+    elif training == 'alternating':
+        totalDatasetSize = int(0.25 * (supdatasetSize + unsupdatasetSize))
+        trainingRatio = supdatasetSize / (supdatasetSize + unsupdatasetSize)
     
+    print("Total Dataset: ", totalDatasetSize)
     for epoch in range(numEpochs):
         
         print('Epoch {}/{}'.format(epoch, numEpochs - 1))
@@ -75,22 +83,32 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
             alternating = True
 
         # for i, data in enumerate(trainloader, 0):
-        for i in range(supdatasetSize + unsupdatasetSize):
-
+        for i in range(totalDatasetSize):
             if alternating:
                 # if i % 2 == 0:
                 if random.random() <= trainingRatio:
-                    supervised = True
-                    data = supiter.next()
-                    print('s')
+                    try:
+                        data = supiter.next()
+                        supervised = True
+                        print(str(i),' s')
+                    except StopIteration:
+                        data = unsupiter.next()
+                        supervised = False
+                        print(str(i),' s-u')
+                    
                 else:
-                    supervised = False
-                    data = unsupiter.next()
-                    print('u')
+                    try:
+                        data = unsupiter.next()
+                        supervised = False
+                        print(str(i),' u')
+                    except StopIteration:
+                        data = supiter.next()
+                        supervised = True
+                        print(str(i),' u-s')
             elif supervised:
                 data = supiter.next()
                 print('s')
-            elif unsupervised:
+            else:
                 data = unsupiter.next()
                 print('u')
 

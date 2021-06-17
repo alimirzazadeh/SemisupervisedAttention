@@ -7,6 +7,7 @@ Created on Fri May 21 10:29:04 2021
 import torch
 import torchvision
 from torchvision.transforms import Compose, Normalize, ToTensor, Resize
+import numpy as np
 
 def loadCifarData(batch_size=4, num_workers=2,shuffle=True):
     # transform = transforms.ToTensor()
@@ -20,8 +21,8 @@ def loadCifarData(batch_size=4, num_workers=2,shuffle=True):
                                             download=True, transform=transform)
 
     supervisedRatio = 0.3
-    supervisedTrainSet = torch.utils.data.Subset(trainset, list(range(int(50000*supervisedRatio))))
-    unsupervisedTrainSet = torch.utils.data.Subset(trainset, list(range(int(50000*supervisedRatio),50000)))
+    supervisedTrainSet = torch.utils.data.Subset(trainset, list(range(int(len(trainset)*supervisedRatio))))
+    unsupervisedTrainSet = torch.utils.data.Subset(trainset, list(range(int(len(trainset)*supervisedRatio),50000)))
 
     suptrainloader = torch.utils.data.DataLoader(supervisedTrainSet, batch_size=batch_size,
                                               shuffle=shuffle, num_workers=num_workers)
@@ -35,6 +36,24 @@ def loadCifarData(batch_size=4, num_workers=2,shuffle=True):
                                              shuffle=False, num_workers=num_workers)
     return suptrainloader, unsuptrainloader, testloader
 
+def balancedMiniDataset(trainset, size):
+    counter = np.zeros(10)
+    subsetToInclude = []
+    iterating = True
+    step = 0
+    while iterating:
+        label = trainset[step][1]
+        if counter[label] < size:
+            subsetToInclude.append(step)
+            counter[label] += 1
+        
+        if np.sum(counter) == 100:
+            iterating = False
+        elif np.sum(counter) > 100:
+            print("error, too many data")
+        step += 1
+    return torch.utils.data.Subset(trainset, subsetToInclude)
+    
 def getLabelWord(arr):
     classes = ('plane', 'car', 'bird', 'cat','deer', 'dog', 'frog', 'horse', 'ship', 'truck')
     arrList = arr.cpu().numpy().astype(int)

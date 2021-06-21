@@ -65,7 +65,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
         
         model.train()
 
-        if epoch % 2 == 1:
+        if epoch % 20 == 19:
             saveCheckpoint(epoch, model, optimizer)
             print("saved checkpoint successfully")
         
@@ -175,7 +175,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
             counter += 1
             
         # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
-        LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer)
+        if epoch % 10 == 9:
+            LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer)
     LossEvaluator.plotLosses()
 def saveCheckpoint(EPOCH, net, optimizer):
     PATH = "saved_checkpoints/model_"+str(EPOCH)+".pt"

@@ -16,6 +16,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 
 from data_loader.cifar_data_loader import loadCifarData
+from data_loader.pascal_runner import loadPascalData
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 # from model.loss import calculateLoss
@@ -23,7 +24,7 @@ from train import train
 
 if __name__ == '__main__':
     ## Load the CIFAR Dataset
-    suptrainloader,unsuptrainloader, testloader = loadCifarData()
+    suptrainloader,unsuptrainloader, testloader = loadPascalData()
 
 
     CHECK_FOLDER = os.path.isdir("saved_figs")
@@ -42,7 +43,7 @@ if __name__ == '__main__':
     
 
     model = models.resnet50(pretrained = True)
-    model.fc = nn.Linear(int(model.fc.in_features), 10)
+    model.fc = nn.Linear(int(model.fc.in_features), 33)
     optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
     
     all_checkpoints = os.listdir('saved_checkpoints')

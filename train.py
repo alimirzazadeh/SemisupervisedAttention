@@ -13,6 +13,7 @@ import torchvision.models as models
 from model.loss import CAMLoss
 import pandas as pd
 import random
+from torch import nn
 
 from metrics.SupervisedMetrics import Evaluator
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
@@ -23,7 +24,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
     device = torch.device("cuda:0" if use_cuda else "cpu")
     model.to(device)
-    criteron = torch.nn.CrossEntropyLoss()
+    # criteron = torch.nn.CrossEntropyLoss()
+    criteron = nn.BCEWithLogitsLoss()
 
     if trackLoss:
         imgPath = 'saved_figs/track_lossImg.npy'
@@ -136,11 +138,19 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                     # print('supervised')
                     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
                     inputs = inputs.to(device)
-                    labels = labels.to(device)
+                    # labels = labels.to(device)
+
+                    # print(labelLogit)
                     outputs = model(inputs) 
                     l1 = criteron(outputs, labels)
+                    print('about to break')
                     _, preds = torch.max(outputs, 1)
-                    running_corrects += torch.sum(preds == labels.data)
+                    # print(preds)
+                    # print(labels)
+                    for pred in range(preds.shape[0]):
+                        running_corrects += labels[pred, int(preds[pred])]
+                        print(labels[pred, int(preds[pred])])
+                    # running_corrects += torch.sum(preds == labels.data)
                 else:
                     # print('unsupervised')
                     CAMLossInstance.cam_model.activations_and_grads.register_hooks()

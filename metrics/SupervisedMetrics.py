@@ -21,6 +21,7 @@ class Evaluator:
         print('.')
         with torch.set_grad_enabled(False):
             for i, data in enumerate(testloader, 0):
+                # print(i)
                 optimizer.zero_grad()
                 inputs, labels = data
                 inputs = inputs.to(device)
@@ -31,7 +32,10 @@ class Evaluator:
                 _, preds = torch.max(outputs, 1)
                 
                 running_loss += l1.item()
-                running_corrects += torch.sum(preds == labels.data)
+                # running_corrects += torch.sum(preds == labels.data)
+                for pred in range(preds.shape[0]):
+                    running_corrects += labels[pred, int(preds[pred])]
+                    # print(labels[pred, int(preds[pred])])
                 # print(running_corrects.item())
                 del l1, inputs, labels, outputs, preds
             print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))

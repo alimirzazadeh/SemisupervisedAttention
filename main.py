@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     # replace the classifier layer with CAM Image Generation
 
-    learning_rate = 0.000001
+    learning_rate = 0.0000001
     
 
     model = models.resnet50(pretrained = True)

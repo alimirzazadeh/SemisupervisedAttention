@@ -97,8 +97,8 @@ if __name__ == '__main__':
 
         for i in range(3):
             images, labels = dataiter.next()
-            # images = images.cuda()
-            # labels = labels.cuda()
+            images = images.to(device)
+            labels = labels.to(device)
             # images.to("cpu")
             # model.to(device)
             with torch.no_grad():

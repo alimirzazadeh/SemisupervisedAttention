@@ -56,7 +56,8 @@ class CAMLoss(nn.Module):
             ####could either rerun the model or use the already calculated values i think
             ###post processing has to be done with torch operations
             # thisImgPreprocessed = preprocess_image(thisImg, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            grayscale_cam = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category)
+            grayscale_cam, topClass = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category, returnTarget=True)
+            
             # print(len(grayscale_cam))
             cam_result = grayscale_cam[0]  #####WHY IS THERE 2? and we're taking the first one?
             # hmp_correlate = cam_result
@@ -88,7 +89,7 @@ class CAMLoss(nn.Module):
             # print(TAc.shape)
             newImgTensor = TAc * thisImgTensor
             newImgPreprocessed = newImgTensor.unsqueeze(0)
-            new_grayscale_cam = self.cam_model(input_tensor=newImgPreprocessed, target_category=target_category)
+            new_grayscale_cam = self.cam_model(input_tensor=newImgPreprocessed, target_category=int(topClass[0]))
             new_cam_result = new_grayscale_cam[0]
             
             # print(newImgPreprocessed.shape)

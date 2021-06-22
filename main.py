@@ -23,23 +23,24 @@ from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from train import train
 
 if __name__ == '__main__':
+    batchDirectory = '/scratch/users/alimirz1/saved_batches/' + sys.argv[6] + '/'
     ## Load the CIFAR Dataset
     suptrainloader,unsuptrainloader, testloader = loadPascalData()
 
 
-    CHECK_FOLDER = os.path.isdir("saved_figs")
+    CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
-        os.makedirs("saved_figs")
+        os.makedirs(batchDirectory + "saved_figs")
         print("Made Saved_Figs folder")
     
-    CHECK_FOLDER = os.path.isdir("saved_checkpoints")
+    CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_checkpoints")
     if not CHECK_FOLDER:
-        os.makedirs("saved_checkpoints")
+        os.makedirs(batchDirectory + "saved_checkpoints")
         print("Made Saved_Checkpoints folder")
 
     # replace the classifier layer with CAM Image Generation
 
-    learning_rate = 0.000001
+    learning_rate = 0.0000001
     
 
     model = models.resnet50(pretrained = True)
@@ -50,7 +51,7 @@ if __name__ == '__main__':
     epoch = 0
     
     if sys.argv[1] == 'loadCheckpoint':
-        whichCheckpoint = int(input('Which Checkpoint to Load: \n'))
+        whichCheckpoint = 0
         if len(all_checkpoints) > 0:
             
             PATH = 'saved_checkpoints/' + all_checkpoints[whichCheckpoint]
@@ -115,6 +116,7 @@ if __name__ == '__main__':
                 print(actualLabels)
                 # print(predictedNames)
             imgTitle = "epoch_" + str(epoch) + "_batchNum_" + str(i)
+
             visualizeLossPerformance(CAMLossInstance, images, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames)
         
     # visualizeImageBatch(images, labels)
@@ -125,7 +127,7 @@ if __name__ == '__main__':
     #need to set params?
     
     
-    numEpochs = 5
+    numEpochs = 50
     # model.fc = nn.Linear(int(model.fc.in_features), 10)
     
     print("done")
@@ -137,7 +139,7 @@ if __name__ == '__main__':
     if sys.argv[3] == 'train':
         trackLoss = sys.argv[4] == 'trackLoss'
         print(trackLoss)
-        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss, training=whichTraining)
+        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory)
     
     
     

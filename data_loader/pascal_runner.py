@@ -17,7 +17,7 @@ def loadPascalData(batch_size=4, num_workers=2,shuffle=True):
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
     batch_size = 4
-    trainset = PascalDataset("C:/Users/alimi/Documents/Stanford/pascal-context/JPEGImages/","C:/Users/alimi/Documents/Stanford/pascal-context/33_context_labels/33_context_labels/", transform=transform)
+    trainset = PascalDataset("/scratch/users/alimirz1/pascal-context/JPEGImages/","/scratch/users/alimirz1/pascal-context/33_context_labels/33_context_labels/", transform=transform)
     
     suptrainset = torch.utils.data.Subset(trainset, list(range(0,100)))
     unsuptrainset = torch.utils.data.Subset(trainset, list(range(2100,len(trainset))))

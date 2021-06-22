@@ -12,6 +12,7 @@ import cv2
 
 def visualizeImageBatch(images, labels, resnetLabels=""):
     def imshow(img, labels):
+        # print(labels)
         # img = img / 2 + 0.5     # unnormalize
         npimg = img.cpu().numpy()
         npimg -= np.min(npimg)
@@ -19,7 +20,7 @@ def visualizeImageBatch(images, labels, resnetLabels=""):
         # print("Image Characteristics:")
         # print(np.max(npimg), np.min(npimg), np.mean(npimg))
         plt.imshow(np.transpose(npimg, (1, 2, 0)))
-        classes = getLabelWord(labels)
+        classes = str(labels)
         titleString = ' '.join('%5s' % classes)
         plt.title(titleString + '\n' + resnetLabels)
         # plt.savefig('./saved_figs/sampleImages.jpg')

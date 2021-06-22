@@ -89,12 +89,17 @@ if __name__ == '__main__':
         # f = open("imagenet_class_index.json",)
         # class_idx = json.load(f)
         # idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
-        idx2label = ['airplane','automobile','bird','cat','deer','dog','frog','horse','ship','truck']
+        idx2label = [ "aeroplane","bicycle","bird","boat","bottle","bus","car",
+                     "cat","chair", "cow", "diningtable", "dog","horse","motorbike",
+                     "person","pottedplant","sheep","sofa","train","tvmonitor","sky",
+                     "grass","ground","road","building","tree","water","mountain","wall",
+                     "floor","track","keyboard","ceiling"]
 
         for i in range(3):
             images, labels = dataiter.next()
             images = images.to(device)
             labels = labels.to(device)
+
             # images.to("cpu")
             # model.to(device)
             with torch.no_grad():
@@ -105,9 +110,13 @@ if __name__ == '__main__':
                 predicted = predicted.tolist()
                 # print(predicted)
                 predictedNames = [idx2label[p] for p in predicted]
+                labels = labels.numpy()
+                actualLabels = [labels[p,predicted[p]] for p in range(len(predicted))]
+                # print(predictedNames)
+                print(actualLabels)
                 # print(predictedNames)
             imgTitle = "epoch_" + str(epoch) + "_batchNum_" + str(i)
-            visualizeLossPerformance(CAMLossInstance, images, labels=labels, imgTitle=imgTitle, imgLabels=predictedNames)
+            visualizeLossPerformance(CAMLossInstance, images, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames)
         
     # visualizeImageBatch(images, labels)
 

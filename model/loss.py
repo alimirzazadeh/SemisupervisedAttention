@@ -12,6 +12,7 @@ import torch.nn as nn
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
+import torch.nn.functional as F
 
 import torch
 
@@ -99,8 +100,13 @@ class CAMLoss(nn.Module):
             
             #calculate pearson's
             
-            criteron = nn.MSELoss()
-            cost = criteron(cam_result, new_cam_result)
+            # criteron = nn.MSELoss()
+            # cost = criteron(cam_result, new_cam_result)
+            def standardize(arr):
+                arr = (arr - torch.mean(arr))/torch.std(arr)
+                return arr.unsqueeze(0).unsqueeze(0)
+            
+            cost = -1 * torch.abs(F.conv2d(standardize(cam_result), standardize(new_cam_result)))
             correlation_pearson2 = correlation_pearson.clone() 
             correlation_pearson = correlation_pearson2 + cost
 

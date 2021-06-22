@@ -23,7 +23,7 @@ from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from train import train
 
 if __name__ == '__main__':
-    batchDirectory = 'saved_batches/' + sys.argv[6] + '/'
+    batchDirectory = '/scratch/users/alimirz1/saved_batches/' + sys.argv[6] + '/'
     ## Load the CIFAR Dataset
     suptrainloader,unsuptrainloader, testloader = loadPascalData()
 

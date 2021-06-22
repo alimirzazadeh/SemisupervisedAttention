@@ -58,13 +58,13 @@ class CAMLoss(nn.Module):
             grayscale_cam = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category)
             # print(len(grayscale_cam))
             cam_result = grayscale_cam[0]  #####WHY IS THERE 2? and we're taking the first one?
-            hmp_correlate = cam_result
-            hmp_correlate_std = torch.std(hmp_correlate)
-            if (hmp_correlate_std > 0):
-                hmp_correlate = (hmp_correlate - torch.mean(hmp_correlate)) / hmp_correlate_std
+            # hmp_correlate = cam_result
+            # hmp_correlate_std = torch.std(hmp_correlate)
+            # if (hmp_correlate_std > 0):
+            #     hmp_correlate = (hmp_correlate - torch.mean(hmp_correlate)) / hmp_correlate_std
             
             if visualize:
-                hmps.append(hmp_correlate.numpy())
+                hmps.append(cam_result.numpy())
 
             # print(cam_result.shape)
             gb_correlate = self.gb_model(thisImgPreprocessed, target_category=target_category)
@@ -77,21 +77,32 @@ class CAMLoss(nn.Module):
             # gb_correlate = -1 * gb_correlate
             gb_correlate = torch.abs(gb_correlate) ################################################################################# 
             gb_correlate = torch.sum(gb_correlate, axis = 2)
+            
+            ww = -8
+            sigma = torch.mean(gb_correlate) + torch.std(gb_correlate) / 2
+            # print(sigma)
+            TAc = 1/ (1 + torch.exp(ww * (gb_correlate - sigma)))
+            TAc = TAc.unsqueeze(0)
+            TAc = torch.repeat_interleave(TAc, 3, dim=0)
+            # print(TAc.shape)
+            newImgTensor = TAc * thisImgTensor
+            newImgPreprocessed = newImgTensor.unsqueeze(0)
+            new_grayscale_cam = self.cam_model(input_tensor=newImgPreprocessed, target_category=target_category)
+            new_cam_result = new_grayscale_cam[0]
+            
+            # print(newImgPreprocessed.shape)
+            
 
             if visualize:
-                gbimgs.append(gb_correlate.numpy())
+                gbimgs.append(new_cam_result.numpy())
 
             
             #calculate pearson's
-            vx = gb_correlate - torch.mean(gb_correlate)
-            vy = hmp_correlate - torch.mean(hmp_correlate)
-            denominator = torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2))
-            if denominator > 0:
-                cost = torch.sum(vx * vy) / denominator
-            else:
-                cost = torch.zeros(1)
+            
+            criteron = nn.MSELoss()
+            cost = criteron(cam_result, new_cam_result)
             correlation_pearson2 = correlation_pearson.clone() 
-            correlation_pearson = correlation_pearson2 + cost * -1
+            correlation_pearson = correlation_pearson2 + cost
 
             # print(torch.sum(hmp_correlate), torch.sum(gb_correlate), cost)
             # correlation_pearson[i] = np.corrcoef(hmp_correlate.flatten(), gb_correlate.flatten())[0,1]
@@ -104,7 +115,7 @@ class CAMLoss(nn.Module):
                 
             
             if visualize:
-                costLoss = -1 * cost
+                costLoss = cost
                 correlations.append(costLoss.item())
                 print('.')
         

@@ -100,7 +100,6 @@ if __name__ == '__main__':
             images, labels = dataiter.next()
             images = images.to(device)
             labels = labels.to(device)
-
             # images.to("cpu")
             # model.to(device)
             with torch.no_grad():

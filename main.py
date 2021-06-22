@@ -128,7 +128,7 @@ if __name__ == '__main__':
     #need to set params?
     
     
-    numEpochs = 100
+    numEpochs = 50
     # model.fc = nn.Linear(int(model.fc.in_features), 10)
     
     print("done")

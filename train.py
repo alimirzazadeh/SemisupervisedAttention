@@ -37,7 +37,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
         allLossImg = np.load(imgPath)
     
     print('evaluating')
-    #LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer)
+    LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer)
     print('finished evaluating')
         
     supdatasetSize = len(suptrainloader.dataset)
@@ -86,6 +86,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
             alternating = True
 
         # for i, data in enumerate(trainloader, 0):
+        print('starting iterations...')
         for i in range(totalDatasetSize):
             if alternating:
                 # if i % 2 == 0:
@@ -93,22 +94,22 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                     try:
                         data = supiter.next()
                         supervised = True
-                        print(str(i),' s')
+                        # print(str(i),' s')
                     except StopIteration:
                         supiter = iter(suptrainloader)
                         data = supiter.next()
                         supervised = True  
-                        print(str(i),' -s')                  
+                        # print(str(i),' -s')                  
                 else:
                     try:
                         data = unsupiter.next()
                         supervised = False
-                        print(str(i),' u')
+                        # print(str(i),' u')
                     except StopIteration:
                         unsupiter = iter(unsuptrainloader)
                         data = unsupiter.next()
                         supervised = False
-                        print(str(i),' -u')
+                        # print(str(i),' -u')
             elif supervised:
                 data = supiter.next()
                 #print('s')

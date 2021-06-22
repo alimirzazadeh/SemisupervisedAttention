@@ -60,23 +60,25 @@ class Evaluator:
         if storeLoss:
             self.unsupervised_losses.append(float(running_loss / datasetSize))
     def evaluateUpdateLosses(self, model, testloader, criteron, CAMLossInstance, device, optimizer):
+        print('evaluating unsupervised performance')
         CAMLossInstance.cam_model.activations_and_grads.register_hooks()
         self.evaluateModelUnsupervisedPerformance(model, testloader, CAMLossInstance, device, optimizer, storeLoss = True)
+        print('evaluating supervised performance')
         CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
         self.evaluateModelSupervisedPerformance(model, testloader, criteron, device, optimizer, storeLoss = True)
         self.total_loss = [a + b for a, b in zip(self.supervised_losses, self.unsupervised_losses)]
-    def plotLosses(self):
+    def plotLosses(self, batchDirectory=''):
         plt.clf()
         plt.plot(self.supervised_losses, label="Supervised Loss")
-        plt.savefig('./saved_figs/SupervisedLossPlot.png')
+        plt.savefig('./'+batchDirectory+'saved_figs/SupervisedLossPlot.png')
         plt.clf()
         plt.plot(self.unsupervised_losses, label="Unsupervised Loss")
-        plt.savefig('./saved_figs/UnsupervisedLossPlot.png')
+        plt.savefig('./'+batchDirectory+'saved_figs/UnsupervisedLossPlot.png')
         plt.clf()
         plt.plot(self.total_loss, label="Total Loss")
-        plt.savefig('./saved_figs/TotalLossPlot.png')
+        plt.savefig('./'+batchDirectory+'saved_figs/TotalLossPlot.png')
         plt.clf()
         plt.plot(self.accuracies, label="Accuracy")
-        plt.savefig('./saved_figs/AccuracyPlot.png')
+        plt.savefig('./'+batchDirectory+'saved_figs/AccuracyPlot.png')
         # plt.legend()
         

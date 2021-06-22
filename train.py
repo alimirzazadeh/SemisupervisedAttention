@@ -18,7 +18,8 @@ from torch import nn
 from metrics.SupervisedMetrics import Evaluator
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 
-def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=False, training='alternating'):
+def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=False, training='alternating', batchDirectory=''):
+    alpha = 10 ##How many times to scale supervised dataset
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
     LossEvaluator = Evaluator()
     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
@@ -28,15 +29,15 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
     criteron = nn.BCEWithLogitsLoss()
 
     if trackLoss:
-        imgPath = 'saved_figs/track_lossImg.npy'
-        lossPath = 'saved_figs/track_lossNum.npy'
+        imgPath = batchDirectory + 'saved_figs/track_lossImg.npy'
+        lossPath = batchDirectory + 'saved_figs/track_lossNum.npy'
         np.save(imgPath, np.zeros((1,512,1024)))
         np.save(lossPath, np.zeros((1,4)))
         allLossNum = np.load(lossPath)
         allLossImg = np.load(imgPath)
     
     print('evaluating')
-    LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer)
+    #LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer)
     print('finished evaluating')
         
     supdatasetSize = len(suptrainloader.dataset)
@@ -50,7 +51,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
         totalDatasetSize = int(0.25 * unsupdatasetSize)
     elif training == 'alternating':
         totalDatasetSize = int(0.25 * (supdatasetSize + unsupdatasetSize))
-        trainingRatio = supdatasetSize / (supdatasetSize + unsupdatasetSize)
+        trainingRatio = alpha * (supdatasetSize / (supdatasetSize + unsupdatasetSize))
     
     print("Total Dataset: ", totalDatasetSize)
     for epoch in range(numEpochs):
@@ -66,7 +67,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
         model.train()
 
         if epoch % 20 == 19:
-            saveCheckpoint(epoch, model, optimizer)
+            saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
             print("saved checkpoint successfully")
         
         counter = 0
@@ -94,22 +95,23 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                         supervised = True
                         print(str(i),' s')
                     except StopIteration:
-                        data = unsupiter.next()
-                        supervised = False
-                        print(str(i),' s-u')
-                    
+                        supiter = iter(suptrainloader)
+                        data = supiter.next()
+                        supervised = True  
+                        print(str(i),' -s')                  
                 else:
                     try:
                         data = unsupiter.next()
                         supervised = False
                         print(str(i),' u')
                     except StopIteration:
-                        data = supiter.next()
-                        supervised = True
-                        print(str(i),' u-s')
+                        unsupiter = iter(unsuptrainloader)
+                        data = unsupiter.next()
+                        supervised = False
+                        print(str(i),' -u')
             elif supervised:
                 data = supiter.next()
-                print('s')
+                #print('s')
             else:
                 data = unsupiter.next()
                 print('u')
@@ -118,7 +120,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                 dataiter = iter(testloader)
                 images, labels = dataiter.next()
                 CAMLossInstance.cam_model.activations_and_grads.register_hooks()
-                thisLoss, thisFig = visualizeLossPerformance(CAMLossInstance, images,use_cuda=use_cuda, saveFig=False)
+                thisLoss, thisFig = visualizeLossPerformance(CAMLossInstance, images,use_cuda=use_cuda, saveFig=False, batchDirectory=batchDirectory)
 
                 allLossImg = np.append(allLossImg,np.expand_dims(thisFig,0).astype(int), axis=0)
                 allLossNum = np.append(allLossNum,np.expand_dims(thisLoss,0), axis=0)
@@ -138,18 +140,18 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                     # print('supervised')
                     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
                     inputs = inputs.to(device)
-                    # labels = labels.to(device)
+                    labels = labels.to(device)
 
                     # print(labelLogit)
                     outputs = model(inputs) 
                     l1 = criteron(outputs, labels)
-                    print('about to break')
+                    #print('about to break')
                     _, preds = torch.max(outputs, 1)
                     # print(preds)
                     # print(labels)
                     for pred in range(preds.shape[0]):
                         running_corrects += labels[pred, int(preds[pred])]
-                        print(labels[pred, int(preds[pred])])
+                        #print(labels[pred, int(preds[pred])])
                     # running_corrects += torch.sum(preds == labels.data)
                 else:
                     # print('unsupervised')
@@ -177,9 +179,9 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
         # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
         if epoch % 10 == 9:
             LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer)
-    LossEvaluator.plotLosses()
-def saveCheckpoint(EPOCH, net, optimizer):
-    PATH = "saved_checkpoints/model_"+str(EPOCH)+".pt"
+    LossEvaluator.plotLosses(batchDirectory=batchDirectory)
+def saveCheckpoint(EPOCH, net, optimizer, batchDirectory=''):
+    PATH = batchDirectory+"saved_checkpoints/"+"model_"+str(EPOCH)+".pt"
     torch.save({
                 'epoch': EPOCH,
                 'model_state_dict': net.state_dict(),

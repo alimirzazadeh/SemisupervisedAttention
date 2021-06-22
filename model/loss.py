@@ -87,6 +87,8 @@ class CAMLoss(nn.Module):
             TAc = TAc.unsqueeze(0)
             TAc = torch.repeat_interleave(TAc, 3, dim=0)
             # print(TAc.shape)
+            TAc = TAc.cuda()
+            thisImgTensor = thisImgTensor.cuda()
             newImgTensor = TAc * thisImgTensor
             newImgPreprocessed = newImgTensor.unsqueeze(0)
             new_grayscale_cam = self.cam_model(input_tensor=newImgPreprocessed, target_category=int(topClass[0]))

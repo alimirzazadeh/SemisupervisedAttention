@@ -116,6 +116,9 @@ class CAMLoss(nn.Module):
                 newImgPreprocessed = newImgTensor.unsqueeze(0)
                 new_gb = self.gb_model(newImgPreprocessed, target_category=int(topClass[0]))
                 new_gb = processGB(new_gb)
+                
+                if visualize:
+                    gbimgs.append(new_gb.numpy())
                 cost = -1 * torch.abs(F.conv2d(standardize(gb_correlate), standardize(new_gb)))
                 
             correlation_pearson2 = correlation_pearson.clone() 

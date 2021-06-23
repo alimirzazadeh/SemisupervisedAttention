@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     # replace the classifier layer with CAM Image Generation
 
-    learning_rate = 0.000001
+    learning_rate = 0.0000001
     
 
     model = models.resnet50(pretrained = True)
@@ -100,7 +100,6 @@ if __name__ == '__main__':
             images, labels = dataiter.next()
             images = images.to(device)
             labels = labels.to(device)
-
             # images.to("cpu")
             # model.to(device)
             with torch.no_grad():
@@ -128,7 +127,7 @@ if __name__ == '__main__':
     #need to set params?
     
     
-    numEpochs = 100
+    numEpochs = 50
     # model.fc = nn.Linear(int(model.fc.in_features), 10)
     
     print("done")

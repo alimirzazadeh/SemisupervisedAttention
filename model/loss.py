@@ -20,6 +20,7 @@ class CAMLoss(nn.Module):
     def __init__(self, model, target_layer, use_cuda):
         super(CAMLoss, self).__init__()
         self.use_cuda = use_cuda
+        self.device = torch.device("cuda:0" if self.use_cuda else "cpu")
         self.model = model
         self.cam_model = GradCAM(model=model, target_layer=target_layer, use_cuda=use_cuda)
         self.gb_model = GuidedBackpropReLUModel(model=model, use_cuda=use_cuda)
@@ -112,6 +113,8 @@ class CAMLoss(nn.Module):
                 TAc = TAc.unsqueeze(0)
                 TAc = torch.repeat_interleave(TAc, 3, dim=0)
                 # print(TAc.shape)
+                TAc = TAc.to(self.device)
+                thisImgTensor = thisImgTensor.to(self.device)
                 newImgTensor = TAc * thisImgTensor
                 newImgPreprocessed = newImgTensor.unsqueeze(0)
                 newImgPreprocessed.type(torch.DoubleTensor) 

@@ -106,7 +106,7 @@ class CAMLoss(nn.Module):
                 
                 cost = -1 * torch.abs(F.conv2d(standardize(cam_result), standardize(new_cam_result)))
             else:
-                ww = -8
+                ww = -32
                 sigma = torch.mean(cam_result) + torch.std(cam_result) / 2
                 TAc = 1/ (1 + torch.exp(ww * (cam_result - sigma)))
                 TAc = TAc.unsqueeze(0)
@@ -114,7 +114,8 @@ class CAMLoss(nn.Module):
                 # print(TAc.shape)
                 newImgTensor = TAc * thisImgTensor
                 newImgPreprocessed = newImgTensor.unsqueeze(0)
-                new_gb = self.gb_model(newImgPreprocessed, target_category=int(topClass[0]))
+                newImgPreprocessed.type(torch.DoubleTensor) 
+                new_gb = self.gb_model(newImgPreprocessed.float(), target_category=int(topClass[0]))
                 new_gb = processGB(new_gb)
                 
                 if visualize:
@@ -123,7 +124,7 @@ class CAMLoss(nn.Module):
                 
             correlation_pearson2 = correlation_pearson.clone() 
             correlation_pearson = correlation_pearson2 + cost
-
+            
             # print(torch.sum(hmp_correlate), torch.sum(gb_correlate), cost)
             # correlation_pearson[i] = np.corrcoef(hmp_correlate.flatten(), gb_correlate.flatten())[0,1]
             

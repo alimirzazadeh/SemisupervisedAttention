@@ -84,12 +84,12 @@ class CAMLoss(nn.Module):
                 return gb_correlate
             gb_correlate = processGB(gb_correlate)
             
-            CAMtoGB = False
+            CAMorGBorNormal = 2
             def standardize(arr):
                 arr = (arr - torch.mean(arr))/torch.std(arr)
                 return arr.unsqueeze(0).unsqueeze(0)
             
-            if CAMtoGB:
+            if CAMorGBorNormal == 0:
                 ww = -8
                 sigma = torch.mean(gb_correlate) + torch.std(gb_correlate) / 2
                 # print(sigma)
@@ -106,7 +106,7 @@ class CAMLoss(nn.Module):
                     gbimgs.append(new_cam_result.numpy())
                 
                 cost = -1 * torch.abs(F.conv2d(standardize(cam_result), standardize(new_cam_result)))
-            else:
+            elif CAMorGBorNormal == 1:
                 ww = -32
                 sigma = torch.mean(cam_result) + torch.std(cam_result) / 2
                 TAc = 1/ (1 + torch.exp(ww * (cam_result - sigma)))
@@ -124,6 +124,17 @@ class CAMLoss(nn.Module):
                 if visualize:
                     gbimgs.append(new_gb.numpy())
                 cost = -1 * torch.abs(F.conv2d(standardize(gb_correlate), standardize(new_gb)))
+            elif CAMorGBorNormal == 2:
+                if visualize:
+                    gbimgs.append(gb_correlate.numpy())
+                #calculate pearson's
+                vx = gb_correlate - torch.mean(gb_correlate)
+                vy = cam_result - torch.mean(cam_result)
+                denominator = torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2))
+                if denominator > 0:
+                    cost = torch.sum(vx * vy) / denominator
+                else:
+                    cost = torch.zeros(1)
                 
             correlation_pearson2 = correlation_pearson.clone() 
             correlation_pearson = correlation_pearson2 + cost

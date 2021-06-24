@@ -7,6 +7,7 @@ Created on Sun Jun 20 22:10:36 2021
 from torchvision.transforms import Compose, Normalize, ToTensor, Resize
 import torch
 import numpy as np
+import os
 
 from data_loader.pascal_data_loader import PascalDataset
 def loadPascalData(batch_size=4, num_workers=2,shuffle=True):
@@ -17,7 +18,12 @@ def loadPascalData(batch_size=4, num_workers=2,shuffle=True):
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
     batch_size = 4
-    trainset = PascalDataset("/scratch/users/alimirz1/VOC2012/JPEGImages/","/scratch/users/alimirz1/VOC2012/allLabels.npy", transform=transform)
+
+    
+    if os.path.isdir("C:\\Users\\alimi\\Documents\\Stanford\\VOC2012\\JPEGImages"):
+        trainset = PascalDataset("C:\\Users\\alimi\\Documents\\Stanford\\VOC2012\\JPEGImages","C:\\Users\\alimi\\Documents\\Stanford\\VOC2012\\allLabels.npy", transform=transform)
+    else:
+        trainset = PascalDataset("/scratch/users/alimirz1/VOC2012/JPEGImages/","/scratch/users/alimirz1/VOC2012/allLabels.npy", transform=transform)
     
     # suptrainset = torch.utils.data.Subset(trainset, list(range(0,100)))
     suptrainset = balancedMiniDataset(trainset, 10)
@@ -51,3 +57,4 @@ def balancedMiniDataset(trainset, size):
             iterating = False
         step += 1
     return torch.utils.data.Subset(trainset, subsetToInclude)
+    

@@ -23,7 +23,10 @@ from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from train import train
 
 if __name__ == '__main__':
-    batchDirectory = '/scratch/users/alimirz1/saved_batches/' + sys.argv[6] + '/'
+    if os.path.isdir('/scratch/'):
+        batchDirectory = '/scratch/users/alimirz1/saved_batches/' + sys.argv[6] + '/'
+    else:
+        batchDirectory = ''
     ## Load the CIFAR Dataset
     suptrainloader,unsuptrainloader, testloader = loadPascalData()
 
@@ -86,7 +89,7 @@ if __name__ == '__main__':
 
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
-        #import json
+
         # f = open("imagenet_class_index.json",)
         # class_idx = json.load(f)
         # idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]

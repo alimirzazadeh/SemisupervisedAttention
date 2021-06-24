@@ -17,6 +17,7 @@ from torch.utils.data import Dataset
 
 class PascalDataset(Dataset):
     """Face Landmarks dataset."""
+
     def __init__(self, root_dir, npy_file, transform=None):
         """
         Args:
@@ -49,6 +50,7 @@ class PascalDataset(Dataset):
         labelLogit = self.all_labels[idx,:]
         sample = image, labelLogit
         return sample
+
 
     # supervisedRatio = 0.3
     # supervisedTrainSet = torch.utils.data.Subset(trainset, list(range(int(len(trainset)*supervisedRatio))))

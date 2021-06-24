@@ -63,7 +63,7 @@ class CAMLoss(nn.Module):
 
 
 
-            CAMorGBorNormalorPool = 3
+            CAMorGBorNormalorPool = 2
             
             
             
@@ -154,7 +154,7 @@ class CAMLoss(nn.Module):
                     cost = torch.zeros(1)
             elif CAMorGBorNormalorPool == 3:
                 m = nn.AvgPool2d(32)
-                gb_correlate = m(gb_correlate.unsqueeze(0).unsqueeze(0))
+                gb_correlate = m(gb_correlate.unsqueeze(0).unsqueeze(0))[0,0,:,:]
                 if visualize:
                     gbimgs.append(gb_correlate.numpy())
                 cost = -1 * torch.abs(F.conv2d(standardize(cam_result), standardize(gb_correlate)))

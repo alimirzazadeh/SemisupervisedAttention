@@ -20,6 +20,7 @@ from metrics.UnsupervisedMetrics import visualizeLossPerformance
 
 def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=False, training='alternating', batchDirectory=''):
     alpha = 4 ##How many times to scale supervised dataset
+    print('alpha: ', alpha)
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
     LossEvaluator = Evaluator()
     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()

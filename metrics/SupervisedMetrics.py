@@ -61,8 +61,8 @@ class Evaluator:
             self.unsupervised_losses.append(float(running_loss / datasetSize))
     def evaluateUpdateLosses(self, model, testloader, criteron, CAMLossInstance, device, optimizer):
         print('evaluating unsupervised performance')
-        # CAMLossInstance.cam_model.activations_and_grads.register_hooks()
-        # self.evaluateModelUnsupervisedPerformance(model, testloader, CAMLossInstance, device, optimizer, storeLoss = True)
+        CAMLossInstance.cam_model.activations_and_grads.register_hooks()
+        self.evaluateModelUnsupervisedPerformance(model, testloader, CAMLossInstance, device, optimizer, storeLoss = True)
         print('evaluating supervised performance')
         CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
         self.evaluateModelSupervisedPerformance(model, testloader, criteron, device, optimizer, storeLoss = True)

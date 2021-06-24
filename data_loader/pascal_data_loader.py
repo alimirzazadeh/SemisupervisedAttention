@@ -12,7 +12,7 @@ import numpy as np
 from PIL import Image
 import os
 from torch.utils.data import Dataset
-from skimage import io, transform
+#from skimage import io, transform
 #PascalDataset("C:/Users/alimi/Documents/Stanford/pascal-context/JPEGImages/","C:/Users/alimi/Documents/Stanford/pascal-context/33_context_labels/33_context_labels/")
 
 class PascalDataset(Dataset):

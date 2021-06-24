@@ -55,7 +55,7 @@ class BaseCAM:
             cam = torch.sum(weighted_activations, axis=1)
         return cam
 
-    def forward(self, input_tensor, target_category=None, eigen_smooth=False):
+    def forward(self, input_tensor, target_category=None, eigen_smooth=False, returnTarget=False):
 
         if self.cuda:
             input_tensor = input_tensor.cuda()
@@ -99,7 +99,10 @@ class BaseCAM:
             img = img / torch.max(img)
             result.append(img[0,0,:,:])
         # result = np.float32(result)
-        return result
+        if returnTarget:
+            return result, target_category
+        else:
+            return result
 
     def forward_augmentation_smoothing(self,
                                        input_tensor,
@@ -134,10 +137,11 @@ class BaseCAM:
                  input_tensor,
                  target_category=None,
                  aug_smooth=False,
-                 eigen_smooth=False):
+                 eigen_smooth=False,
+                 returnTarget=False):
         if aug_smooth is True:
             return self.forward_augmentation_smoothing(input_tensor,
                 target_category, eigen_smooth)
 
         return self.forward(input_tensor,
-            target_category, eigen_smooth)
+            target_category, eigen_smooth, returnTarget=returnTarget)

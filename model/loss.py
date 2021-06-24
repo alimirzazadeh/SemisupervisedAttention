@@ -31,12 +31,12 @@ class CAMLoss(nn.Module):
     def forward(self, input_tensor,  target_category, logs=False, visualize=False):
         assert(len(input_tensor.shape) > 3)
         
+        resolutionMatch = 3 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
+        similarityMetric = 2 #Pearson, cross corr, SSIM
         
-        # correlation_pearson = torch.zeros(input_tensor.shape[0])
-        # correlation_pearson.requires_grad=True
+       
         correlation_pearson = torch.zeros(1)
         correlation_pearson.requires_grad = True
-        # correlation_cross = tor.zeros(input_tensor.shape[0])
         
         if visualize:
             fig, axs = plt.subplots(3, input_tensor.shape[0])
@@ -47,26 +47,11 @@ class CAMLoss(nn.Module):
             
         
         for i in range(input_tensor.shape[0]):
-    
-    
-            # thisImg = cv2.resize(thisImg, (256, 256))
             
             thisImgTensor = input_tensor[i,:,:,:]
             thisImgTensor = thisImgTensor.to(self.device)
             thisImgPreprocessed = thisImgTensor.unsqueeze(0)
-                
-            ##we have to keep the gradients that are calculated, from the cam_model forward method
-            ####could either rerun the model or use the already calculated values i think
-            ###post processing has to be done with torch operations
-            # thisImgPreprocessed = preprocess_image(thisImg, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
-
-
-
-
-            resolutionMatch = 3 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
-            similarityMetric = 2 #Pearson, cross corr, SSIM
-            
             
             
             

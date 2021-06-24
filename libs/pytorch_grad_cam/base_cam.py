@@ -139,10 +139,11 @@ class BaseCAM:
                  target_category=None,
                  aug_smooth=False,
                  eigen_smooth=False,
-                 returnTarget=False):
+                 returnTarget=False,
+                 upSample=True):
         if aug_smooth is True:
             return self.forward_augmentation_smoothing(input_tensor,
                 target_category, eigen_smooth)
 
         return self.forward(input_tensor,
-            target_category, eigen_smooth, returnTarget=returnTarget)
+            target_category, eigen_smooth, returnTarget=returnTarget, upSample=upSample)

@@ -60,7 +60,7 @@ if __name__ == '__main__':
     epoch = 0
     
     if sys.argv[1] == 'loadCheckpoint':
-        whichCheckpoint = 0
+        whichCheckpoint = 4
         if len(all_checkpoints) > 0:
             
             if os.path.isdir('/scratch/'):

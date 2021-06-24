@@ -33,6 +33,10 @@ class PascalDataset(Dataset):
         self.all_labels = np.load(npy_file)
         self.root_dir = root_dir
         self.transform = transform
+        self.idx2label = ['aeroplane','bicycle', 'bird', 'boat', 'bottle', 'bus', 
+                     'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 
+                     'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
+
 
     def __len__(self):
         return len(self.all_imageNames)

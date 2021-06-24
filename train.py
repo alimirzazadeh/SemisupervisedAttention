@@ -167,16 +167,13 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                 
                 running_loss += l1.item()
 
-
-            
             #if i % 200 == 199:    # print every 200 mini-batches
             #    print('[%d, %5d] loss: %.3f' %
             #          (epoch + 1, i + 1, running_loss / 200))
             #    running_loss = 0.0
             #    print('[%d, %5d] accuracy: %.3f' %
             #          (epoch + 1, i + 1, running_corrects / 200))
-            #    running_corrects = 0
-            
+            #    running_corrects = 0            
             counter += 1
             
         # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()

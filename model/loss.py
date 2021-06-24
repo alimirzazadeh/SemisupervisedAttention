@@ -7,6 +7,7 @@ Created on Fri May 21 11:32:41 2021
 from libs.pytorch_grad_cam.grad_cam import GradCAM
 from libs.pytorch_grad_cam.guided_backprop import GuidedBackpropReLUModel
 from libs.pytorch_grad_cam.utils.image import deprocess_image, preprocess_image
+import libs.pytorch_ssim as pytorch_ssim
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 import torch.nn as nn
 import matplotlib.pyplot as plt
@@ -63,111 +64,104 @@ class CAMLoss(nn.Module):
 
 
 
-            CAMorGBorNormalorPool = 2
+            resolutionMatch = 3 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
+            similarityMetric = 2 #Pearson, cross corr, SSIM
             
             
             
             
-            if CAMorGBorNormalorPool == 3:
+            
+            if resolutionMatch == 1 or resolutionMatch == 2:
                 upSample = False
             else:
                 upSample = True
             
             grayscale_cam, topClass = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category, returnTarget=True , upSample=upSample)
-            
-            # print(len(grayscale_cam))
-            cam_result = grayscale_cam[0]  #####WHY IS THERE 2? and we're taking the first one?
-            # hmp_correlate = cam_result
-            # hmp_correlate_std = torch.std(hmp_correlate)
-            # if (hmp_correlate_std > 0):
-            #     hmp_correlate = (hmp_correlate - torch.mean(hmp_correlate)) / hmp_correlate_std
-            
-            if visualize:
-                hmps.append(cam_result.numpy())
 
-            # print(cam_result.shape)
+            cam_result = grayscale_cam[0]  #####WHY IS THERE 2? and we're taking the first one?
+
             gb_correlate = self.gb_model(thisImgPreprocessed, target_category=target_category)
+            
             def processGB(gb_correlate):
                 gb_correlate_std = torch.std(gb_correlate)
                 if (gb_correlate_std > 0):
                     gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
     
-                ####now zeroing negatives
-                # gb_correlate[gb_correlate > 0] = 0
-                # gb_correlate = -1 * gb_correlate
                 gb_correlate = torch.abs(gb_correlate) ################################################################################# 
                 gb_correlate = torch.sum(gb_correlate, axis = 2)
                 return gb_correlate
+
+            def standardize(arr):
+                arr = (arr - torch.mean(arr))/torch.std(arr)
+                return arr.unsqueeze(0).unsqueeze(0).float()
             
             
             gb_correlate = processGB(gb_correlate)
             
-            
-            def standardize(arr):
-                arr = (arr - torch.mean(arr))/torch.std(arr)
-                return arr.unsqueeze(0).unsqueeze(0)
-            
-            if CAMorGBorNormalorPool == 0:
+            if resolutionMatch == 0:
+                firstCompare = cam_result
+                secondCompare = gb_correlate
+            elif resolutionMatch == 1:
+                m = nn.AvgPool2d(32)
+                gb_correlate = m(gb_correlate.unsqueeze(0).unsqueeze(0))[0,0,:,:]
+                firstCompare = cam_result
+                secondCompare = gb_correlate
+            elif resolutionMatch == 2:
                 ww = -8
                 sigma = torch.mean(gb_correlate) + torch.std(gb_correlate) / 2
-                # print(sigma)
                 TAc = 1/ (1 + torch.exp(ww * (gb_correlate - sigma)))
                 TAc = TAc.unsqueeze(0)
                 TAc = torch.repeat_interleave(TAc, 3, dim=0)
-                # print(TAc.shape)
                 newImgTensor = TAc * thisImgTensor
                 newImgPreprocessed = newImgTensor.unsqueeze(0)
-                new_grayscale_cam = self.cam_model(input_tensor=newImgPreprocessed, target_category=int(topClass[0]))
+                new_grayscale_cam = self.cam_model(input_tensor=newImgPreprocessed, target_category=int(topClass[0]), upSample=upSample)
                 new_cam_result = new_grayscale_cam[0]
-                
-                if visualize:
-                    gbimgs.append(new_cam_result.numpy())
-                
-                cost = -1 * torch.abs(F.conv2d(standardize(cam_result), standardize(new_cam_result)))
-            elif CAMorGBorNormalorPool == 1:
+                firstCompare = cam_result
+                secondCompare = new_cam_result
+            elif resolutionMatch == 3:
                 ww = -32
                 sigma = torch.mean(cam_result) + torch.std(cam_result) / 2
                 TAc = 1/ (1 + torch.exp(ww * (cam_result - sigma)))
                 TAc = TAc.unsqueeze(0)
                 TAc = torch.repeat_interleave(TAc, 3, dim=0)
-                # print(TAc.shape)
                 TAc = TAc.to(self.device)
                 newImgTensor = TAc * thisImgTensor
                 newImgPreprocessed = newImgTensor.unsqueeze(0)
                 newImgPreprocessed.type(torch.DoubleTensor) 
                 new_gb = self.gb_model(newImgPreprocessed.float(), target_category=int(topClass[0]))
                 new_gb = processGB(new_gb)
+                firstCompare = gb_correlate
+                secondCompare = new_gb
+
                 
-                if visualize:
-                    gbimgs.append(new_gb.numpy())
-                cost = -1 * torch.abs(F.conv2d(standardize(gb_correlate), standardize(new_gb)))
-            elif CAMorGBorNormalorPool == 2:
-                if visualize:
-                    gbimgs.append(gb_correlate.numpy())
-                #calculate pearson's
-                vx = gb_correlate - torch.mean(gb_correlate)
-                vy = cam_result - torch.mean(cam_result)
+                
+            if visualize:
+                hmps.append(firstCompare.numpy())
+                gbimgs.append(secondCompare.numpy())
+            
+            
+            
+            if similarityMetric == 0:
+                vx = firstCompare - torch.mean(firstCompare)
+                vy = secondCompare - torch.mean(secondCompare)
                 denominator = torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2))
                 if denominator > 0:
                     cost = -1 * torch.sum(vx * vy) / denominator
                 else:
-                    cost = torch.zeros(1)
-            elif CAMorGBorNormalorPool == 3:
-                m = nn.AvgPool2d(32)
-                gb_correlate = m(gb_correlate.unsqueeze(0).unsqueeze(0))[0,0,:,:]
-                if visualize:
-                    gbimgs.append(gb_correlate.numpy())
-                cost = -1 * torch.abs(F.conv2d(standardize(cam_result), standardize(gb_correlate)))
+                    cost = torch.zeros(1)       
+            elif similarityMetric == 1:
+                cost = -1 * torch.abs(F.conv2d(standardize(firstCompare), standardize(secondCompare))) 
+                cost = cost.squeeze()
+            elif similarityMetric == 2:
+                ssim_loss = pytorch_ssim.SSIM()
+                cost = -ssim_loss(standardize(firstCompare), standardize(secondCompare))
                 
                 
                 
             correlation_pearson2 = correlation_pearson.clone() 
             correlation_pearson = correlation_pearson2 + cost
             
-            # print(torch.sum(hmp_correlate), torch.sum(gb_correlate), cost)
-            # correlation_pearson[i] = np.corrcoef(hmp_correlate.flatten(), gb_correlate.flatten())[0,1]
-            
-            # correlation_cross[i] = np.correlate(hmp_correlate.flatten(), gb_correlate.flatten())[0]
+
             
             if logs:
                 print("The Pearson output loss is: ", correlation_pearson[i])
@@ -189,9 +183,6 @@ class CAMLoss(nn.Module):
             final_hmp_frame = cv2.hconcat(hmps)
 
 
-            # print(np.min(final_hmp_frame), np.max(final_hmp_frame), np.median(final_hmp_frame))
-            # print(np.min(final_gb_frame), np.max(final_gb_frame), np.median(final_gb_frame))
-            # print(final_gb_frame.dtype, final_hmp_frame.dtype)
 
 
             def normalize(arr):

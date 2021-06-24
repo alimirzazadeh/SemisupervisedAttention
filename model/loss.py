@@ -58,7 +58,12 @@ class CAMLoss(nn.Module):
             ####could either rerun the model or use the already calculated values i think
             ###post processing has to be done with torch operations
             # thisImgPreprocessed = preprocess_image(thisImg, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            CAMorGBorNormalorPool = 2
+
+
+
+
+
+            CAMorGBorNormalorPool = 3
             
             
             
@@ -144,7 +149,7 @@ class CAMLoss(nn.Module):
                 vy = cam_result - torch.mean(cam_result)
                 denominator = torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2))
                 if denominator > 0:
-                    cost = torch.sum(vx * vy) / denominator
+                    cost = -1 * torch.sum(vx * vy) / denominator
                 else:
                     cost = torch.zeros(1)
             elif CAMorGBorNormalorPool == 3:
@@ -152,7 +157,7 @@ class CAMLoss(nn.Module):
                 gb_correlate = m(gb_correlate.unsqueeze(0).unsqueeze(0))
                 if visualize:
                     gbimgs.append(gb_correlate.numpy())
-                cost = -1 * torch.abs(F.conv2d(standardize(cam_result), standardize(new_cam_result)))
+                cost = -1 * torch.abs(F.conv2d(standardize(cam_result), standardize(gb_correlate)))
                 
                 
                 

@@ -23,6 +23,15 @@ from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from train import train
 
 if __name__ == '__main__':
+
+    learning_rate = 0.000001
+    numEpochs = 200
+
+    print('Learning Rate: ', learning_rate)
+    print('Number of Epochs: ', numEpochs)
+
+
+
     if os.path.isdir('/scratch/'):
         batchDirectory = '/scratch/users/alimirz1/saved_batches/' + sys.argv[6] + '/'
     else:
@@ -41,13 +50,10 @@ if __name__ == '__main__':
         os.makedirs(batchDirectory + "saved_checkpoints")
         print("Made Saved_Checkpoints folder")
 
-    # replace the classifier layer with CAM Image Generation
-
-    learning_rate = 0.0000001
     
 
     model = models.resnet50(pretrained = True)
-    model.fc = nn.Linear(int(model.fc.in_features), 33)
+    model.fc = nn.Linear(int(model.fc.in_features), 20)
     optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
     
     all_checkpoints = os.listdir('saved_checkpoints')
@@ -57,7 +63,11 @@ if __name__ == '__main__':
         whichCheckpoint = 0
         if len(all_checkpoints) > 0:
             
-            PATH = 'saved_checkpoints/' + all_checkpoints[whichCheckpoint]
+            if os.path.isdir('/scratch/'):
+                PATH = '/scratch/users/alimirz1/saved_batches/...'
+            else:
+                PATH = 'saved_checkpoints/' + all_checkpoints[whichCheckpoint]
+
             print('Loading Saved Model', PATH)
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             checkpoint = torch.load(PATH, map_location=device)
@@ -128,7 +138,7 @@ if __name__ == '__main__':
     #need to set params?
     
     
-    numEpochs = 140
+    
     # model.fc = nn.Linear(int(model.fc.in_features), 10)
     
     print("done")

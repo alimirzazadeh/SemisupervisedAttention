@@ -20,6 +20,7 @@ class CAMLoss(nn.Module):
     def __init__(self, model, target_layer, use_cuda):
         super(CAMLoss, self).__init__()
         self.use_cuda = use_cuda
+        self.device = torch.device("cuda:0" if self.use_cuda else "cpu")
         self.model = model
         self.cam_model = GradCAM(model=model, target_layer=target_layer, use_cuda=use_cuda)
         self.gb_model = GuidedBackpropReLUModel(model=model, use_cuda=use_cuda)
@@ -70,49 +71,74 @@ class CAMLoss(nn.Module):
 
             # print(cam_result.shape)
             gb_correlate = self.gb_model(thisImgPreprocessed, target_category=target_category)
-            gb_correlate_std = torch.std(gb_correlate)
-            if (gb_correlate_std > 0):
-                gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
-
-            ####now zeroing negatives
-            # gb_correlate[gb_correlate > 0] = 0
-            # gb_correlate = -1 * gb_correlate
-            gb_correlate = torch.abs(gb_correlate) ################################################################################# 
-            gb_correlate = torch.sum(gb_correlate, axis = 2)
+            def processGB(gb_correlate):
+                gb_correlate_std = torch.std(gb_correlate)
+                if (gb_correlate_std > 0):
+                    gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
+    
+                ####now zeroing negatives
+                # gb_correlate[gb_correlate > 0] = 0
+                # gb_correlate = -1 * gb_correlate
+                gb_correlate = torch.abs(gb_correlate) ################################################################################# 
+                gb_correlate = torch.sum(gb_correlate, axis = 2)
+                return gb_correlate
+            gb_correlate = processGB(gb_correlate)
             
-            ww = -8
-            sigma = torch.mean(gb_correlate) + torch.std(gb_correlate) / 2
-            # print(sigma)
-            TAc = 1/ (1 + torch.exp(ww * (gb_correlate - sigma)))
-            TAc = TAc.unsqueeze(0)
-            TAc = torch.repeat_interleave(TAc, 3, dim=0)
-            # print(TAc.shape)
-            TAc = TAc.cuda()
-            thisImgTensor = thisImgTensor.cuda()
-            newImgTensor = TAc * thisImgTensor
-            newImgPreprocessed = newImgTensor.unsqueeze(0)
-            new_grayscale_cam = self.cam_model(input_tensor=newImgPreprocessed, target_category=int(topClass[0]))
-            new_cam_result = new_grayscale_cam[0]
-            
-            # print(newImgPreprocessed.shape)
-            
-
-            if visualize:
-                gbimgs.append(new_cam_result.numpy())
-
-            
-            #calculate pearson's
-            
-            # criteron = nn.MSELoss()
-            # cost = criteron(cam_result, new_cam_result)
+            CAMorGBorNormal = 2
             def standardize(arr):
                 arr = (arr - torch.mean(arr))/torch.std(arr)
                 return arr.unsqueeze(0).unsqueeze(0)
             
-            cost = -1 * torch.abs(F.conv2d(standardize(cam_result), standardize(new_cam_result)))
+            if CAMorGBorNormal == 0:
+                ww = -8
+                sigma = torch.mean(gb_correlate) + torch.std(gb_correlate) / 2
+                # print(sigma)
+                TAc = 1/ (1 + torch.exp(ww * (gb_correlate - sigma)))
+                TAc = TAc.unsqueeze(0)
+                TAc = torch.repeat_interleave(TAc, 3, dim=0)
+                # print(TAc.shape)
+                newImgTensor = TAc * thisImgTensor
+                newImgPreprocessed = newImgTensor.unsqueeze(0)
+                new_grayscale_cam = self.cam_model(input_tensor=newImgPreprocessed, target_category=int(topClass[0]))
+                new_cam_result = new_grayscale_cam[0]
+                
+                if visualize:
+                    gbimgs.append(new_cam_result.numpy())
+                
+                cost = -1 * torch.abs(F.conv2d(standardize(cam_result), standardize(new_cam_result)))
+            elif CAMorGBorNormal == 1:
+                ww = -32
+                sigma = torch.mean(cam_result) + torch.std(cam_result) / 2
+                TAc = 1/ (1 + torch.exp(ww * (cam_result - sigma)))
+                TAc = TAc.unsqueeze(0)
+                TAc = torch.repeat_interleave(TAc, 3, dim=0)
+                # print(TAc.shape)
+                TAc = TAc.to(self.device)
+                thisImgTensor = thisImgTensor.to(self.device)
+                newImgTensor = TAc * thisImgTensor
+                newImgPreprocessed = newImgTensor.unsqueeze(0)
+                newImgPreprocessed.type(torch.DoubleTensor) 
+                new_gb = self.gb_model(newImgPreprocessed.float(), target_category=int(topClass[0]))
+                new_gb = processGB(new_gb)
+                
+                if visualize:
+                    gbimgs.append(new_gb.numpy())
+                cost = -1 * torch.abs(F.conv2d(standardize(gb_correlate), standardize(new_gb)))
+            elif CAMorGBorNormal == 2:
+                if visualize:
+                    gbimgs.append(gb_correlate.numpy())
+                #calculate pearson's
+                vx = gb_correlate - torch.mean(gb_correlate)
+                vy = cam_result - torch.mean(cam_result)
+                denominator = torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2))
+                if denominator > 0:
+                    cost = torch.sum(vx * vy) / denominator
+                else:
+                    cost = torch.zeros(1)
+                
             correlation_pearson2 = correlation_pearson.clone() 
             correlation_pearson = correlation_pearson2 + cost
-
+            
             # print(torch.sum(hmp_correlate), torch.sum(gb_correlate), cost)
             # correlation_pearson[i] = np.corrcoef(hmp_correlate.flatten(), gb_correlate.flatten())[0,1]
             

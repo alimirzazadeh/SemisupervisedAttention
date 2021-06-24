@@ -89,6 +89,7 @@ if __name__ == '__main__':
 
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
+
         # f = open("imagenet_class_index.json",)
         # class_idx = json.load(f)
         # idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
@@ -127,7 +128,7 @@ if __name__ == '__main__':
     #need to set params?
     
     
-    numEpochs = 50
+    numEpochs = 140
     # model.fc = nn.Linear(int(model.fc.in_features), 10)
     
     print("done")

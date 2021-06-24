@@ -18,6 +18,7 @@ def loadPascalData(batch_size=4, num_workers=2,shuffle=True):
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
     batch_size = 4
+
     
     if os.path.isdir("C:\\Users\\alimi\\Documents\\Stanford\\VOC2012\\JPEGImages"):
         trainset = PascalDataset("C:\\Users\\alimi\\Documents\\Stanford\\VOC2012\\JPEGImages","C:\\Users\\alimi\\Documents\\Stanford\\VOC2012\\allLabels.npy", transform=transform)

@@ -47,14 +47,14 @@ if __name__ == '__main__':
     
 
     model = models.resnet50(pretrained = True)
-    model.fc = nn.Linear(int(model.fc.in_features), 33)
+    model.fc = nn.Linear(int(model.fc.in_features), 20)
     optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
     
     all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0
     
     if sys.argv[1] == 'loadCheckpoint':
-        whichCheckpoint = 0
+        whichCheckpoint = 4
         if len(all_checkpoints) > 0:
             
             PATH = 'saved_checkpoints/' + all_checkpoints[whichCheckpoint]

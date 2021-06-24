@@ -27,8 +27,8 @@ def loadPascalData(batch_size=4, num_workers=2,shuffle=True):
     
     # suptrainset = torch.utils.data.Subset(trainset, list(range(0,100)))
     suptrainset = balancedMiniDataset(trainset, 10)
-    unsuptrainset = torch.utils.data.Subset(trainset, list(range(3100,len(trainset))))
-    testset = torch.utils.data.Subset(trainset, list(range(1000,3100)))
+    unsuptrainset = torch.utils.data.Subset(trainset, list(range(3000,len(trainset))))
+    testset = torch.utils.data.Subset(trainset, list(range(1000,3000)))
     
     
     

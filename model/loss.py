@@ -51,13 +51,24 @@ class CAMLoss(nn.Module):
             # thisImg = cv2.resize(thisImg, (256, 256))
             
             thisImgTensor = input_tensor[i,:,:,:]
+            thisImgTensor = thisImgTensor.to(self.device)
             thisImgPreprocessed = thisImgTensor.unsqueeze(0)
                 
             ##we have to keep the gradients that are calculated, from the cam_model forward method
             ####could either rerun the model or use the already calculated values i think
             ###post processing has to be done with torch operations
             # thisImgPreprocessed = preprocess_image(thisImg, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            grayscale_cam, topClass = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category, returnTarget=True)
+            CAMorGBorNormalorPool = 2
+            
+            
+            
+            
+            if CAMorGBorNormalorPool == 3:
+                upSample = False
+            else:
+                upSample = True
+            
+            grayscale_cam, topClass = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category, returnTarget=True , upSample=upSample)
             
             # print(len(grayscale_cam))
             cam_result = grayscale_cam[0]  #####WHY IS THERE 2? and we're taking the first one?
@@ -82,14 +93,16 @@ class CAMLoss(nn.Module):
                 gb_correlate = torch.abs(gb_correlate) ################################################################################# 
                 gb_correlate = torch.sum(gb_correlate, axis = 2)
                 return gb_correlate
+            
+            
             gb_correlate = processGB(gb_correlate)
             
-            CAMorGBorNormal = 2
+            
             def standardize(arr):
                 arr = (arr - torch.mean(arr))/torch.std(arr)
                 return arr.unsqueeze(0).unsqueeze(0)
             
-            if CAMorGBorNormal == 0:
+            if CAMorGBorNormalorPool == 0:
                 ww = -8
                 sigma = torch.mean(gb_correlate) + torch.std(gb_correlate) / 2
                 # print(sigma)
@@ -106,7 +119,7 @@ class CAMLoss(nn.Module):
                     gbimgs.append(new_cam_result.numpy())
                 
                 cost = -1 * torch.abs(F.conv2d(standardize(cam_result), standardize(new_cam_result)))
-            elif CAMorGBorNormal == 1:
+            elif CAMorGBorNormalorPool == 1:
                 ww = -32
                 sigma = torch.mean(cam_result) + torch.std(cam_result) / 2
                 TAc = 1/ (1 + torch.exp(ww * (cam_result - sigma)))
@@ -114,7 +127,6 @@ class CAMLoss(nn.Module):
                 TAc = torch.repeat_interleave(TAc, 3, dim=0)
                 # print(TAc.shape)
                 TAc = TAc.to(self.device)
-                thisImgTensor = thisImgTensor.to(self.device)
                 newImgTensor = TAc * thisImgTensor
                 newImgPreprocessed = newImgTensor.unsqueeze(0)
                 newImgPreprocessed.type(torch.DoubleTensor) 
@@ -124,7 +136,7 @@ class CAMLoss(nn.Module):
                 if visualize:
                     gbimgs.append(new_gb.numpy())
                 cost = -1 * torch.abs(F.conv2d(standardize(gb_correlate), standardize(new_gb)))
-            elif CAMorGBorNormal == 2:
+            elif CAMorGBorNormalorPool == 2:
                 if visualize:
                     gbimgs.append(gb_correlate.numpy())
                 #calculate pearson's
@@ -135,6 +147,14 @@ class CAMLoss(nn.Module):
                     cost = torch.sum(vx * vy) / denominator
                 else:
                     cost = torch.zeros(1)
+            elif CAMorGBorNormalorPool == 3:
+                m = nn.AvgPool2d(32)
+                gb_correlate = m(gb_correlate.unsqueeze(0).unsqueeze(0))
+                if visualize:
+                    gbimgs.append(gb_correlate.numpy())
+                cost = -1 * torch.abs(F.conv2d(standardize(cam_result), standardize(new_cam_result)))
+                
+                
                 
             correlation_pearson2 = correlation_pearson.clone() 
             correlation_pearson = correlation_pearson2 + cost

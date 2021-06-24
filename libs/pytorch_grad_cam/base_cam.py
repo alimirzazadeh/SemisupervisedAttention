@@ -55,7 +55,7 @@ class BaseCAM:
             cam = torch.sum(weighted_activations, axis=1)
         return cam
 
-    def forward(self, input_tensor, target_category=None, eigen_smooth=False, returnTarget=False):
+    def forward(self, input_tensor, target_category=None, eigen_smooth=False, returnTarget=False, upSample=True):
 
         if self.cuda:
             input_tensor = input_tensor.cuda()
@@ -93,7 +93,8 @@ class BaseCAM:
             # img = cv2.resize(img, input_tensor.shape[-2:][::-1])
             # print(img.shape)
             img = img.reshape((1,1,img.shape[0],img.shape[1]))
-            img = torch.nn.functional.upsample_bilinear(img.double(),size=list(input_tensor.shape[-2:][::-1]))
+            if upSample:
+                img = torch.nn.functional.upsample_bilinear(img.double(),size=list(input_tensor.shape[-2:][::-1]))
             # print(img.shape)
             img = img - torch.min(img)
             img = img / torch.max(img)

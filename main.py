@@ -86,15 +86,13 @@ if __name__ == '__main__':
 
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
-        import json
+        #import json
         # f = open("imagenet_class_index.json",)
         # class_idx = json.load(f)
         # idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
-        idx2label = [ "aeroplane","bicycle","bird","boat","bottle","bus","car",
-                     "cat","chair", "cow", "diningtable", "dog","horse","motorbike",
-                     "person","pottedplant","sheep","sofa","train","tvmonitor","sky",
-                     "grass","ground","road","building","tree","water","mountain","wall",
-                     "floor","track","keyboard","ceiling"]
+        idx2label = ['aeroplane','bicycle', 'bird', 'boat', 'bottle', 'bus', 
+                     'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 
+                     'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
 
         for i in range(3):
             images, labels = dataiter.next()
@@ -127,7 +125,7 @@ if __name__ == '__main__':
     #need to set params?
     
     
-    numEpochs = 50
+    numEpochs = 140
     # model.fc = nn.Linear(int(model.fc.in_features), 10)
     
     print("done")

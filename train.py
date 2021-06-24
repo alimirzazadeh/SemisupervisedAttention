@@ -19,7 +19,7 @@ from metrics.SupervisedMetrics import Evaluator
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 
 def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=False, training='alternating', batchDirectory=''):
-    alpha = 10 ##How many times to scale supervised dataset
+    alpha = 4 ##How many times to scale supervised dataset
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
     LossEvaluator = Evaluator()
     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
@@ -119,7 +119,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                 #print('s')
             else:
                 data = unsupiter.next()
-                print('u')
+                #print('u')
 
             if trackLoss and counter % 100 == 0:
                 dataiter = iter(testloader)

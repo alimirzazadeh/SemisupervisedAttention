@@ -17,8 +17,7 @@ from torch.utils.data import Dataset
 
 class PascalDataset(Dataset):
     """Face Landmarks dataset."""
-
-    def __init__(self, root_dir, csv_file, transform=None):
+    def __init__(self, root_dir, npy_file, transform=None):
         """
         Args:
             csv_file (string): Path to the csv file with annotations.
@@ -28,39 +27,28 @@ class PascalDataset(Dataset):
         """
         # np.loadtxt(label_file)
         # self.landmarks_frame = pd.read_csv(csv_file)
-        self.label_dir = csv_file
-        self.landmarks_frame = os.listdir(csv_file)
-        self.root_frame = [item[:-4] + ".jpg" for item in self.landmarks_frame]
+        # self.label_dir = csv_file
+        self.all_imageNames = os.listdir(root_dir)
+        self.all_labels = np.load(npy_file)
         self.root_dir = root_dir
         self.transform = transform
 
     def __len__(self):
-        return len(self.landmarks_frame)
+        return len(self.all_imageNames)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
         img_name = os.path.join(self.root_dir,
-                                self.root_frame[idx])
+                                self.all_imageNames[idx])
         image = Image.open(img_name)
-        
-        label_name = os.path.join(self.label_dir,
-                                self.landmarks_frame[idx])
-        landmarks = self.imageToLabel(label_name)
-        # print('ye')
         if self.transform:
             # print('yes')
             image = self.transform(image)
-        labelLogit = torch.zeros(33)
-        for label in landmarks:
-            labelLogit[label - 1] = 1
+        labelLogit = self.all_labels[idx,:]
         sample = image, labelLogit
         return sample
-    def imageToLabel(self, path):
-        image = Image.open(path)
-        return np.unique(np.asarray(image))
-
 
     # supervisedRatio = 0.3
     # supervisedTrainSet = torch.utils.data.Subset(trainset, list(range(int(len(trainset)*supervisedRatio))))

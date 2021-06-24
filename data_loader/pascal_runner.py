@@ -17,11 +17,12 @@ def loadPascalData(batch_size=4, num_workers=2,shuffle=True):
         Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
     batch_size = 4
-    trainset = PascalDataset("C:/Users/alimi/Documents/Stanford/pascal-context/JPEGImages/","C:/Users/alimi/Documents/Stanford/pascal-context/33_context_labels/33_context_labels/", transform=transform)
+    trainset = PascalDataset("C:\\Users\\alimi\\Documents\\Stanford\\VOC2012\\JPEGImages","C:\\Users\\alimi\\Documents\\Stanford\\VOC2012\\allLabels.npy", transform=transform)
     
-    suptrainset = torch.utils.data.Subset(trainset, list(range(0,100)))
-    unsuptrainset = torch.utils.data.Subset(trainset, list(range(2100,len(trainset))))
-    testset = torch.utils.data.Subset(trainset, list(range(100,2100)))
+    # suptrainset = torch.utils.data.Subset(trainset, list(range(0,100)))
+    suptrainset = balancedMiniDataset(trainset, 10)
+    unsuptrainset = torch.utils.data.Subset(trainset, list(range(3100,len(trainset))))
+    testset = torch.utils.data.Subset(trainset, list(range(1000,3100)))
     
     
     
@@ -34,3 +35,20 @@ def loadPascalData(batch_size=4, num_workers=2,shuffle=True):
     
     
     return suptrainloader, unsuptrainloader, testloader
+
+def balancedMiniDataset(trainset, size):
+    counter = np.zeros(len(trainset[0][1]))
+    iterating = True
+    step = 0
+    subsetToInclude = []
+    while iterating and step < 1000:
+        label = trainset[step][1]
+        if np.all(counter + label <= size):
+            counter += label
+            subsetToInclude.append(step)
+        
+        if np.sum(counter) >= size * len(trainset[0][1]):
+            iterating = False
+        step += 1
+    return torch.utils.data.Subset(trainset, subsetToInclude)
+    

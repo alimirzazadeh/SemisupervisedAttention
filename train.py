@@ -18,7 +18,7 @@ from torch import nn
 from metrics.SupervisedMetrics import Evaluator
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 
-def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=False, training='alternating', batchDirectory=''):
+def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=False, training='alternating', batchDirectory='', scheduler=None):
     alpha = 4 ##How many times to scale supervised dataset
     print('alpha: ', alpha)
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
@@ -67,6 +67,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
     
     print("Total Dataset: ", totalDatasetSize)
     for epoch in range(numEpochs):
+        if scheduler:
+            scheduler.step()
         
         print('Epoch {}/{}'.format(epoch, numEpochs - 1))
         

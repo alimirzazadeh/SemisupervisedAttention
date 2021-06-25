@@ -21,6 +21,7 @@ from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 # from model.loss import calculateLoss
 from train import train
+import torch.optim as optim
 
 if __name__ == '__main__':
 
@@ -56,7 +57,14 @@ if __name__ == '__main__':
 
     model = models.resnet50(pretrained = True)
     model.fc = nn.Linear(int(model.fc.in_features), 20)
-    optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
+    # optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
+    lr = [1e-5, 5e-3]
+    optimizer = optim.SGD([   
+        {'params': list(model.parameters())[:-1], 'lr': lr[0], 'momentum': 0.9},
+        {'params': list(model.parameters())[-1], 'lr': lr[1], 'momentum': 0.9}
+        ])
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, 12, eta_min=0, last_epoch=-1)
+    
     
     all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0
@@ -152,7 +160,7 @@ if __name__ == '__main__':
     if sys.argv[3] == 'train':
         trackLoss = sys.argv[4] == 'trackLoss'
         print(trackLoss)
-        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory)
+        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, scheduler=scheduler)
     
     
     

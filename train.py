@@ -26,10 +26,17 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
     device = torch.device("cuda:0" if use_cuda else "cpu")
     model.to(device)
+    
+    
+    # def criteron(pred_label, target_label):
+    #     m = nn.Softmax(dim=1)
+    #     pred_label = m(pred_label)
+    #     return (-pred_label.log() * target_label).sum(dim=1).mean()
     def criteron(pred_label, target_label):
-        m = nn.Softmax(dim=1)
-        pred_label = m(pred_label)
-        return (-pred_label.log() * target_label).sum(dim=1).mean()
+        m = nn.BCEWithLogitsLoss()
+        return m(pred_label, target_label)
+        
+    
     # criteron = torch.nn.CrossEntropyLoss()
     # criteron = nn.BCEWithLogitsLoss()
 

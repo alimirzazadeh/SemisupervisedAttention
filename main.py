@@ -26,7 +26,9 @@ if __name__ == '__main__':
 
     learning_rate = 0.000001
     numEpochs = 200
-
+    batch_size = 4
+    
+    
     print('Learning Rate: ', learning_rate)
     print('Number of Epochs: ', numEpochs)
 
@@ -37,7 +39,7 @@ if __name__ == '__main__':
     else:
         batchDirectory = ''
     ## Load the CIFAR Dataset
-    suptrainloader,unsuptrainloader, testloader = loadPascalData()
+    suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
 
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")

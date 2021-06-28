@@ -24,8 +24,8 @@ def loadPascalData(batch_size=4, num_workers=2,shuffle=True):
     else:
         trainset = PascalDataset("/scratch/users/alimirz1/VOC2012/JPEGImages/","/scratch/users/alimirz1/VOC2012/allLabels.npy", transform=transform)
     
-    # suptrainset = torch.utils.data.Subset(trainset, list(range(0,1000)))
-    suptrainset = balancedMiniDataset(trainset, 10)
+    suptrainset = torch.utils.data.Subset(trainset, list(range(0,1000)))
+    # suptrainset = balancedMiniDataset(trainset, 10)
     unsuptrainset = torch.utils.data.Subset(trainset, list(range(3000,len(trainset))))
     # suptrainset = unsuptrainset
     testset = torch.utils.data.Subset(trainset, list(range(1000,3000)))

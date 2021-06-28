@@ -25,7 +25,8 @@ import torch.optim as optim
 
 if __name__ == '__main__':
 
-    learning_rate = 0.000001
+    # learning_rate = 0.000001
+    learning_rate = 0.001
     numEpochs = 200
     batch_size = 4
     
@@ -57,13 +58,27 @@ if __name__ == '__main__':
 
     model = models.resnet50(pretrained = True)
     model.fc = nn.Linear(int(model.fc.in_features), 20)
+    
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    
     # optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
-    lr = [1e-5, 5e-3]
-    optimizer = optim.SGD([   
-        {'params': list(model.parameters())[:-1], 'lr': lr[0], 'momentum': 0.9},
-        {'params': list(model.parameters())[-1], 'lr': lr[1], 'momentum': 0.9}
-        ])
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, 12, eta_min=0, last_epoch=-1)
+    # lr = [1e-5, 5e-3]
+    # optimizer = optim.SGD([   
+    #     {'params': list(model.parameters())[:-1], 'lr': lr[0], 'momentum': 0.9},
+    #     {'params': list(model.parameters())[-1], 'lr': lr[1], 'momentum': 0.9}
+    #     ])
+    # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, 12, eta_min=0, last_epoch=-1)
+    weight = torch.tensor([0.87713311, 1.05761317, 0.73638968, 1.11496746, 0.78593272, 1.33506494,
+                           0.4732965, 0.514, 0.47548566, 1.9469697, 0.97348485, 0.43670348,
+                           1.15765766, 1.06639004, 0.13186249, 1.05544148, 1.71906355, 1.04684318,
+                           1.028, 0.93624772])
+    weight = weight.to(device)
+
+    criterion = nn.MultiLabelSoftMarginLoss(weight=weight)
+    optimizer = torch.optim.SGD(model.parameters(),
+                                lr=learning_rate, momentum=0.9, weight_decay=0.0001)
+    scheduler = None
+    
     
     
     all_checkpoints = os.listdir('saved_checkpoints')
@@ -79,7 +94,6 @@ if __name__ == '__main__':
                 PATH = 'saved_checkpoints/' + all_checkpoints[whichCheckpoint]
 
             print('Loading Saved Model', PATH)
-            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             checkpoint = torch.load(PATH, map_location=device)
             model.load_state_dict(checkpoint['model_state_dict'])
             # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -109,10 +123,29 @@ if __name__ == '__main__':
 
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
+        
+        # def findWord(arr, idx2label):
+        #     for item in arr:
+        #         ones = np.argwhere(item.numpy())
+        #         ones = [i[0] for i in ones]
+        #         print(idx2label[ones[0]])
 
         # f = open("imagenet_class_index.json",)
         # class_idx = json.load(f)
         # idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
+        
+        # def showImg(arr):
+        #     fig, axs = plt.subplots(1,4)
+        #     counter = 0
+        #     for item in arr:
+        #         bb = np.moveaxis(arr[counter].numpy(),0,-1)
+        #         bb -= np.min(bb)
+        #         bb = bb/ np.max(bb)
+        #         axs[counter].imshow(bb)
+        #         counter += 1
+        #     plt.show()
+        
+        
         idx2label = ['aeroplane','bicycle', 'bird', 'boat', 'bottle', 'bus', 
                      'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 
                      'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']

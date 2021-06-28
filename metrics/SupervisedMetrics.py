@@ -59,10 +59,11 @@ class Evaluator:
         print('\n Test Model Unsupervised Loss: %.3f' % float(running_loss / datasetSize))
         if storeLoss:
             self.unsupervised_losses.append(float(running_loss / datasetSize))
-    def evaluateUpdateLosses(self, model, testloader, criteron, CAMLossInstance, device, optimizer):
-        print('evaluating unsupervised performance')
-        CAMLossInstance.cam_model.activations_and_grads.register_hooks()
-        self.evaluateModelUnsupervisedPerformance(model, testloader, CAMLossInstance, device, optimizer, storeLoss = True)
+    def evaluateUpdateLosses(self, model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True):
+        if unsupervised:
+            print('evaluating unsupervised performance')
+            CAMLossInstance.cam_model.activations_and_grads.register_hooks()
+            self.evaluateModelUnsupervisedPerformance(model, testloader, CAMLossInstance, device, optimizer, storeLoss = True)
         print('evaluating supervised performance')
         CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
         self.evaluateModelSupervisedPerformance(model, testloader, criteron, device, optimizer, storeLoss = True)

@@ -57,7 +57,7 @@ if __name__ == '__main__':
     
 
     model = models.resnet50(pretrained = True)
-    model.fc = nn.Linear(int(model.fc.in_features), 20)
+    
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
@@ -79,21 +79,32 @@ if __name__ == '__main__':
     epoch = 0
     
     if sys.argv[1] == 'loadCheckpoint':
-        whichCheckpoint = 4
+        whichCheckpoint = 6
         if len(all_checkpoints) > 0:
             
             if os.path.isdir('/scratch/'):
-                PATH = '/scratch/users/alimirz1/saved_batches/...'
+                # PATH = '/scratch/users/alimirz1/saved_batches/...'
+                PATH = '/home/users/alimirz1/SemisupervisedAttention/saved_checkpoints/resnet50-19c8e357.pth'
             else:
                 PATH = 'saved_checkpoints/' + all_checkpoints[whichCheckpoint]
 
             print('Loading Saved Model', PATH)
-            checkpoint = torch.load(PATH, map_location=device)
-            model.load_state_dict(checkpoint['model_state_dict'])
-            # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            epoch = checkpoint['epoch']
-            # loss = checkpoint['loss']
+            
+            if True:
+                net_state_dict = model.state_dict()
+                pretrained_dict34 = torch.load(PATH,map_location=device)
+                pretrained_dict_1 = {k: v for k, v in pretrained_dict34.items() if k in net_state_dict}
+                net_state_dict.update(pretrained_dict_1)
+                model.load_state_dict(net_state_dict)             
+            else:
+                checkpoint = torch.load(PATH, map_location=device)
+                model.load_state_dict(checkpoint['model_state_dict'])
+                # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                epoch = checkpoint['epoch']
+                # loss = checkpoint['loss']
         
+    model.fc = nn.Linear(int(model.fc.in_features), 20)
+    
     target_layer = model.layer4[-1] ##this is the layer before the pooling
 
 

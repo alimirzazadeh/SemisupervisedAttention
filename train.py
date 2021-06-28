@@ -55,7 +55,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
         allLossImg = np.load(imgPath)
     
     print('evaluating')
-    LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer)
+    LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=False)
     print('finished evaluating')
         
     supdatasetSize = len(suptrainloader.dataset)
@@ -194,7 +194,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
             
         # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
         if epoch % 10 == 9:
-            LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer)
+            LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=False)
     LossEvaluator.plotLosses(batchDirectory=batchDirectory)
 def saveCheckpoint(EPOCH, net, optimizer, batchDirectory=''):
     PATH = batchDirectory+"saved_checkpoints/"+"model_"+str(EPOCH)+".pt"

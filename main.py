@@ -68,13 +68,7 @@ if __name__ == '__main__':
     #     {'params': list(model.parameters())[-1], 'lr': lr[1], 'momentum': 0.9}
     #     ])
     # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, 12, eta_min=0, last_epoch=-1)
-    weight = torch.tensor([0.87713311, 1.05761317, 0.73638968, 1.11496746, 0.78593272, 1.33506494,
-                           0.4732965, 0.514, 0.47548566, 1.9469697, 0.97348485, 0.43670348,
-                           1.15765766, 1.06639004, 0.13186249, 1.05544148, 1.71906355, 1.04684318,
-                           1.028, 0.93624772])
-    weight = weight.to(device)
 
-    criterion = nn.MultiLabelSoftMarginLoss(weight=weight)
     optimizer = torch.optim.SGD(model.parameters(),
                                 lr=learning_rate, momentum=0.9, weight_decay=0.0001)
     scheduler = None

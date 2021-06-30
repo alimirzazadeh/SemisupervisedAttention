@@ -26,9 +26,9 @@ import torch.optim as optim
 
 if __name__ == '__main__':
 
-    # learning_rate = 0.000001
-    learning_rate = 0.001
-    numEpochs = 200
+    learning_rate = 0.0000002
+    # learning_rate = 0.001
+    numEpochs = 120
     batch_size = 4
     
     
@@ -43,8 +43,7 @@ if __name__ == '__main__':
         batchDirectory = ''
     ## Load the CIFAR Dataset
     # suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
-    suptrainloader, testloader = loadPascalData(batch_size=batch_size)
-    unsuptrainloader = None
+    suptrainloader, unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
@@ -63,7 +62,7 @@ if __name__ == '__main__':
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
-    # optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
     # lr = [1e-5, 5e-3]
     # optimizer = optim.SGD([   
     #     {'params': list(model.parameters())[:-1], 'lr': lr[0], 'momentum': 0.9},
@@ -71,8 +70,8 @@ if __name__ == '__main__':
     #     ])
     # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, 12, eta_min=0, last_epoch=-1)
 
-    optimizer = torch.optim.SGD(model.parameters(),
-                                lr=learning_rate, momentum=0.9, weight_decay=0.0001)
+    #optimizer = torch.optim.SGD(model.parameters(),
+    #                            lr=learning_rate, momentum=0.9, weight_decay=0.0001)
     scheduler = None
     
     

@@ -31,8 +31,8 @@ class CAMLoss(nn.Module):
     def forward(self, input_tensor,  target_category, logs=False, visualize=False):
         assert(len(input_tensor.shape) > 3)
         
-        resolutionMatch = 3 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
-        similarityMetric = 2 #Pearson, cross corr, SSIM
+        resolutionMatch = 0 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
+        similarityMetric = 0 #Pearson, cross corr, SSIM
         
        
         correlation_pearson = torch.zeros(1)

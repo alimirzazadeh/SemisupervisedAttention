@@ -40,11 +40,11 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                            1.15765766, 1.06639004, 0.13186249, 1.05544148, 1.71906355, 1.04684318,
                            1.028, 0.93624772])
     weight = weight.to(device)
-    criteron = nn.MultiLabelSoftMarginLoss(weight=weight)
+    # criteron = nn.MultiLabelSoftMarginLoss(weight=weight)
         
     
     # criteron = torch.nn.CrossEntropyLoss()
-    # criteron = nn.BCEWithLogitsLoss()
+    criteron = nn.BCEWithLogitsLoss()
 
     if trackLoss:
         imgPath = batchDirectory + 'saved_figs/track_lossImg.npy'

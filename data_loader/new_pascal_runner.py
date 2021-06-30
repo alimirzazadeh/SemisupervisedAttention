@@ -70,7 +70,10 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
                                       download=download_data, 
                                       transform=transformations, 
                                       target_transform=encode_labels)
-    
+
+
+    dataset_train = torch.utils.data.Subset(dataset_train, list(range(0,500))) 
+    unsup_train = torch.utils.data.Subset(dataset_train, list(range(500,len(dataset_train))))
     
 
     dataset_valid = PascalVOC_Dataset(data_dir,
@@ -82,6 +85,7 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
     
     
     train_loader = DataLoader(dataset_train, batch_size=batch_size, num_workers=4, shuffle=True)
+    unsup_loader = DataLoader(unsup_train, batch_size=batch_size, num_workers=4, shuffle=True)
     valid_loader = DataLoader(dataset_valid, batch_size=batch_size, num_workers=4)
     
-    return train_loader, valid_loader
+    return train_loader, unsup_loader, valid_loader

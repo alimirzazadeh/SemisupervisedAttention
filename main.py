@@ -16,7 +16,8 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 
 from data_loader.cifar_data_loader import loadCifarData
-from data_loader.pascal_runner import loadPascalData
+# from data_loader.pascal_runner import loadPascalData
+from data_loader.new_pascal_runner import loadPascalData
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 # from model.loss import calculateLoss
@@ -41,8 +42,9 @@ if __name__ == '__main__':
     else:
         batchDirectory = ''
     ## Load the CIFAR Dataset
-    suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
-
+    # suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
+    suptrainloader, testloader = loadPascalData(batch_size=batch_size)
+    unsuptrainloader = None
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:

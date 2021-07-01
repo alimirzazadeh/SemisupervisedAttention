@@ -67,7 +67,8 @@ class BaseCAM:
 
         if target_category is None:
             # print("Category shapes: ", output.cpu().data.numpy().shape)
-            target_category = np.argmax(output.cpu().data.numpy(), axis=-1)
+            out_output = output.cpu().data.numpy()
+            target_category = np.argmax(out_output, axis=-1)
             # print(target_category)
             # print("Labels: ", self.idx2label[target_category[0]])
             # print(target_category)
@@ -101,6 +102,7 @@ class BaseCAM:
             result.append(img[0,0,:,:])
         # result = np.float32(result)
         if returnTarget:
+            target_category = out_output.argsort()[0][-3:][::-1]
             return result, target_category
         else:
             return result

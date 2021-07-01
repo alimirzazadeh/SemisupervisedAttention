@@ -31,7 +31,7 @@ class CAMLoss(nn.Module):
     def forward(self, input_tensor,  target_category, logs=False, visualize=False):
         assert(len(input_tensor.shape) > 3)
         
-        resolutionMatch = 0 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
+        resolutionMatch = 1 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
         similarityMetric = 0 #Pearson, cross corr, SSIM
         
        
@@ -68,9 +68,9 @@ class CAMLoss(nn.Module):
             gb_correlate = self.gb_model(thisImgPreprocessed, target_category=target_category)
             
             def processGB(gb_correlate):
-                gb_correlate_std = torch.std(gb_correlate)
-                if (gb_correlate_std > 0):
-                    gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
+                # gb_correlate_std = torch.std(gb_correlate)
+                # if (gb_correlate_std > 0):
+                #     gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
     
                 gb_correlate = torch.abs(gb_correlate) ################################################################################# 
                 gb_correlate = torch.sum(gb_correlate, axis = 2)
@@ -78,19 +78,25 @@ class CAMLoss(nn.Module):
 
             def standardize(arr):
                 arr = (arr - torch.mean(arr))/torch.std(arr)
+                m = nn.Sigmoid()
+                return m(arr)
+            
+            def reshaper(arr):
                 return arr.unsqueeze(0).unsqueeze(0).float()
             
             
             gb_correlate = processGB(gb_correlate)
+            cam_result = cam_result
+            
             
             if resolutionMatch == 0:
-                firstCompare = cam_result
-                secondCompare = gb_correlate
+                firstCompare = standardize(cam_result)
+                secondCompare = standardize(gb_correlate)
             elif resolutionMatch == 1:
                 m = nn.AvgPool2d(32)
-                gb_correlate = m(gb_correlate.unsqueeze(0).unsqueeze(0))[0,0,:,:]
-                firstCompare = cam_result
-                secondCompare = gb_correlate
+                gb_correlate = m(reshaper(gb_correlate))[0,0,:,:]
+                firstCompare = standardize(cam_result)
+                secondCompare = standardize(gb_correlate)
             elif resolutionMatch == 2:
                 ww = -8
                 sigma = torch.mean(gb_correlate) + torch.std(gb_correlate) / 2
@@ -101,8 +107,8 @@ class CAMLoss(nn.Module):
                 newImgPreprocessed = newImgTensor.unsqueeze(0)
                 new_grayscale_cam = self.cam_model(input_tensor=newImgPreprocessed, target_category=int(topClass[0]), upSample=upSample)
                 new_cam_result = new_grayscale_cam[0]
-                firstCompare = cam_result
-                secondCompare = new_cam_result
+                firstCompare = standardize(cam_result)
+                secondCompare = standardize(new_cam_result)
             elif resolutionMatch == 3:
                 ww = -32
                 sigma = torch.mean(cam_result) + torch.std(cam_result) / 2
@@ -115,12 +121,14 @@ class CAMLoss(nn.Module):
                 newImgPreprocessed.type(torch.DoubleTensor) 
                 new_gb = self.gb_model(newImgPreprocessed.float(), target_category=int(topClass[0]))
                 new_gb = processGB(new_gb)
-                firstCompare = gb_correlate
-                secondCompare = new_gb
+                firstCompare = standardize(gb_correlate)
+                secondCompare = standardize(new_gb)
 
                 
                 
             if visualize:
+                # print(firstCompare.shape, secondCompare.shape)
+                # print(firstCompare.dtype, secondCompare.dtype)
                 hmps.append(firstCompare.numpy())
                 gbimgs.append(secondCompare.numpy())
             
@@ -135,11 +143,11 @@ class CAMLoss(nn.Module):
                 else:
                     cost = torch.zeros(1)       
             elif similarityMetric == 1:
-                cost = -1 * torch.abs(F.conv2d(standardize(firstCompare), standardize(secondCompare))) 
+                cost = -1 * torch.abs(F.conv2d(reshaper(firstCompare), reshaper(secondCompare))) 
                 cost = cost.squeeze()
             elif similarityMetric == 2:
                 ssim_loss = pytorch_ssim.SSIM()
-                cost = -ssim_loss(standardize(firstCompare), standardize(secondCompare))
+                cost = -ssim_loss(reshaper(firstCompare), reshaper(secondCompare))
                 
                 
                 
@@ -196,7 +204,7 @@ class CAMLoss(nn.Module):
             # print(np.min(final_gb_frame), np.max(final_gb_frame), np.median(final_gb_frame))
             # print(final_gb_frame.dtype, final_hmp_frame.dtype)
 
-            data = np.array(cv2.vconcat([final_hmp_frame, final_gb_frame.astype('float64')]))
+            data = np.array(cv2.vconcat([final_hmp_frame.astype('float64'), final_gb_frame.astype('float64')]))
             return correlations, data
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
             

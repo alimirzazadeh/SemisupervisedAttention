@@ -96,8 +96,8 @@ class BaseCAM:
             if upSample:
                 img = torch.nn.functional.upsample_bilinear(img.double(),size=list(input_tensor.shape[-2:][::-1]))
             # print(img.shape)
-            img = img - torch.min(img)
-            img = img / torch.max(img)
+            # img = img - torch.min(img)
+            # img = img / torch.max(img)
             result.append(img[0,0,:,:])
         # result = np.float32(result)
         if returnTarget:

@@ -79,6 +79,9 @@ if __name__ == '__main__':
     all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0
     
+    model.fc = nn.Linear(int(model.fc.in_features), 20)
+    print(model.fc.weight)
+    
     if sys.argv[1] == 'loadCheckpoint':
         whichCheckpoint = 6
         if len(all_checkpoints) > 0:
@@ -87,11 +90,11 @@ if __name__ == '__main__':
                 # PATH = '/scratch/users/alimirz1/saved_batches/...'
                 PATH = '/home/users/alimirz1/SemisupervisedAttention/saved_checkpoints/resnet50-19c8e357.pth'
             else:
-                PATH = 'saved_checkpoints/' + all_checkpoints[whichCheckpoint]
+                PATH = 'saved_checkpoints/model_159_reallyGood.pt' #+ all_checkpoints[whichCheckpoint]
 
             print('Loading Saved Model', PATH)
             
-            if True:
+            if False:
                 net_state_dict = model.state_dict()
                 pretrained_dict34 = torch.load(PATH,map_location=device)
                 pretrained_dict_1 = {k: v for k, v in pretrained_dict34.items() if k in net_state_dict}
@@ -104,11 +107,11 @@ if __name__ == '__main__':
                 epoch = checkpoint['epoch']
                 # loss = checkpoint['loss']
         
-    model.fc = nn.Linear(int(model.fc.in_features), 20)
+    
     
     target_layer = model.layer4[-1] ##this is the layer before the pooling
 
-
+    print(model.fc.weight)
     model.conv1.padding_mode = 'reflect'
     for x in model.layer1:
         x.conv2.padding_mode = 'reflect'

@@ -102,8 +102,10 @@ class BaseCAM:
             result.append(img[0,0,:,:])
         # result = np.float32(result)
         if returnTarget:
-            target_category = out_output.argsort()[0][-3:][::-1]
-            return result, target_category
+            target_categories = out_output.argsort()[0][-3:][::-1]
+            target_weight = out_output[:,target_category].squeeze()
+            target_weight[target_weight < 0] = 0
+            return result, target_categories, target_weight
         else:
             return result
 

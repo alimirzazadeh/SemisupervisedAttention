@@ -71,7 +71,7 @@ class CAMLoss(nn.Module):
                 if target_category != None:
                     target_category = int(topClass[whichTargetCategory])
                     
-                grayscale_cam, topClass = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category, returnTarget=True , upSample=upSample)
+                grayscale_cam, topClass, targetWeight = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category, returnTarget=True , upSample=upSample)
                 
                 if target_category == None:
                     target_category = int(topClass[whichTargetCategory])
@@ -167,7 +167,7 @@ class CAMLoss(nn.Module):
                     
                     
                 correlation_pearson2 = correlation_pearson.clone() 
-                correlation_pearson = correlation_pearson2 + cost
+                correlation_pearson = correlation_pearson2 + cost * targetWeight
             
 
             

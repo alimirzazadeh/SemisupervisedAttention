@@ -28,7 +28,7 @@ class CAMLoss(nn.Module):
         
     def forward(self, predict, target):
         print("hey")
-    def forward(self, input_tensor,  target_category, logs=False, visualize=False):
+    def forward(self, input_tensor,  target_category , logs=False, visualize=False):
         assert(len(input_tensor.shape) > 3)
         
         resolutionMatch = 1 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
@@ -48,6 +48,7 @@ class CAMLoss(nn.Module):
             
         
         for i in range(input_tensor.shape[0]):
+            target_category = None
             for whichTargetCategory in range(topHowMany):   
                 
 
@@ -77,7 +78,8 @@ class CAMLoss(nn.Module):
 
                 
                 cam_result = grayscale_cam[0]  #####WHY IS THERE 2? and we're taking the first one?
-    
+                
+                ##doesn't automatically zero gradients, so should be feeding in new img every time
                 gb_correlate = self.gb_model(thisImgPreprocessed, target_category=target_category)
                 
                 def processGB(gb_correlate):

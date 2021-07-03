@@ -92,7 +92,8 @@ class CAMLoss(nn.Module):
                     return gb_correlate
     
                 def standardize(arr):
-                    arr = (arr - torch.mean(arr))/torch.std(arr)
+                    return (arr - torch.mean(arr))/torch.std(arr)
+                def sigmoidIt(arr):
                     m = nn.Sigmoid()
                     return m(arr)
                 
@@ -150,6 +151,8 @@ class CAMLoss(nn.Module):
                 
                 
                 if similarityMetric == 0:
+                    firstCompare = sigmoidIt(firstCompare)
+                    secondCompare = sigmoidIt(secondCompare)
                     vx = firstCompare - torch.mean(firstCompare)
                     vy = secondCompare - torch.mean(secondCompare)
                     denominator = torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2))
@@ -158,6 +161,8 @@ class CAMLoss(nn.Module):
                     else:
                         cost = torch.zeros(1)       
                 elif similarityMetric == 1:
+                    firstCompare = sigmoidIt(firstCompare)
+                    secondCompare = sigmoidIt(secondCompare)
                     cost = -1 * torch.abs(F.conv2d(reshaper(firstCompare), reshaper(secondCompare))) 
                     cost = cost.squeeze()
                 elif similarityMetric == 2:

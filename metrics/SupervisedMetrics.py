@@ -6,6 +6,7 @@ Created on Thu Jun 10 15:28:10 2021
 """
 import torch
 import matplotlib.pyplot as plt
+import torch.nn as nn
 
 class Evaluator:
     def __init__(self):
@@ -17,6 +18,11 @@ class Evaluator:
         model.eval()
         running_corrects = 0
         running_loss = 0.0
+        
+        tp = None
+        fp = None
+        fn = None
+        
         datasetSize = len(testloader.dataset)
         print('.')
         with torch.set_grad_enabled(False):
@@ -35,11 +41,33 @@ class Evaluator:
                 # running_corrects += torch.sum(preds == labels.data)
                 for pred in range(preds.shape[0]):
                     running_corrects += labels[pred, int(preds[pred])]
+                    m = nn.Sigmoid()
+                    pred_probability = m(outputs[pred])
+                    pred_logits = (pred_probability > 0.5).int()
+                    
+                    if tp == None:
+                        tp = (pred_logits + labels[pred] > 1).int()
+                        fp = (torch.subtract(pred_logits, labels[pred]) > 0).int()
+                        fn = (torch.subtract(pred_logits, labels[pred]) < 0).int()
+                    else:
+                        tp += (pred_logits + labels[pred] > 1).int()
+                        fp += (torch.subtract(pred_logits, labels[pred]) > 0).int()
+                        fn += (torch.subtract(pred_logits, labels[pred]) < 0).int()
+                    
+                    # if labels[pred, int(preds[pred])] == 1:
+                    #     tp += 1
+                    # else:
+                    #     fp += 1
+                    # fn += 
                     # print(labels[pred, int(preds[pred])])
                 # print(running_corrects.item())
-                del l1, inputs, labels, outputs, preds
+                # del l1, inputs, labels, outputs, preds
             print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))
             print('\n Test Model Supervised Loss: %.3f' % float(running_loss / datasetSize))
+            f1_score = self.calculateF1score(tp, fp, fn)
+            print('\n F1 Score: \n', f1_score.data.cpu().numpy())
+            
+            
             if storeLoss:
                 self.supervised_losses.append(float(running_loss / datasetSize))
                 self.accuracies.append(float(running_corrects.item() / datasetSize))
@@ -82,4 +110,8 @@ class Evaluator:
         plt.plot(self.accuracies, label="Accuracy")
         plt.savefig(batchDirectory+'saved_figs/AccuracyPlot.png')
         # plt.legend()
+    def calculateF1score(tp, fp, fn):
+        recall = tp / (tp + fn)
+        precision = tp / (tp + fp)
+        return 2 * (recall * precision) / (recall + precision)
         

@@ -31,8 +31,8 @@ class CAMLoss(nn.Module):
     def forward(self, input_tensor,  target_category , logs=False, visualize=False):
         assert(len(input_tensor.shape) > 3)
         
-        resolutionMatch = 1 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
-        similarityMetric = 0 #Pearson, cross corr, SSIM
+        resolutionMatch = 2 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
+        similarityMetric = 2 #Pearson, cross corr, SSIM
         topHowMany = 1
         
        
@@ -117,6 +117,7 @@ class CAMLoss(nn.Module):
                     ww = -8
                     sigma = torch.mean(gb_correlate) + torch.std(gb_correlate) / 2
                     TAc = 1/ (1 + torch.exp(ww * (gb_correlate - sigma)))
+                    TAc = TAc.to(self.device)
                     TAc = TAc.unsqueeze(0)
                     TAc = torch.repeat_interleave(TAc, 3, dim=0)
                     newImgTensor = TAc * thisImgTensor
@@ -167,12 +168,14 @@ class CAMLoss(nn.Module):
                     cost = cost.squeeze()
                 elif similarityMetric == 2:
                     ssim_loss = pytorch_ssim.SSIM()
-                    cost = -ssim_loss(reshaper(firstCompare), reshaper(secondCompare))
+                    cost = 1 - ssim_loss(reshaper(firstCompare), reshaper(secondCompare))
                     
                     
-                    
+                #if targetWeight < 0:
+                #    targetWeight = 0
+                #    print('target less than 0!')
                 correlation_pearson2 = correlation_pearson.clone() 
-                correlation_pearson = correlation_pearson2 + cost * targetWeight
+                correlation_pearson = correlation_pearson2 + cost #* targetWeight
             
 
             

@@ -26,9 +26,9 @@ import torch.optim as optim
 
 if __name__ == '__main__':
 
-    learning_rate = 0.0000002
+    learning_rate = 0.00001
     # learning_rate = 0.001
-    numEpochs = 120
+    numEpochs = 400
     batch_size = 4
     
     
@@ -88,7 +88,8 @@ if __name__ == '__main__':
             
             if os.path.isdir('/scratch/'):
                 # PATH = '/scratch/users/alimirz1/saved_batches/...'
-                PATH = '/home/users/alimirz1/SemisupervisedAttention/saved_checkpoints/resnet50-19c8e357.pth'
+                # PATH = '/scratch/users/alimirz1/saved_batches/exp_11/saved_checkpoints/model_59.pt'
+                PATH = '/scratch/users/alimirz1/saved_batches/savingAfter15Sup/saved_checkpoints/model_14.pt'
             else:
                 PATH = 'saved_checkpoints/model_159_reallyGood.pt' #+ all_checkpoints[whichCheckpoint]
 
@@ -202,7 +203,7 @@ if __name__ == '__main__':
     if sys.argv[3] == 'train':
         trackLoss = sys.argv[4] == 'trackLoss'
         print(trackLoss)
-        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, scheduler=scheduler)
+        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, scheduler=scheduler, batch_size=batch_size)
     
     
     

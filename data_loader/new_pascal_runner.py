@@ -72,7 +72,7 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
                                       target_transform=encode_labels)
 
 
-    dataset_train = torch.utils.data.Subset(dataset_train_orig, list(range(0,500))) 
+    dataset_train = torch.utils.data.Subset(dataset_train_orig, list(range(0,50))) 
     unsup_train = torch.utils.data.Subset(dataset_train_orig, list(range(500,len(dataset_train_orig))))
     
 

@@ -110,7 +110,7 @@ class Evaluator:
         plt.plot(self.accuracies, label="Accuracy")
         plt.savefig(batchDirectory+'saved_figs/AccuracyPlot.png')
         # plt.legend()
-    def calculateF1score(tp, fp, fn):
+    def calculateF1score(self, tp, fp, fn):
         recall = tp / (tp + fn)
         precision = tp / (tp + fp)
         return 2 * (recall * precision) / (recall + precision)

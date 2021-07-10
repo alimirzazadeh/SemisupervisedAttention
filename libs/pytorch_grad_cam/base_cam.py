@@ -67,7 +67,8 @@ class BaseCAM:
 
         if target_category is None:
             # print("Category shapes: ", output.cpu().data.numpy().shape)
-            target_category = np.argmax(output.cpu().data.numpy(), axis=-1)
+            out_output = output.cpu().data.numpy()
+            target_category = np.argmax(out_output, axis=-1)
             # print(target_category)
             # print("Labels: ", self.idx2label[target_category[0]])
             # print(target_category)
@@ -96,12 +97,15 @@ class BaseCAM:
             if upSample:
                 img = torch.nn.functional.upsample_bilinear(img.double(),size=list(input_tensor.shape[-2:][::-1]))
             # print(img.shape)
-            img = img - torch.min(img)
-            img = img / torch.max(img)
+            # img = img - torch.min(img)
+            # img = img / torch.max(img)
             result.append(img[0,0,:,:])
         # result = np.float32(result)
         if returnTarget:
-            return result, target_category
+            target_categories = out_output.argsort()[0][-3:][::-1]
+            target_weight = out_output[:,target_category].squeeze()
+            target_weight[target_weight < 0] = 0
+            return result, target_categories, target_weight
         else:
             return result
 

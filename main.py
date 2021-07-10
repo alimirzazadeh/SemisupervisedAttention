@@ -16,17 +16,22 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 
 from data_loader.cifar_data_loader import loadCifarData
-from data_loader.pascal_runner import loadPascalData
+# from data_loader.pascal_runner import loadPascalData
+from data_loader.new_pascal_runner import loadPascalData
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 # from model.loss import calculateLoss
 from train import train
+import torch.optim as optim
 
 if __name__ == '__main__':
 
-    learning_rate = 0.000001
-    numEpochs = 200
-
+    learning_rate = 0.00001
+    # learning_rate = 0.001
+    numEpochs = 400
+    batch_size = 4
+    
+    
     print('Learning Rate: ', learning_rate)
     print('Number of Epochs: ', numEpochs)
 
@@ -37,8 +42,8 @@ if __name__ == '__main__':
     else:
         batchDirectory = ''
     ## Load the CIFAR Dataset
-    suptrainloader,unsuptrainloader, testloader = loadPascalData()
-
+    # suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
+    suptrainloader, unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
@@ -53,32 +58,61 @@ if __name__ == '__main__':
     
 
     model = models.resnet50(pretrained = True)
-    model.fc = nn.Linear(int(model.fc.in_features), 20)
+    
+    
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    
     optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
+    # lr = [1e-5, 5e-3]
+    # optimizer = optim.SGD([   
+    #     {'params': list(model.parameters())[:-1], 'lr': lr[0], 'momentum': 0.9},
+    #     {'params': list(model.parameters())[-1], 'lr': lr[1], 'momentum': 0.9}
+    #     ])
+    # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, 12, eta_min=0, last_epoch=-1)
+
+    #optimizer = torch.optim.SGD(model.parameters(),
+    #                            lr=learning_rate, momentum=0.9, weight_decay=0.0001)
+    scheduler = None
+    
+    
     
     all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0
     
+    model.fc = nn.Linear(int(model.fc.in_features), 20)
+    print(model.fc.weight)
+    
     if sys.argv[1] == 'loadCheckpoint':
-        whichCheckpoint = 4
+        whichCheckpoint = 6
         if len(all_checkpoints) > 0:
             
             if os.path.isdir('/scratch/'):
-                PATH = '/scratch/users/alimirz1/saved_batches/...'
+                # PATH = '/scratch/users/alimirz1/saved_batches/...'
+                # PATH = '/scratch/users/alimirz1/saved_batches/exp_11/saved_checkpoints/model_59.pt'
+                PATH = '/scratch/users/alimirz1/saved_batches/savingAfter15Sup/saved_checkpoints/model_14.pt'
             else:
-                PATH = 'saved_checkpoints/' + all_checkpoints[whichCheckpoint]
+                PATH = 'saved_checkpoints/model_159_reallyGood.pt' #+ all_checkpoints[whichCheckpoint]
 
             print('Loading Saved Model', PATH)
-            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-            checkpoint = torch.load(PATH, map_location=device)
-            model.load_state_dict(checkpoint['model_state_dict'])
-            # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            epoch = checkpoint['epoch']
-            # loss = checkpoint['loss']
+            
+            if False:
+                net_state_dict = model.state_dict()
+                pretrained_dict34 = torch.load(PATH,map_location=device)
+                pretrained_dict_1 = {k: v for k, v in pretrained_dict34.items() if k in net_state_dict}
+                net_state_dict.update(pretrained_dict_1)
+                model.load_state_dict(net_state_dict)             
+            else:
+                checkpoint = torch.load(PATH, map_location=device)
+                model.load_state_dict(checkpoint['model_state_dict'])
+                # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+                epoch = checkpoint['epoch']
+                # loss = checkpoint['loss']
         
+    
+    
     target_layer = model.layer4[-1] ##this is the layer before the pooling
 
-
+    print(model.fc.weight)
     model.conv1.padding_mode = 'reflect'
     for x in model.layer1:
         x.conv2.padding_mode = 'reflect'
@@ -99,10 +133,29 @@ if __name__ == '__main__':
 
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
+        
+        # def findWord(arr, idx2label):
+        #     for item in arr:
+        #         ones = np.argwhere(item.numpy())
+        #         ones = [i[0] for i in ones]
+        #         print(idx2label[ones[0]])
 
         # f = open("imagenet_class_index.json",)
         # class_idx = json.load(f)
         # idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
+        
+        # def showImg(arr):
+        #     fig, axs = plt.subplots(1,4)
+        #     counter = 0
+        #     for item in arr:
+        #         bb = np.moveaxis(arr[counter].numpy(),0,-1)
+        #         bb -= np.min(bb)
+        #         bb = bb/ np.max(bb)
+        #         axs[counter].imshow(bb)
+        #         counter += 1
+        #     plt.show()
+        
+        
         idx2label = ['aeroplane','bicycle', 'bird', 'boat', 'bottle', 'bus', 
                      'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 
                      'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
@@ -150,7 +203,7 @@ if __name__ == '__main__':
     if sys.argv[3] == 'train':
         trackLoss = sys.argv[4] == 'trackLoss'
         print(trackLoss)
-        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory)
+        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, scheduler=scheduler, batch_size=batch_size)
     
     
     

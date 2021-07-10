@@ -28,11 +28,12 @@ class CAMLoss(nn.Module):
         
     def forward(self, predict, target):
         print("hey")
-    def forward(self, input_tensor,  target_category, logs=False, visualize=False):
+    def forward(self, input_tensor,  target_category , logs=False, visualize=False):
         assert(len(input_tensor.shape) > 3)
         
-        resolutionMatch = 3 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
+        resolutionMatch = 2 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
         similarityMetric = 2 #Pearson, cross corr, SSIM
+        topHowMany = 1
         
        
         correlation_pearson = torch.zeros(1)
@@ -47,104 +48,134 @@ class CAMLoss(nn.Module):
             
         
         for i in range(input_tensor.shape[0]):
-            
-            thisImgTensor = input_tensor[i,:,:,:]
-            thisImgTensor = thisImgTensor.to(self.device)
-            thisImgPreprocessed = thisImgTensor.unsqueeze(0)
+            target_category = None
+            for whichTargetCategory in range(topHowMany):   
+                
 
-            
-            
-            
-            
-            if resolutionMatch == 1 or resolutionMatch == 2:
-                upSample = False
-            else:
-                upSample = True
-            
-            grayscale_cam, topClass = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category, returnTarget=True , upSample=upSample)
-
-            cam_result = grayscale_cam[0]  #####WHY IS THERE 2? and we're taking the first one?
-
-            gb_correlate = self.gb_model(thisImgPreprocessed, target_category=target_category)
-            
-            def processGB(gb_correlate):
-                gb_correlate_std = torch.std(gb_correlate)
-                if (gb_correlate_std > 0):
-                    gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
+                    
+                    
+                thisImgTensor = input_tensor[i,:,:,:]
+                thisImgTensor = thisImgTensor.to(self.device)
+                thisImgPreprocessed = thisImgTensor.unsqueeze(0)
     
-                gb_correlate = torch.abs(gb_correlate) ################################################################################# 
-                gb_correlate = torch.sum(gb_correlate, axis = 2)
-                return gb_correlate
-
-            def standardize(arr):
-                arr = (arr - torch.mean(arr))/torch.std(arr)
-                return arr.unsqueeze(0).unsqueeze(0).float()
-            
-            
-            gb_correlate = processGB(gb_correlate)
-            
-            if resolutionMatch == 0:
-                firstCompare = cam_result
-                secondCompare = gb_correlate
-            elif resolutionMatch == 1:
-                m = nn.AvgPool2d(32)
-                gb_correlate = m(gb_correlate.unsqueeze(0).unsqueeze(0))[0,0,:,:]
-                firstCompare = cam_result
-                secondCompare = gb_correlate
-            elif resolutionMatch == 2:
-                ww = -8
-                sigma = torch.mean(gb_correlate) + torch.std(gb_correlate) / 2
-                TAc = 1/ (1 + torch.exp(ww * (gb_correlate - sigma)))
-                TAc = TAc.unsqueeze(0)
-                TAc = torch.repeat_interleave(TAc, 3, dim=0)
-                newImgTensor = TAc * thisImgTensor
-                newImgPreprocessed = newImgTensor.unsqueeze(0)
-                new_grayscale_cam = self.cam_model(input_tensor=newImgPreprocessed, target_category=int(topClass[0]), upSample=upSample)
-                new_cam_result = new_grayscale_cam[0]
-                firstCompare = cam_result
-                secondCompare = new_cam_result
-            elif resolutionMatch == 3:
-                ww = -32
-                sigma = torch.mean(cam_result) + torch.std(cam_result) / 2
-                TAc = 1/ (1 + torch.exp(ww * (cam_result - sigma)))
-                TAc = TAc.unsqueeze(0)
-                TAc = torch.repeat_interleave(TAc, 3, dim=0)
-                TAc = TAc.to(self.device)
-                newImgTensor = TAc * thisImgTensor
-                newImgPreprocessed = newImgTensor.unsqueeze(0)
-                newImgPreprocessed.type(torch.DoubleTensor) 
-                new_gb = self.gb_model(newImgPreprocessed.float(), target_category=int(topClass[0]))
-                new_gb = processGB(new_gb)
-                firstCompare = gb_correlate
-                secondCompare = new_gb
-
                 
                 
-            if visualize:
-                hmps.append(firstCompare.numpy())
-                gbimgs.append(secondCompare.numpy())
-            
-            
-            
-            if similarityMetric == 0:
-                vx = firstCompare - torch.mean(firstCompare)
-                vy = secondCompare - torch.mean(secondCompare)
-                denominator = torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2))
-                if denominator > 0:
-                    cost = -1 * torch.sum(vx * vy) / denominator
+                
+                
+                if resolutionMatch == 1 or resolutionMatch == 2:
+                    upSample = False
                 else:
-                    cost = torch.zeros(1)       
-            elif similarityMetric == 1:
-                cost = -1 * torch.abs(F.conv2d(standardize(firstCompare), standardize(secondCompare))) 
-                cost = cost.squeeze()
-            elif similarityMetric == 2:
-                ssim_loss = pytorch_ssim.SSIM()
-                cost = -ssim_loss(standardize(firstCompare), standardize(secondCompare))
+                    upSample = True
+
+                    
+                if target_category != None:
+                    target_category = int(topClass[whichTargetCategory])
+                    
+                grayscale_cam, topClass, targetWeight = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category, returnTarget=True , upSample=upSample)
+                
+                if target_category == None:
+                    target_category = int(topClass[whichTargetCategory])
+
+                
+                cam_result = grayscale_cam[0]  #####WHY IS THERE 2? and we're taking the first one?
+                
+                ##doesn't automatically zero gradients, so should be feeding in new img every time
+                gb_correlate = self.gb_model(thisImgPreprocessed, target_category=target_category)
+                
+                def processGB(gb_correlate):
+                    # gb_correlate_std = torch.std(gb_correlate)
+                    # if (gb_correlate_std > 0):
+                    #     gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
+        
+                    gb_correlate = torch.abs(gb_correlate) ################################################################################# 
+                    gb_correlate = torch.sum(gb_correlate, axis = 2)
+                    return gb_correlate
+    
+                def standardize(arr):
+                    return (arr - torch.mean(arr))/torch.std(arr)
+                def sigmoidIt(arr):
+                    m = nn.Sigmoid()
+                    return m(arr)
+                
+                def reshaper(arr):
+                    return arr.unsqueeze(0).unsqueeze(0).float()
+                
+                
+                gb_correlate = processGB(gb_correlate)
+                cam_result = cam_result
+                
+                
+                if resolutionMatch == 0:
+                    firstCompare = standardize(cam_result)
+                    secondCompare = standardize(gb_correlate)
+                elif resolutionMatch == 1:
+                    m = nn.AvgPool2d(32)
+                    gb_correlate = m(reshaper(gb_correlate))[0,0,:,:]
+                    firstCompare = standardize(cam_result)
+                    secondCompare = standardize(gb_correlate)
+                elif resolutionMatch == 2:
+                    ww = -8
+                    sigma = torch.mean(gb_correlate) + torch.std(gb_correlate) / 2
+                    TAc = 1/ (1 + torch.exp(ww * (gb_correlate - sigma)))
+                    TAc = TAc.to(self.device)
+                    TAc = TAc.unsqueeze(0)
+                    TAc = torch.repeat_interleave(TAc, 3, dim=0)
+                    newImgTensor = TAc * thisImgTensor
+                    newImgPreprocessed = newImgTensor.unsqueeze(0)
+                    new_grayscale_cam = self.cam_model(input_tensor=newImgPreprocessed, target_category=target_category, upSample=upSample)
+                    new_cam_result = new_grayscale_cam[0]
+                    firstCompare = standardize(cam_result)
+                    secondCompare = standardize(new_cam_result)
+                elif resolutionMatch == 3:
+                    ww = -32
+                    sigma = torch.mean(cam_result) + torch.std(cam_result) / 2
+                    TAc = 1/ (1 + torch.exp(ww * (cam_result - sigma)))
+                    TAc = TAc.unsqueeze(0)
+                    TAc = torch.repeat_interleave(TAc, 3, dim=0)
+                    TAc = TAc.to(self.device)
+                    newImgTensor = TAc * thisImgTensor
+                    newImgPreprocessed = newImgTensor.unsqueeze(0)
+                    newImgPreprocessed.type(torch.DoubleTensor) 
+                    new_gb = self.gb_model(newImgPreprocessed.float(), target_category=target_category)
+                    new_gb = processGB(new_gb)
+                    firstCompare = standardize(gb_correlate)
+                    secondCompare = standardize(new_gb)
+                                
+                    
+                    
+                if visualize:
+                    # print(firstCompare.shape, secondCompare.shape)
+                    # print(firstCompare.dtype, secondCompare.dtype)
+                    hmps.append(firstCompare.numpy())
+                    gbimgs.append(secondCompare.numpy())
                 
                 
                 
-            correlation_pearson2 = correlation_pearson.clone() 
-            correlation_pearson = correlation_pearson2 + cost
+                if similarityMetric == 0:
+                    firstCompare = sigmoidIt(firstCompare)
+                    secondCompare = sigmoidIt(secondCompare)
+                    vx = firstCompare - torch.mean(firstCompare)
+                    vy = secondCompare - torch.mean(secondCompare)
+                    denominator = torch.sqrt(torch.sum(vx ** 2)) * torch.sqrt(torch.sum(vy ** 2))
+                    if denominator > 0:
+                        cost = -1 * torch.sum(vx * vy) / denominator
+                    else:
+                        cost = torch.zeros(1)       
+                elif similarityMetric == 1:
+                    firstCompare = sigmoidIt(firstCompare)
+                    secondCompare = sigmoidIt(secondCompare)
+                    cost = -1 * torch.abs(F.conv2d(reshaper(firstCompare), reshaper(secondCompare))) 
+                    cost = cost.squeeze()
+                elif similarityMetric == 2:
+                    ssim_loss = pytorch_ssim.SSIM()
+                    cost = 1 - ssim_loss(reshaper(firstCompare), reshaper(secondCompare))
+                    
+                    
+                #if targetWeight < 0:
+                #    targetWeight = 0
+                #    print('target less than 0!')
+                correlation_pearson2 = correlation_pearson.clone() 
+                correlation_pearson = correlation_pearson2 + cost #* targetWeight
             
 
             
@@ -196,7 +227,7 @@ class CAMLoss(nn.Module):
             # print(np.min(final_gb_frame), np.max(final_gb_frame), np.median(final_gb_frame))
             # print(final_gb_frame.dtype, final_hmp_frame.dtype)
 
-            data = np.array(cv2.vconcat([final_hmp_frame, final_gb_frame.astype('float64')]))
+            data = np.array(cv2.vconcat([final_hmp_frame.astype('float64'), final_gb_frame.astype('float64')]))
             return correlations, data
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
             

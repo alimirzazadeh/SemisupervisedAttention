@@ -15,5 +15,3 @@ python3 visualizer/loss_visualizer.py
 
 How to save a training iteration:
 python3 project_saver.py
-
-test

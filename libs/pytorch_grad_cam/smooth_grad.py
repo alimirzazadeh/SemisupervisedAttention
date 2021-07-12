@@ -23,10 +23,11 @@ class SmoothGrad(VanillaGrad):
 
     def __call__(self, x, index=None):
         x = x.data.cpu().numpy()
-        stdev = self.stdev_spread * (np.max(x) - np.min(x))
-        total_gradients = np.zeros_like(x)
+        stdev = self.stdev_spread * (torch.max(x) - torch.min(x))
+        total_gradients = torch.zeros_like(x)
         for i in range(self.n_samples):
-            noise = np.random.normal(0, stdev, x.shape).astype(np.float32)
+            noise = torch.random.normal(
+                0, stdev, x.shape).astype(torch.float32)
             x_plus_noise = x + noise
             if self.cuda:
                 x_plus_noise = Variable(torch.from_numpy(
@@ -37,9 +38,9 @@ class SmoothGrad(VanillaGrad):
             output = self.pretrained_model(x_plus_noise)
 
             if index is None:
-                index = np.argmax(output.data.cpu().numpy())
+                index = torch.argmax(output.data.cpu().numpy())
 
-            one_hot = np.zeros((1, output.size()[-1]), dtype=np.float32)
+            one_hot = torch.zeros((1, output.size()[-1]), dtype=torch.float32)
             one_hot[0][index] = 1
             if self.cuda:
                 one_hot = Variable(torch.from_numpy(

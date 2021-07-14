@@ -32,10 +32,9 @@ def customTrain(model):
     model.apply(_freeze_norm_stats)
             
 
-def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=False, training='alternating', batchDirectory='', scheduler=None, batch_size=4):
-    alpha = 1 ##How many times to scale supervised dataset
+def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, trackLoss=False, training='alternating', batchDirectory='', scheduler=None, batch_size=4):
     print('alpha: ', alpha)
-    CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
+    CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric)
     LossEvaluator = Evaluator()
     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
     device = torch.device("cuda:0" if use_cuda else "cpu")

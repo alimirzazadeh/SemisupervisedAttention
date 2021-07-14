@@ -18,21 +18,23 @@ import torch.nn.functional as F
 import torch
 
 class CAMLoss(nn.Module):
-    def __init__(self, model, target_layer, use_cuda):
+    def __init__(self, model, target_layer, use_cuda, resolutionMatch, similarityMetric):
         super(CAMLoss, self).__init__()
         self.use_cuda = use_cuda
         self.device = torch.device("cuda:0" if self.use_cuda else "cpu")
         self.model = model
         self.cam_model = GradCAM(model=model, target_layer=target_layer, use_cuda=use_cuda)
         self.gb_model = GuidedBackpropReLUModel(model=model, use_cuda=use_cuda)
+        self.resolutionMatch = resolutionMatch
+        self.similarityMetric = similarityMetric
         
     def forward(self, predict, target):
         print("hey")
     def forward(self, input_tensor,  target_category , logs=False, visualize=False):
         assert(len(input_tensor.shape) > 3)
         
-        resolutionMatch = 2 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
-        similarityMetric = 2 #Pearson, cross corr, SSIM
+        resolutionMatch = self.resolutionMatch #Upsample CAM, Downsample GB, GB mask, Hmp Mask
+        similarityMetric = self.similarityMetric #Pearson, cross corr, SSIM
         topHowMany = 1
         
        

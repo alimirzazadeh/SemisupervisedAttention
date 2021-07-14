@@ -30,6 +30,9 @@ if __name__ == '__main__':
     # learning_rate = 0.001
     numEpochs = 400
     batch_size = 4
+    resolutionMatch = 2
+    similarityMetric = 2
+    alpha = 2
     
     
     print('Learning Rate: ', learning_rate)
@@ -132,7 +135,7 @@ if __name__ == '__main__':
     # load a few images from CIFAR and save
     if sys.argv[2] == 'visualLoss':
         from model.loss import CAMLoss
-        CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
+        CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric)
         dataiter = iter(testloader)
 
         device = torch.device("cuda:0" if use_cuda else "cpu")
@@ -207,7 +210,7 @@ if __name__ == '__main__':
     if sys.argv[3] == 'train':
         trackLoss = sys.argv[4] == 'trackLoss'
         print(trackLoss)
-        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, scheduler=scheduler, batch_size=batch_size)
+        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, scheduler=scheduler, batch_size=batch_size)
     
     
     

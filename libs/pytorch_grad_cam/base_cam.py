@@ -71,7 +71,7 @@ class BaseCAM:
 
         if target_category is None:
             # print("Category shapes: ", output.cpu().data.numpy().shape)
-            out_output = output.data.numpy()
+            out_output = output.data.cpu().numpy()
             target_category = np.argmax(out_output, axis=-1)
             # print("Target Category: ", target_category)
             # print(target_category)

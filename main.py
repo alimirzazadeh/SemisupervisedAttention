@@ -26,17 +26,20 @@ import torch.optim as optim
 
 if __name__ == '__main__':
 
-    learning_rate = 0.00001
-    # learning_rate = 0.001
-    numEpochs = 400
-    batch_size = 4
-    resolutionMatch = 2
-    similarityMetric = 2
-    alpha = 2
+    learning_rate = float(sys.argv[7]) #0.00001
+    numEpochs = int(sys.argv[8]) #400
+    batch_size = int(sys.argv[9]) #4
+    resolutionMatch = int(sys.argv[10]) #2
+    similarityMetric = int(sys.argv[11]) #2
+    alpha = int(sys.argv[12]) #2
     
-    
+    print('Training Mode: ', sys.argv[5])
     print('Learning Rate: ', learning_rate)
     print('Number of Epochs: ', numEpochs)
+    print('Batch Size: ', batch_size)
+    print('Resolution Match Mode: ', resolutionMatch)
+    print('Similarity Metric Mode: ', similarityMetric)
+    print('Alpha: ', alpha)
 
 
 
@@ -96,7 +99,7 @@ if __name__ == '__main__':
             if os.path.isdir('/scratch/'):
                 # PATH = '/scratch/users/alimirz1/saved_batches/...'
                 # PATH = '/scratch/users/alimirz1/saved_batches/exp_11/saved_checkpoints/model_59.pt'
-                PATH = '/scratch/users/alimirz1/saved_batches/savingAfter15Sup/saved_checkpoints/model_14.pt'
+                PATH = '/scratch/users/alimirz1/saved_batches/pre_gradFix/savingAfter15Sup/saved_checkpoints/model_14.pt'
             else:
                 PATH = 'saved_checkpoints/model_14.pt' #+ all_checkpoints[whichCheckpoint]
 

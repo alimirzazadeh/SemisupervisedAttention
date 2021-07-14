@@ -70,6 +70,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
     print('evaluating')
     model.eval()
     LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True) #unsupervised=training!='supervised')
+    LossEvaluator.plotLosses(batchDirectory=batchDirectory)
     print('finished evaluating')
         
     supdatasetSize = len(suptrainloader.dataset)
@@ -215,8 +216,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
         # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
         if epoch % 10 == 5:
             print('Epoch {}/{}'.format(epoch, numEpochs - 1))
-            # LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=False) #training!='supervised')
-            # LossEvaluator.plotLosses(batchDirectory=batchDirectory)
+        #    LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True) #training!='supervised')
+        #    LossEvaluator.plotLosses(batchDirectory=batchDirectory)
     saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
 
 def saveCheckpoint(EPOCH, net, optimizer, batchDirectory=''):

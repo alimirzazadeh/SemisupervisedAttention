@@ -40,6 +40,7 @@ class CAMLoss(nn.Module):
        
         correlation_pearson = torch.zeros(1)
         correlation_pearson.requires_grad = True
+        correlation_pearson = correlation_pearson.to(self.device)
         
         if visualize:
             fig, axs = plt.subplots(3, input_tensor.shape[0])

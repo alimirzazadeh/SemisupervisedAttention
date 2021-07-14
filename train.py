@@ -124,6 +124,14 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
         # for i, data in enumerate(trainloader, 0):
         #print('starting iterations...')
         for i in range(totalDatasetSize):
+            if i % 100 == 50:
+                model.eval()
+                optimizer.zero_grad()
+                LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True) #training!='supervised')
+                LossEvaluator.plotLosses(batchDirectory=batchDirectory)
+            
+            
+            
             if alternating:
                 # if i % 2 == 0:
                 if random.random() <= trainingRatio:
@@ -168,17 +176,13 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
             inputs, labels = data
     
             # zero the parameter gradients
-            if i % 100 == 50:
-                optimizer.zero_grad()
-                LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True) #training!='supervised')
-                LossEvaluator.plotLosses(batchDirectory=batchDirectory)
-            
-            optimizer.zero_grad()
             
             with torch.set_grad_enabled(True):
 
                 ####FOR SUPERVISED OR UNSUPERVISED
                 if supervised:
+                    model.train()
+                    optimizer.zero_grad()
                     # print('supervised')
                     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
                     inputs = inputs.to(device)
@@ -194,6 +198,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                         running_corrects += labels[pred, int(preds[pred])]
                     # running_corrects += torch.sum(preds == labels.data)
                 else:
+                    customTrain(model)
+                    optimizer.zero_grad()
                     # print('unsupervised')
                     CAMLossInstance.cam_model.activations_and_grads.register_hooks()
                     l1 = CAMLossInstance(inputs, target_category)

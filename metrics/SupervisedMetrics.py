@@ -15,7 +15,7 @@ class Evaluator:
         self.unsupervised_losses = []
         self.total_loss = []
     def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss = False):
-        model.eval()
+        #model.eval()
         running_corrects = 0
         running_loss = 0.0
         
@@ -73,7 +73,7 @@ class Evaluator:
                 self.accuracies.append(float(running_corrects.item() / datasetSize))
         print('..')
     def evaluateModelUnsupervisedPerformance(self, model, testloader, CAMLossInstance, device, optimizer, target_category=None, storeLoss = False):
-        model.eval()
+        # model.eval()
         running_loss = 0.0
         datasetSize = len(testloader.dataset)
         print('.')

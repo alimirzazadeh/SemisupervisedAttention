@@ -27,14 +27,14 @@ class ActivationsAndGradients:
         activation = output
         if self.reshape_transform is not None:
             activation = self.reshape_transform(activation)
-        self.activations.append(activation.cpu().detach())
+        self.activations.append(activation)#.cpu())
 
     def save_gradient(self, module, grad_input, grad_output):
         # Gradients are computed in reverse order
         grad = grad_output[0]
         if self.reshape_transform is not None:
             grad = self.reshape_transform(grad)
-        self.gradients = [grad.cpu().detach()] + self.gradients
+        self.gradients.append(grad)#.cpu()) #[grad.cpu()] + self.gradients
 
     def __call__(self, x):
         self.gradients = []

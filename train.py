@@ -18,6 +18,20 @@ from torch import nn
 from metrics.SupervisedMetrics import Evaluator
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 
+def customTrain(model):
+    def _freeze_norm_stats(net):
+        try:
+            for m in net.modules():
+                if isinstance(m, nn.BatchNorm2d):
+                    m.eval()
+    
+        except ValueError:  
+            print("errrrrrrrrrrrrrroooooooorrrrrrrrrrrr with instancenorm")
+            return
+    model.train()
+    model.apply(_freeze_norm_stats)
+            
+
 def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, trackLoss=False, training='alternating', batchDirectory='', scheduler=None, batch_size=4):
     alpha = 1 ##How many times to scale supervised dataset
     print('alpha: ', alpha)
@@ -55,6 +69,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
         allLossImg = np.load(imgPath)
     
     print('evaluating')
+    model.eval()
     LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True) #unsupervised=training!='supervised')
     print('finished evaluating')
         
@@ -72,16 +87,20 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
         trainingRatio = alpha * (supdatasetSize / (supdatasetSize + unsupdatasetSize))
     
     print("Total Dataset: ", totalDatasetSize)
+    
+    customTrain(model)
+    
+    
     for epoch in range(numEpochs):
-        if scheduler:
-            scheduler.step()        
+        
+        # if scheduler:
+        #     scheduler.step()        
         running_corrects = 0
         running_loss = 0.0
 
         supiter = iter(suptrainloader)
         unsupiter = iter(unsuptrainloader)
         
-        model.train()
 
         #if epoch % 20 == 19:
         #    saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
@@ -149,6 +168,11 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
             inputs, labels = data
     
             # zero the parameter gradients
+            if i % 100 == 50:
+                optimizer.zero_grad()
+                LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True) #training!='supervised')
+                LossEvaluator.plotLosses(batchDirectory=batchDirectory)
+            
             optimizer.zero_grad()
             
             with torch.set_grad_enabled(True):
@@ -173,13 +197,12 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                     # print('unsupervised')
                     CAMLossInstance.cam_model.activations_and_grads.register_hooks()
                     l1 = CAMLossInstance(inputs, target_category)
-
+                    
                 optimizer.zero_grad()
-
                 l1.backward()
                 optimizer.step()
                 
-                running_loss += l1.item()
+                # running_loss += l1.item()
 
             #if i % 200 == 199:    # print every 200 mini-batches
             #    print('[%d, %5d] loss: %.3f' %
@@ -193,8 +216,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
         # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
         if epoch % 10 == 5:
             print('Epoch {}/{}'.format(epoch, numEpochs - 1))
-            LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True) #training!='supervised')
-            LossEvaluator.plotLosses(batchDirectory=batchDirectory)
+            # LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=False) #training!='supervised')
+            # LossEvaluator.plotLosses(batchDirectory=batchDirectory)
     saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
 
 def saveCheckpoint(EPOCH, net, optimizer, batchDirectory=''):

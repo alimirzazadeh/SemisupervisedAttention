@@ -62,6 +62,10 @@ if __name__ == '__main__':
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
+    
+    model.fc = nn.Linear(int(model.fc.in_features), 20)
+    
+    
     optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
     # lr = [1e-5, 5e-3]
     # optimizer = optim.SGD([   
@@ -79,7 +83,7 @@ if __name__ == '__main__':
     all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0
     
-    model.fc = nn.Linear(int(model.fc.in_features), 20)
+    
     print(model.fc.weight)
     
     if sys.argv[1] == 'loadCheckpoint':
@@ -91,7 +95,7 @@ if __name__ == '__main__':
                 # PATH = '/scratch/users/alimirz1/saved_batches/exp_11/saved_checkpoints/model_59.pt'
                 PATH = '/scratch/users/alimirz1/saved_batches/savingAfter15Sup/saved_checkpoints/model_14.pt'
             else:
-                PATH = 'saved_checkpoints/model_159_reallyGood.pt' #+ all_checkpoints[whichCheckpoint]
+                PATH = 'saved_checkpoints/model_14.pt' #+ all_checkpoints[whichCheckpoint]
 
             print('Loading Saved Model', PATH)
             

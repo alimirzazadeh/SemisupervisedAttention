@@ -71,7 +71,7 @@ class BaseCAM:
 
         if target_category is None:
             # print("Category shapes: ", output.cpu().data.numpy().shape)
-            out_output = output.cpu().data.numpy()
+            out_output = output.data.numpy()
             target_category = np.argmax(out_output, axis=-1)
             # print("Target Category: ", target_category)
             # print(target_category)
@@ -87,8 +87,8 @@ class BaseCAM:
         torch.autograd.grad(loss,input_tensor,create_graph=True)
         # loss.backward(retain_graph=True)
 
-        activations = self.activations_and_grads.activations[-1].cpu()
-        grads = self.activations_and_grads.gradients[-1].cpu()
+        activations = self.activations_and_grads.activations[-1]
+        grads = self.activations_and_grads.gradients[-1]
 
         cam = self.get_cam_image(input_tensor, target_category, 
             activations, grads, eigen_smooth)

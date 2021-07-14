@@ -65,7 +65,7 @@ class Evaluator:
             print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))
             print('\n Test Model Supervised Loss: %.3f' % float(running_loss / datasetSize))
             f1_score = self.calculateF1score(tp, fp, fn)
-            print('\n F1 Score: \n', f1_score.data.cpu().numpy())
+            print('\n F1 Score: \n', f1_score.data.numpy())
             
             
             if storeLoss:

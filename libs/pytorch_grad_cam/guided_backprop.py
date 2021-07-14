@@ -63,6 +63,7 @@ class GuidedBackpropReLUModel:
         output = self.forward(input_img)
 
         if target_category is None:
+            print('warning: using CPU')
             target_category = np.argmax(output.cpu().data.numpy())
 
         loss = output[0, target_category]

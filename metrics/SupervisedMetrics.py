@@ -15,7 +15,7 @@ class Evaluator:
         self.unsupervised_losses = []
         self.total_loss = []
     def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss = False):
-        model.eval()
+        #model.eval()
         running_corrects = 0
         running_loss = 0.0
         
@@ -24,7 +24,7 @@ class Evaluator:
         fn = None
         
         datasetSize = len(testloader.dataset)
-        print('.')
+
         with torch.set_grad_enabled(False):
             for i, data in enumerate(testloader, 0):
                 # print(i)
@@ -71,12 +71,12 @@ class Evaluator:
             if storeLoss:
                 self.supervised_losses.append(float(running_loss / datasetSize))
                 self.accuracies.append(float(running_corrects.item() / datasetSize))
-        print('..')
+        #print('..')
     def evaluateModelUnsupervisedPerformance(self, model, testloader, CAMLossInstance, device, optimizer, target_category=None, storeLoss = False):
-        model.eval()
+        # model.eval()
         running_loss = 0.0
         datasetSize = len(testloader.dataset)
-        print('.')
+        #print('.')
         with torch.set_grad_enabled(True):
             for i, data in enumerate(testloader, 0):
                 optimizer.zero_grad()
@@ -89,10 +89,10 @@ class Evaluator:
             self.unsupervised_losses.append(float(running_loss / datasetSize))
     def evaluateUpdateLosses(self, model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True):
         if unsupervised:
-            print('evaluating unsupervised performance')
+            #print('evaluating unsupervised performance')
             CAMLossInstance.cam_model.activations_and_grads.register_hooks()
             self.evaluateModelUnsupervisedPerformance(model, testloader, CAMLossInstance, device, optimizer, storeLoss = True)
-        print('evaluating supervised performance')
+        #print('evaluating supervised performance')
         CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
         self.evaluateModelSupervisedPerformance(model, testloader, criteron, device, optimizer, storeLoss = True)
         self.total_loss = [a + b for a, b in zip(self.supervised_losses, self.unsupervised_losses)]

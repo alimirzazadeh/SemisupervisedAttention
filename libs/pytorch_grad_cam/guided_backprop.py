@@ -27,7 +27,7 @@ class GuidedBackpropReLU(Function):
 class GuidedBackpropReLUModel:
     def __init__(self, model, use_cuda):
         self.model = model
-        self.model.eval()
+        # self.model.eval()
         self.cuda = use_cuda
         if self.cuda:
             self.model = self.model.cuda()
@@ -63,13 +63,15 @@ class GuidedBackpropReLUModel:
         output = self.forward(input_img)
 
         if target_category is None:
+            print('warning: using CPU')
             target_category = np.argmax(output.cpu().data.numpy())
 
         loss = output[0, target_category]
-        loss.backward(retain_graph=True)
+        # loss.backward(retain_graph=True)
+        output = torch.autograd.grad(loss,input_img,create_graph=True)
         # print(input_img.grad.cpu().data.shape)
-        output = input_img.grad.cpu().data
-        output = output[0, :, :, :]
+        # output = input_img.grad.cpu().data
+        output = output[0][0, :, :, :]
         output = torch.moveaxis(output, 0, 2)
 
         # replace GuidedBackpropReLU back with ReLU

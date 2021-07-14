@@ -18,26 +18,29 @@ import torch.nn.functional as F
 import torch
 
 class CAMLoss(nn.Module):
-    def __init__(self, model, target_layer, use_cuda):
+    def __init__(self, model, target_layer, use_cuda, resolutionMatch, similarityMetric):
         super(CAMLoss, self).__init__()
         self.use_cuda = use_cuda
         self.device = torch.device("cuda:0" if self.use_cuda else "cpu")
         self.model = model
         self.cam_model = GradCAM(model=model, target_layer=target_layer, use_cuda=use_cuda)
         self.gb_model = GuidedBackpropReLUModel(model=model, use_cuda=use_cuda)
+        self.resolutionMatch = resolutionMatch
+        self.similarityMetric = similarityMetric
         
     def forward(self, predict, target):
         print("hey")
     def forward(self, input_tensor,  target_category , logs=False, visualize=False):
         assert(len(input_tensor.shape) > 3)
         
-        resolutionMatch = 2 #Upsample CAM, Downsample GB, GB mask, Hmp Mask
-        similarityMetric = 2 #Pearson, cross corr, SSIM
+        resolutionMatch = self.resolutionMatch #Upsample CAM, Downsample GB, GB mask, Hmp Mask
+        similarityMetric = self.similarityMetric #Pearson, cross corr, SSIM
         topHowMany = 1
         
        
         correlation_pearson = torch.zeros(1)
         correlation_pearson.requires_grad = True
+        correlation_pearson = correlation_pearson.to(self.device)
         
         if visualize:
             fig, axs = plt.subplots(3, input_tensor.shape[0])
@@ -70,17 +73,20 @@ class CAMLoss(nn.Module):
                     
                 if target_category != None:
                     target_category = int(topClass[whichTargetCategory])
-                    
-                grayscale_cam, topClass, targetWeight = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category, returnTarget=True , upSample=upSample)
+                
+                
+                cam_result, topClass, targetWeight = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category, returnTarget=True , upSample=upSample)
                 
                 if target_category == None:
                     target_category = int(topClass[whichTargetCategory])
 
                 
-                cam_result = grayscale_cam[0]  #####WHY IS THERE 2? and we're taking the first one?
-                
+            
                 ##doesn't automatically zero gradients, so should be feeding in new img every time
                 gb_correlate = self.gb_model(thisImgPreprocessed, target_category=target_category)
+                
+                
+                
                 
                 def processGB(gb_correlate):
                     # gb_correlate_std = torch.std(gb_correlate)
@@ -122,8 +128,8 @@ class CAMLoss(nn.Module):
                     TAc = torch.repeat_interleave(TAc, 3, dim=0)
                     newImgTensor = TAc * thisImgTensor
                     newImgPreprocessed = newImgTensor.unsqueeze(0)
-                    new_grayscale_cam = self.cam_model(input_tensor=newImgPreprocessed, target_category=target_category, upSample=upSample)
-                    new_cam_result = new_grayscale_cam[0]
+                    new_cam_result = self.cam_model(input_tensor=newImgPreprocessed, target_category=target_category, upSample=upSample)
+                    #new_cam_result = new_grayscale_cam[0]
                     firstCompare = standardize(cam_result)
                     secondCompare = standardize(new_cam_result)
                 elif resolutionMatch == 3:
@@ -169,7 +175,6 @@ class CAMLoss(nn.Module):
                 elif similarityMetric == 2:
                     ssim_loss = pytorch_ssim.SSIM()
                     cost = 1 - ssim_loss(reshaper(firstCompare), reshaper(secondCompare))
-                    
                     
                 #if targetWeight < 0:
                 #    targetWeight = 0

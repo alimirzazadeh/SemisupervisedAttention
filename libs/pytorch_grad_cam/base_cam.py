@@ -13,7 +13,7 @@ class BaseCAM:
                  target_layer,
                  use_cuda=False,
                  reshape_transform=None):
-        self.model = model.eval()
+        self.model = model#.eval()
         self.target_layer = target_layer
         self.cuda = use_cuda
         if self.cuda:
@@ -60,6 +60,10 @@ class BaseCAM:
         if self.cuda:
             input_tensor = input_tensor.cuda()
 
+
+        input_tensor = input_tensor.requires_grad_(True)
+        
+        
         output = self.activations_and_grads(input_tensor)
 
         if type(target_category) is int:
@@ -67,8 +71,9 @@ class BaseCAM:
 
         if target_category is None:
             # print("Category shapes: ", output.cpu().data.numpy().shape)
-            out_output = output.cpu().data.numpy()
+            out_output = output.data.cpu().numpy()
             target_category = np.argmax(out_output, axis=-1)
+            # print("Target Category: ", target_category)
             # print(target_category)
             # print("Labels: ", self.idx2label[target_category[0]])
             # print(target_category)
@@ -77,10 +82,13 @@ class BaseCAM:
 
         self.model.zero_grad()
         loss = self.get_loss(output, target_category)
-        loss.backward(retain_graph=True)
+        
+        
+        torch.autograd.grad(loss,input_tensor,create_graph=True)
+        # loss.backward(retain_graph=True)
 
-        activations = self.activations_and_grads.activations[-1].cpu().data
-        grads = self.activations_and_grads.gradients[-1].cpu().data
+        activations = self.activations_and_grads.activations[-1]
+        grads = self.activations_and_grads.gradients[-1]
 
         cam = self.get_cam_image(input_tensor, target_category, 
             activations, grads, eigen_smooth)
@@ -89,17 +97,17 @@ class BaseCAM:
         cam = torch.max(cam, 0)
         # print(cam)
         result = []
-        for img in cam:
-            # print(input_tensor.shape[-2:][::-1])
-            # img = cv2.resize(img, input_tensor.shape[-2:][::-1])
-            # print(img.shape)
-            img = img.reshape((1,1,img.shape[0],img.shape[1]))
-            if upSample:
-                img = torch.nn.functional.upsample_bilinear(img.double(),size=list(input_tensor.shape[-2:][::-1]))
-            # print(img.shape)
-            # img = img - torch.min(img)
-            # img = img / torch.max(img)
-            result.append(img[0,0,:,:])
+        img = cam[0]
+        # print(input_tensor.shape[-2:][::-1])
+        # img = cv2.resize(img, input_tensor.shape[-2:][::-1])
+        # print(img.shape)
+        img = img.reshape((1,1,img.shape[0],img.shape[1]))
+        if upSample:
+            img = torch.nn.functional.upsample_bilinear(img.double(),size=list(input_tensor.shape[-2:][::-1]))
+        # print(img.shape)
+        # img = img - torch.min(img)
+        # img = img / torch.max(img)
+        result = img[0,0,:,:]
         # result = np.float32(result)
         if returnTarget:
             target_categories = out_output.argsort()[0][-3:][::-1]

@@ -13,7 +13,7 @@ class Evaluator:
         self.supervised_losses = []
         self.accuracies = []
         self.unsupervised_losses = []
-        self.total_loss = []
+        self.f1_scoresum = []
     def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss = False):
         #model.eval()
         running_corrects = 0
@@ -66,11 +66,13 @@ class Evaluator:
             print('\n Test Model Supervised Loss: %.3f' % float(running_loss / datasetSize))
             f1_score = self.calculateF1score(tp, fp, fn)
             print('\n F1 Score: \n', f1_score.data.cpu().numpy())
+            print('\n F1 Score Sum: \n', np.sum(f1_score.data.cpu().numpy()))
             
             
             if storeLoss:
                 self.supervised_losses.append(float(running_loss / datasetSize))
                 self.accuracies.append(float(running_corrects.item() / datasetSize))
+                self.f1_scoresum.append(np.sum(f1_score.data.cpu().numpy()))
         #print('..')
     def evaluateModelUnsupervisedPerformance(self, model, testloader, CAMLossInstance, device, optimizer, target_category=None, storeLoss = False):
         # model.eval()
@@ -95,20 +97,24 @@ class Evaluator:
         #print('evaluating supervised performance')
         CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
         self.evaluateModelSupervisedPerformance(model, testloader, criteron, device, optimizer, storeLoss = True)
-        self.total_loss = [a + b for a, b in zip(self.supervised_losses, self.unsupervised_losses)]
     def plotLosses(self, batchDirectory=''):
         plt.clf()
-        plt.plot(self.supervised_losses, label="Supervised Loss")
-        plt.savefig(batchDirectory+'saved_figs/SupervisedLossPlot.png')
-        plt.clf()
-        plt.plot(self.unsupervised_losses, label="Unsupervised Loss")
-        plt.savefig(batchDirectory+'saved_figs/UnsupervisedLossPlot.png')
-        plt.clf()
-        plt.plot(self.total_loss, label="Total Loss")
-        plt.savefig(batchDirectory+'saved_figs/TotalLossPlot.png')
-        plt.clf()
-        plt.plot(self.accuracies, label="Accuracy")
-        plt.savefig(batchDirectory+'saved_figs/AccuracyPlot.png')
+        fig, axs = plt.subplots(2, 2)
+        axs[0, 0].plot(self.supervised_losses, label="Supervised Loss")
+        axs[0, 0].set_title('Supervised Loss')
+        #plt.savefig(batchDirectory+'saved_figs/SupervisedLossPlot.png')
+        #plt.clf()
+        axs[0, 1].plot(self.unsupervised_losses, label="Unsupervised Loss")
+        axs[0, 1].set_title('Unsupervised Loss')
+        #plt.savefig(batchDirectory+'saved_figs/UnsupervisedLossPlot.png')
+        #plt.clf()
+        axs[1, 0].plot(self.f1_scoresum, label="F1 Score Sum")
+        axs[1, 0].set_title('F1 Score Sum')
+        #plt.savefig(batchDirectory+'saved_figs/TotalLossPlot.png')
+        #plt.clf()
+        axs[1, 1].plot(self.accuracies, label="Accuracy")
+        axs[1, 1].set_title('Accuracy')
+        plt.savefig(batchDirectory+'saved_figs/AllPlots.png')
         # plt.legend()
     def calculateF1score(self, tp, fp, fn):
         recall = tp / (tp + fn)

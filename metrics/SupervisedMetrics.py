@@ -67,7 +67,7 @@ class Evaluator:
             print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))
             print('\n Test Model Supervised Loss: %.3f' % float(running_loss / datasetSize))
             f1_score = self.calculateF1score(tp, fp, fn)
-            f1_sum = np.sum(f1_score.data.cpu().numpy())
+            f1_sum = np.nansum(f1_score.data.cpu().numpy())
             
             if f1_sum > self.bestF1Sum:
                 self.bestF1Sum = f1_sum

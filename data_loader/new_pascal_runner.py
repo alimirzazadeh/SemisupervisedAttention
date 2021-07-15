@@ -14,7 +14,7 @@ import os
 
 
 class PascalVOC_Dataset(voc.VOCDetection):
-    def __init__(self, root, year='2012', image_set='train', download=True, transform=None, target_transform=None):
+    def __init__(self, root, year='2012', image_set='train', download=False, transform=None, target_transform=None):
 
         super().__init__(
             root,
@@ -55,7 +55,7 @@ def encode_labels(target):
     return torch.from_numpy(k)
 
 
-def loadPascalData(data_dir='../data/', download_data=True, batch_size=32):
+def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
 
     transformations = transforms.Compose([
         transforms.Resize((256, 256)),
@@ -73,17 +73,9 @@ def loadPascalData(data_dir='../data/', download_data=True, batch_size=32):
                                            transform=transformations,
                                            target_transform=encode_labels)
 
-<<<<<<< HEAD
     dataset_train = torch.utils.data.Subset(dataset_train_orig, list(range(0,50))) 
     unsup_train = torch.utils.data.Subset(dataset_train_orig, list(range(500,1500))) #len(dataset_train_orig))))
     
-=======
-    dataset_train = torch.utils.data.Subset(
-        dataset_train_orig, list(range(0, 50)))
-    unsup_train = torch.utils.data.Subset(
-        dataset_train_orig, list(range(500, len(dataset_train_orig))))
->>>>>>> cfab14afae766bc2acec9b1f31ab8b3572e5acdf
-
     dataset_valid = PascalVOC_Dataset(data_dir,
                                       year='2012',
                                       image_set='val',

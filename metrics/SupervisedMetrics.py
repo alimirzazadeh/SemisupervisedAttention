@@ -7,6 +7,7 @@ Created on Thu Jun 10 15:28:10 2021
 import torch
 import matplotlib.pyplot as plt
 import torch.nn as nn
+import numpy as np
 
 class Evaluator:
     def __init__(self):
@@ -14,7 +15,8 @@ class Evaluator:
         self.accuracies = []
         self.unsupervised_losses = []
         self.f1_scoresum = []
-    def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss = False):
+        self.bestF1Sum = 0
+    def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss = False, batchDirectory=''):
         #model.eval()
         running_corrects = 0
         running_loss = 0.0
@@ -65,14 +67,20 @@ class Evaluator:
             print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))
             print('\n Test Model Supervised Loss: %.3f' % float(running_loss / datasetSize))
             f1_score = self.calculateF1score(tp, fp, fn)
-            print('\n F1 Score: \n', f1_score.data.cpu().numpy())
-            print('\n F1 Score Sum: \n', np.sum(f1_score.data.cpu().numpy()))
+            f1_sum = np.sum(f1_score.data.cpu().numpy())
             
+            if f1_sum > self.bestF1Sum:
+                self.bestF1Sum = f1_sum
+                self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory)
+            print('\n F1 Score: \n', f1_score.data.cpu().numpy())
+            print('\n F1 Score Sum: \n', f1_sum)
+        
+        
             
             if storeLoss:
                 self.supervised_losses.append(float(running_loss / datasetSize))
                 self.accuracies.append(float(running_corrects.item() / datasetSize))
-                self.f1_scoresum.append(np.sum(f1_score.data.cpu().numpy()))
+                self.f1_scoresum.append(f1_sum)
         #print('..')
     def evaluateModelUnsupervisedPerformance(self, model, testloader, CAMLossInstance, device, optimizer, target_category=None, storeLoss = False):
         # model.eval()
@@ -89,14 +97,14 @@ class Evaluator:
         print('\n Test Model Unsupervised Loss: %.3f' % float(running_loss / datasetSize))
         if storeLoss:
             self.unsupervised_losses.append(float(running_loss / datasetSize))
-    def evaluateUpdateLosses(self, model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True):
+    def evaluateUpdateLosses(self, model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=''):
         if unsupervised:
             #print('evaluating unsupervised performance')
             CAMLossInstance.cam_model.activations_and_grads.register_hooks()
             self.evaluateModelUnsupervisedPerformance(model, testloader, CAMLossInstance, device, optimizer, storeLoss = True)
         #print('evaluating supervised performance')
         CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
-        self.evaluateModelSupervisedPerformance(model, testloader, criteron, device, optimizer, storeLoss = True)
+        self.evaluateModelSupervisedPerformance(model, testloader, criteron, device, optimizer, storeLoss = True, batchDirectory= batchDirectory)
     def plotLosses(self, batchDirectory=''):
         plt.clf()
         fig, axs = plt.subplots(2, 2)
@@ -121,3 +129,9 @@ class Evaluator:
         precision = tp / (tp + fp)
         return 2 * (recall * precision) / (recall + precision)
         
+    def saveCheckpoint(self, net, optimizer, batchDirectory=''):
+        PATH = batchDirectory+"saved_checkpoints/model_best.pt"
+        torch.save({
+                    'model_state_dict': net.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    }, PATH)

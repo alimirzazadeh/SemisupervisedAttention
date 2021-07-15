@@ -24,7 +24,6 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 if __name__ == '__main__':
 
-<<<<<<< Updated upstream
     learning_rate = float(sys.argv[7])  # 0.00001
     numEpochs = int(sys.argv[8])  # 400
     batch_size = int(sys.argv[9])  # 4
@@ -42,18 +41,6 @@ if __name__ == '__main__':
 
     if os.path.isdir('/scratch/'):
         batchDirectory = '/scratch/users/alimirz1/saved_batches/' + \
-=======
-    learning_rate = 0.00001
-    # learning_rate = 0.001
-    numEpochs = 400
-    batch_size = 4
-
-    print('Learning Rate: ', learning_rate)
-    print('Number of Epochs: ', numEpochs)
-
-    if os.path.isdir('/scratch/'):
-        batchDirectory = '/scratch/groups/rubin/krish05m/AttentionMap/saved_batches/' + \
->>>>>>> Stashed changes
             sys.argv[6] + '/'
     else:
         batchDirectory = ''
@@ -76,11 +63,8 @@ if __name__ == '__main__':
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-<<<<<<< Updated upstream
     model.fc = nn.Linear(int(model.fc.in_features), 20)
 
-=======
->>>>>>> Stashed changes
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     # lr = [1e-5, 5e-3]
     # optimizer = optim.SGD([
@@ -96,10 +80,6 @@ if __name__ == '__main__':
     all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0
 
-<<<<<<< Updated upstream
-=======
-    model.fc = nn.Linear(int(model.fc.in_features), 20)
->>>>>>> Stashed changes
     print(model.fc.weight)
 
     if sys.argv[1] == 'loadCheckpoint':
@@ -112,11 +92,7 @@ if __name__ == '__main__':
                 PATH = '/scratch/users/alimirz1/saved_batches/pre_gradFix/savingAfter15Sup/saved_checkpoints/model_14.pt'
             else:
                 # + all_checkpoints[whichCheckpoint]
-<<<<<<< Updated upstream
                 PATH = 'saved_checkpoints/model_14.pt'
-=======
-                PATH = 'saved_checkpoints/model_159_reallyGood.pt'
->>>>>>> Stashed changes
 
             print('Loading Saved Model', PATH)
 
@@ -225,10 +201,5 @@ if __name__ == '__main__':
     if sys.argv[3] == 'train':
         trackLoss = sys.argv[4] == 'trackLoss'
         print(trackLoss)
-<<<<<<< Updated upstream
         train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
               similarityMetric, alpha, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, scheduler=scheduler, batch_size=batch_size)
-=======
-        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda,
-              trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, scheduler=scheduler, batch_size=batch_size)
->>>>>>> Stashed changes

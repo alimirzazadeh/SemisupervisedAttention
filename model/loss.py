@@ -83,7 +83,7 @@ class CAMLoss(nn.Module):
                     gb_correlate = self.gb_model(
                         thisImgPreprocessed, target_category=target_category)
                 else:
-                    gb_correlate = self.vg_model(x=thisImgPreprocessed)
+                    gb_correlate = self.sg_model(x=thisImgPreprocessed)
 
                 def processGB(gb_correlate):
                     # gb_correlate_std = torch.std(gb_correlate)

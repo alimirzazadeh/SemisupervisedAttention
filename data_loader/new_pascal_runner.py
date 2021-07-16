@@ -14,7 +14,7 @@ import os
 
 
 class PascalVOC_Dataset(voc.VOCDetection):
-    def __init__(self, root, year='2012', image_set='train', download=True, transform=None, target_transform=None):
+    def __init__(self, root, year='2012', image_set='train', download=False, transform=None, target_transform=None):
 
         super().__init__(
             root,
@@ -55,7 +55,7 @@ def encode_labels(target):
     return torch.from_numpy(k)
 
 
-def loadPascalData(data_dir='../data/', download_data=True, batch_size=32):
+def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
 
     transformations = transforms.Compose([
         transforms.Resize((256, 256)),

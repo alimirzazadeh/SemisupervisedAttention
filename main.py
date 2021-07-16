@@ -23,7 +23,6 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 # from model.loss import calculateLoss
 
 if __name__ == '__main__':
-
     learning_rate = float(sys.argv[7])  # 0.00001
     numEpochs = int(sys.argv[8])  # 400
     batch_size = int(sys.argv[9])  # 4

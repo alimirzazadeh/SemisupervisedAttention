@@ -28,6 +28,9 @@ class CAMLoss(nn.Module):
         self.cam_model = GradCAM(
             model=model, target_layer=target_layer, use_cuda=use_cuda)
         self.gb_model = GuidedBackpropReLUModel(model=model, use_cuda=use_cuda)
+        self.vg_model = VanillaGrad(model=model, use_cuda=use_cuda)
+        self.sg_model = SmoothGrad(model=model, use_cuda=use_cuda)
+
         self.resolutionMatch = resolutionMatch
         self.similarityMetric = similarityMetric
 
@@ -76,8 +79,11 @@ class CAMLoss(nn.Module):
                     target_category = int(topClass[whichTargetCategory])
 
                 # doesn't automatically zero gradients, so should be feeding in new img every time
-                gb_correlate = self.gb_model(
-                    thisImgPreprocessed, target_category=target_category)
+                if resolutionMatch != 4:
+                    gb_correlate = self.gb_model(
+                        thisImgPreprocessed, target_category=target_category)
+                else:
+                    gb_correlate = self.vg_model(x=thisImgPreprocessed)
 
                 def processGB(gb_correlate):
                     # gb_correlate_std = torch.std(gb_correlate)
@@ -139,12 +145,20 @@ class CAMLoss(nn.Module):
                     new_gb = processGB(new_gb)
                     firstCompare = standardize(gb_correlate)
                     secondCompare = standardize(new_gb)
+                elif resolutionMatch == 4:
+                    # Add smoothgrad
+
+                    print(gb_correlate.shape)
+                    print(gb_correlate.requires_grad)
+                    firstCompare = standardize(cam_result)
+                    secondCompare = standardize(gb_correlate)
+                    # smooth_cam, _ = smooth_grad(image)
 
                 if visualize:
                     # print(firstCompare.shape, secondCompare.shape)
                     # print(firstCompare.dtype, secondCompare.dtype)
-                    hmps.append(firstCompare.numpy())
-                    gbimgs.append(secondCompare.numpy())
+                    hmps.append(firstCompare.detach().numpy())
+                    gbimgs.append(secondCompare.detach().numpy())
 
                 if similarityMetric == 0:
                     firstCompare = sigmoidIt(firstCompare)

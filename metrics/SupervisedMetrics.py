@@ -8,6 +8,7 @@ import torch
 import matplotlib.pyplot as plt
 import torch.nn as nn
 import numpy as np
+import pandas as pd
 
 class Evaluator:
     def __init__(self):
@@ -16,6 +17,7 @@ class Evaluator:
         self.unsupervised_losses = []
         self.f1_scoresum = []
         self.bestF1Sum = 0
+        self.counter = 0
     def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss = False, batchDirectory=''):
         #model.eval()
         running_corrects = 0
@@ -67,6 +69,13 @@ class Evaluator:
             print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))
             print('\n Test Model Supervised Loss: %.3f' % float(running_loss / datasetSize))
             f1_score = self.calculateF1score(tp, fp, fn)
+            
+            try:
+                pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())),index=[self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', mode='a', header=False)
+            except:
+                pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())),index=[self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', header=False)
+            self.counter += 1
+            
             f1_sum = np.nansum(f1_score.data.cpu().numpy())
             
             if f1_sum > self.bestF1Sum:

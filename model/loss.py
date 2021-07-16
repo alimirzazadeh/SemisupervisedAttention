@@ -54,7 +54,7 @@ class CAMLoss(nn.Module):
             target_category = None
             for whichTargetCategory in range(topHowMany):   
                 
-
+                
                     
                     
                 thisImgTensor = input_tensor[i,:,:,:]
@@ -70,21 +70,17 @@ class CAMLoss(nn.Module):
                 else:
                     upSample = True
 
+                flipCost = False
                     
                 if target_category != None:
                     target_category = int(topClass[whichTargetCategory])
                 
                 
-                cam_result, topClass, targetWeight = self.cam_model(input_tensor=thisImgPreprocessed, target_category=target_category, returnTarget=True , upSample=upSample)
+                cam_result, topClass, targetWeight = self.cam_model(input_tensor=thisImgPreprocessed.clone(), target_category=target_category, returnTarget=True , upSample=upSample)
                 
                 if target_category == None:
                     target_category = int(topClass[whichTargetCategory])
 
-                
-            
-                ##doesn't automatically zero gradients, so should be feeding in new img every time
-                gb_correlate = self.gb_model(thisImgPreprocessed, target_category=target_category)
-                
                 
                 
                 
@@ -107,8 +103,11 @@ class CAMLoss(nn.Module):
                     return arr.unsqueeze(0).unsqueeze(0).float()
                 
                 
-                gb_correlate = processGB(gb_correlate)
-                cam_result = cam_result
+                                
+                ##doesn't automatically zero gradients, so should be feeding in new img every time
+                if resolutionMatch != 4:
+                    gb_correlate = self.gb_model(thisImgPreprocessed, target_category=target_category)
+                    gb_correlate = processGB(gb_correlate)
                 
                 
                 if resolutionMatch == 0:
@@ -146,7 +145,13 @@ class CAMLoss(nn.Module):
                     new_gb = processGB(new_gb)
                     firstCompare = standardize(gb_correlate)
                     secondCompare = standardize(new_gb)
-                                
+                elif resolutionMatch == 4:
+                    nextCategory = int(topClass[1])
+                    print("THIS CATGRY: ", int(topClass[0]), "NEXT CATEGORI: ", nextCategory)
+                    new_cam_result = self.cam_model(input_tensor=thisImgPreprocessed.clone(), target_category=nextCategory, returnTarget=False , upSample=upSample)
+                    firstCompare = standardize(cam_result)
+                    secondCompare = standardize(new_cam_result)
+                    flipCost = True
                     
                     
                 if visualize:
@@ -155,7 +160,19 @@ class CAMLoss(nn.Module):
                     hmps.append(firstCompare.numpy())
                     gbimgs.append(secondCompare.numpy())
                 
-                
+                ##Uncomment this to visualize single image while testing unsup loss convergence
+                # if True:
+                #     plt.imshow(firstCompare.detach().numpy())
+                #     plt.show()
+                #     plt.imshow(secondCompare.detach().numpy())
+                #     plt.show()
+                #     toShow = thisImgTensor.moveaxis(0,-1).numpy()
+                #     toShow -= np.min(toShow)
+                #     toShow /= np.max(toShow)
+                #     plt.imshow(toShow)
+                #     plt.show()
+                #    #print(self.model(thisImgPreprocessed))
+                ###################################3
                 
                 if similarityMetric == 0:
                     firstCompare = sigmoidIt(firstCompare)
@@ -179,6 +196,9 @@ class CAMLoss(nn.Module):
                 #if targetWeight < 0:
                 #    targetWeight = 0
                 #    print('target less than 0!')
+                if flipCost:
+                    cost = cost * -1
+                
                 correlation_pearson2 = correlation_pearson.clone() 
                 correlation_pearson = correlation_pearson2 + cost #* targetWeight
             

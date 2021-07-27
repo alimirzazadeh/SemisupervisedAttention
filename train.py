@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri May 21 16:27:39 2021
-
 @author: alimi
 """
 
@@ -69,7 +68,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
     
     print('evaluating')
     model.eval()
-    LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True) #unsupervised=training!='supervised')
+    LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #unsupervised=training!='supervised')
     LossEvaluator.plotLosses(batchDirectory=batchDirectory)
     print('finished evaluating')
         
@@ -229,7 +228,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
             print('Epoch {}/{}'.format(epoch, numEpochs - 1))
             model.eval()
             optimizer.zero_grad()
-            LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True) #training!='supervised')
+            LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
             LossEvaluator.plotLosses(batchDirectory=batchDirectory)
             print('Unsup Iter Reloaded: ', unsupiter_reloaded)
             print('Sup Iter Reloaded: ', supiter_reloaded)

@@ -39,7 +39,7 @@ if __name__ == '__main__':
     print('Alpha: ', alpha)
 
     if os.path.isdir('/scratch/'):
-        batchDirectory = '/scratch/users/alimirz1/saved_batches/' + \
+        batchDirectory = '/scratch/groups/rubin/krish05m/saved_batches/' + \
             sys.argv[6] + '/'
     else:
         batchDirectory = ''
@@ -76,38 +76,28 @@ if __name__ == '__main__':
     #                            lr=learning_rate, momentum=0.9, weight_decay=0.0001)
     scheduler = None
 
-    all_checkpoints = os.listdir('saved_checkpoints')
+    # all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0
 
     print(model.fc.weight)
 
     if sys.argv[1] == 'loadCheckpoint':
         whichCheckpoint = 6
-        if len(all_checkpoints) > 0:
-
-            if os.path.isdir('/scratch/'):
-                # PATH = '/scratch/users/alimirz1/saved_batches/...'
-                # PATH = '/scratch/users/alimirz1/saved_batches/exp_11/saved_checkpoints/model_59.pt'
-                PATH = '/scratch/users/alimirz1/saved_batches/pre_gradFix/savingAfter15Sup/saved_checkpoints/model_14.pt'
-            else:
-                # + all_checkpoints[whichCheckpoint]
-                PATH = 'saved_checkpoints/model_14.pt'
-
-            print('Loading Saved Model', PATH)
-
-            if False:
-                net_state_dict = model.state_dict()
-                pretrained_dict34 = torch.load(PATH, map_location=device)
-                pretrained_dict_1 = {
-                    k: v for k, v in pretrained_dict34.items() if k in net_state_dict}
-                net_state_dict.update(pretrained_dict_1)
-                model.load_state_dict(net_state_dict)
-            else:
-                checkpoint = torch.load(PATH, map_location=device)
-                model.load_state_dict(checkpoint['model_state_dict'])
-                # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-                epoch = checkpoint['epoch']
-                # loss = checkpoint['loss']
+        PATH = "model_best.pt"
+        print('Loading Saved Model', PATH)
+        if False:
+            net_state_dict = model.state_dict()
+            pretrained_dict34 = torch.load(PATH, map_location=device)
+            pretrained_dict_1 = {
+                k: v for k, v in pretrained_dict34.items() if k in net_state_dict}
+            net_state_dict.update(pretrained_dict_1)
+            model.load_state_dict(net_state_dict)
+        else:
+            checkpoint = torch.load(PATH, map_location=device)
+            model.load_state_dict(checkpoint['model_state_dict'])
+            # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            # epoch = checkpoint['epoch']
+            # loss = checkpoint['loss']
 
     target_layer = model.layer4[-1]  # this is the layer before the pooling
 

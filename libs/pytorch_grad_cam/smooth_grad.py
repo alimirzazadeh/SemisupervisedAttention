@@ -20,7 +20,7 @@ class VanillaGrad:
 
         one_hot = torch.zeros((1, output.size()[-1]), dtype=torch.float32)
         one_hot[0][index] = 1
-        one_hot = torch.sum(one_hot * output)
+        one_hot = torch.sum(one_hot.cuda() * output.cuda())
         grad = torch.autograd.grad(one_hot, x, create_graph=True)
         grad = grad[0][0, :, :, :]
         grad = torch.moveaxis(grad, 0, 2)
@@ -30,7 +30,7 @@ class VanillaGrad:
 class SmoothGrad(VanillaGrad):
 
     def __init__(self, model, use_cuda=False, stdev_spread=0.15,
-                 n_samples=25, magnitude=True):
+                 n_samples=8, magnitude=True):
         super(SmoothGrad, self).__init__(model, use_cuda)
         self.model = model
         self.stdev_spread = stdev_spread

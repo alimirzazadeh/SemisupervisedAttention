@@ -88,7 +88,8 @@ if __name__ == '__main__':
             if os.path.isdir('/scratch/'):
                 # PATH = '/scratch/users/alimirz1/saved_batches/...'
                 # PATH = '/scratch/users/alimirz1/saved_batches/exp_11/saved_checkpoints/model_59.pt'
-                PATH = '/scratch/users/alimirz1/saved_batches/pre_gradFix/savingAfter15Sup/saved_checkpoints/model_14.pt'
+                # PATH = '/scratch/users/alimirz1/saved_batches/pre_gradFix/savingAfter15Sup/saved_checkpoints/model_14.pt'
+                PATH = '/scratch/users/alimirz1/saved_batches/medium_alt_gb_pears_2/saved_checkpoints/model_best.pt'
             else:
                 # + all_checkpoints[whichCheckpoint]
                 PATH = 'saved_checkpoints/model_14.pt'
@@ -108,7 +109,7 @@ if __name__ == '__main__':
                 # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
                 try:
                     epoch = checkpoint['epoch']
-                catch:
+                except:
                     epoch = 0
                 # loss = checkpoint['loss']
 

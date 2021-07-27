@@ -39,7 +39,7 @@ if __name__ == '__main__':
     print('Alpha: ', alpha)
 
     if os.path.isdir('/scratch/'):
-        batchDirectory = '/scratch/groups/rubin/krish05m/saved_batches/' + \
+        batchDirectory = '/scratch/groups/rubin/krish05m/AttentionMap/saved_batches/' + \
             sys.argv[6] + '/'
     else:
         batchDirectory = ''
@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
     if sys.argv[1] == 'loadCheckpoint':
         whichCheckpoint = 6
-        PATH = "model_best.pt"
+        PATH = "/scratch/groups/rubin/model_best.pt"
         print('Loading Saved Model', PATH)
         if False:
             net_state_dict = model.state_dict()

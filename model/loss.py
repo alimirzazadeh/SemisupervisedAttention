@@ -103,6 +103,7 @@ class CAMLoss(nn.Module):
 
                 def reshaper(arr):
                     return arr.unsqueeze(0).unsqueeze(0).float()
+
                 gb_correlate = processGB(gb_correlate)
                 cam_result = cam_result
 
@@ -144,24 +145,11 @@ class CAMLoss(nn.Module):
                     new_gb = processGB(new_gb)
                     firstCompare = standardize(gb_correlate)
                     secondCompare = standardize(new_gb)
-                elif resolutionMatch == 4:   
-                ##Uncomment this to visualize single image while testing unsup loss convergence
-                # if True:
-                #     plt.imshow(firstCompare.detach().numpy())
-                #     plt.show()
-                #     plt.imshow(secondCompare.detach().numpy())
-                #     plt.show()
-                #     toShow = thisImgTensor.moveaxis(0,-1).numpy()
-                #     toShow -= np.min(toShow)
-                #     toShow /= np.max(toShow)
-                #     plt.imshow(toShow)
-                #     plt.show()
-                #    #print(self.model(thisImgPreprocessed))
-                ###################################3
+                elif resolutionMatch == 4:
+                    # Add smoothgrad
 
-
-#                     print(gb_correlate.shape)
-#                     print(gb_correlate.requires_grad)
+                    print(gb_correlate.shape)
+                    print(gb_correlate.requires_grad)
                     firstCompare = standardize(cam_result)
                     secondCompare = standardize(gb_correlate)
                     # smooth_cam, _ = smooth_grad(image)

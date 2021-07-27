@@ -50,7 +50,7 @@ class SmoothGrad(VanillaGrad):
 
             one_hot = torch.zeros((1, output.size()[-1]), dtype=torch.float32)
             one_hot[0][index] = 1
-            one_hot = torch.sum(one_hot * output)
+            one_hot = torch.sum(one_hot.cuda() * output.cuda())
 
             if x_plus_noise.grad is not None:
                 x_plus_noise.grad.data.zero_()

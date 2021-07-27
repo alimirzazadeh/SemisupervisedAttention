@@ -106,7 +106,7 @@ if __name__ == '__main__':
                 checkpoint = torch.load(PATH, map_location=device)
                 model.load_state_dict(checkpoint['model_state_dict'])
                 # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-                epoch = checkpoint['epoch']
+                # epoch = checkpoint['epoch']
                 # loss = checkpoint['loss']
 
     target_layer = model.layer4[-1]  # this is the layer before the pooling

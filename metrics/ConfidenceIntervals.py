@@ -25,7 +25,7 @@ def custom_metric(data_methodx):
     fp = None
     fn = None
     
-    for preds in data_methodx.to_numpy()[:100]:
+    for preds in data_methodx.to_numpy():
         
         labels = preds[:int(len(preds) / 2)]
         pred_logits = preds[int(len(preds) / 2):]
@@ -42,7 +42,7 @@ def custom_metric(data_methodx):
     return f1_score_sum
 
 
-def boostrapping_CI(data,nbr_runs=10):
+def boostrapping_CI(data,nbr_runs=100):
     #Confidence Interval Estimation of an ROC Curve: An Application of Generalized Half Normal and Weibull Distributions
     
     nbr_scans = len(data.index)
@@ -70,7 +70,7 @@ def boostrapping_CI(data,nbr_runs=10):
     return metric_stats
 
 
-def boostrapping_hypothesisTesting(data_method1,data_method2,nbr_runs=10):
+def boostrapping_hypothesisTesting(data_method1,data_method2,nbr_runs=100):
     
     n = len(data_method1.index)
     m = len(data_method2.index)

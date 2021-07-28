@@ -17,6 +17,7 @@ class Evaluator:
         self.unsupervised_losses = []
         self.f1_scoresum = []
         self.bestF1Sum = 0
+        self.bestSupSum = 999999
         self.counter = 0
     def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss = False, batchDirectory=''):
         #model.eval()
@@ -67,7 +68,8 @@ class Evaluator:
                 # print(running_corrects.item())
                 # del l1, inputs, labels, outputs, preds
             print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))
-            print('\n Test Model Supervised Loss: %.3f' % float(running_loss / datasetSize))
+            supervised_loss = float(running_loss / datasetSize)
+            print('\n Test Model Supervised Loss: %.3f' % supervised_loss)
             f1_score = self.calculateF1score(tp, fp, fn)
             
             try:
@@ -80,14 +82,19 @@ class Evaluator:
             
             if f1_sum > self.bestF1Sum:
                 self.bestF1Sum = f1_sum
+                print("\n Best F1 Score so far: ", self.bestF1Sum)
+                # self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory)
+            # print('\n F1 Score: ', f1_score.data.cpu().numpy())
+            # print('\n F1 Score Sum: ', f1_sum)
+            
+            if supervised_loss < self.bestSupSum:
+                self.bestSupSum = supervised_loss
                 self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory)
-            print('\n F1 Score: \n', f1_score.data.cpu().numpy())
-            print('\n F1 Score Sum: \n', f1_sum)
         
         
             
             if storeLoss:
-                self.supervised_losses.append(float(running_loss / datasetSize))
+                self.supervised_losses.append(supervised_loss)
                 self.accuracies.append(float(running_corrects.item() / datasetSize))
                 self.f1_scoresum.append(f1_sum)
         #print('..')

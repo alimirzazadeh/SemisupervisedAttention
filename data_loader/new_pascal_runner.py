@@ -84,6 +84,7 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
                                       target_transform=encode_labels)
 
     dataset_valid = torch.utils.data.Subset(dataset_valid, list(range(0, 500)))
+    dataset_test = torch.utils.data.Subset(dataset_valid, list(range(500,len(dataset_valid))))
 
     train_loader = DataLoader(
         dataset_train, batch_size=batch_size, num_workers=4, shuffle=True)
@@ -91,5 +92,7 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
         unsup_train, batch_size=batch_size, num_workers=4, shuffle=True)
     valid_loader = DataLoader(
         dataset_valid, batch_size=batch_size, num_workers=4)
+    test_loader = DataLoader(
+        dataset_valid, batch_size=batch_size, num_workers=4)
 
-    return train_loader, unsup_loader, valid_loader
+    return train_loader, unsup_loader, valid_loader, test_loader

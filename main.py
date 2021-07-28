@@ -1,5 +1,6 @@
 import torch.optim as optim
 from train import train
+from evaluate import evaluate
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 from data_loader.new_pascal_runner import loadPascalData
@@ -45,7 +46,7 @@ if __name__ == '__main__':
         batchDirectory = ''
     # Load the CIFAR Dataset
     # suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
-    suptrainloader, unsuptrainloader, testloader = loadPascalData(
+    suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(
         batch_size=batch_size)
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
@@ -132,7 +133,7 @@ if __name__ == '__main__':
         from model.loss import CAMLoss
         CAMLossInstance = CAMLoss(
             model, target_layer, use_cuda, resolutionMatch, similarityMetric)
-        dataiter = iter(testloader)
+        dataiter = iter(validloader)
 
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
@@ -204,5 +205,9 @@ if __name__ == '__main__':
     if sys.argv[3] == 'train':
         trackLoss = sys.argv[4] == 'trackLoss'
         print(trackLoss)
-        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
+        train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
               similarityMetric, alpha, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, scheduler=scheduler, batch_size=batch_size)
+        print("Training Complete. Evaluating on Test Set...")
+        checkpoint = torch.load(batchDirectory + "saved_checkpoints/model_best.pt", map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        evaluate(model, testloader, device, batchDirectory=batchDirectory)

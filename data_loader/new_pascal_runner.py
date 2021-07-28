@@ -73,7 +73,8 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
                                            transform=transformations,
                                            target_transform=encode_labels)
 
-    dataset_train = torch.utils.data.Subset(dataset_train_orig, list(range(0,50))) 
+    #dataset_train = torch.utils.data.Subset(dataset_train_orig, list(range(0,50))) 
+    dataset_train = balancedMiniDataset(dataset_train_orig, 2, len(dataset_train_orig))
     unsup_train = torch.utils.data.Subset(dataset_train_orig, list(range(500,1500))) #len(dataset_train_orig))))
     
     dataset_valid = PascalVOC_Dataset(data_dir,
@@ -96,3 +97,22 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
         dataset_valid, batch_size=batch_size, num_workers=4)
 
     return train_loader, unsup_loader, valid_loader, test_loader
+
+
+def balancedMiniDataset(trainset, size, limit):
+    counter = np.zeros(len(trainset[0][1]))
+    iterating = True
+    step = 1500
+    subsetToInclude = []
+    while iterating and step < limit:
+        label = trainset[step][1].numpy()
+        if np.all(counter + label <= size) and np.sum(label).item() == 1:
+            counter += label
+            print(counter, step)
+            subsetToInclude.append(step)
+        
+        if np.sum(counter) >= size * len(trainset[0][1]):
+            print("Completely Balanced Dataset")
+            iterating = False
+        step += 1
+    return torch.utils.data.Subset(trainset, subsetToInclude)

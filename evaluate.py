@@ -23,3 +23,4 @@ def evaluate(model, testloader, device, batchDirectory = ''):
             pred_logits = (m(outputs) > 0.5).int()
             df = df.append(pd.DataFrame(torch.cat((labels, pred_logits),axis=1)).astype("int"))
         df.to_csv(batchDirectory + 'saved_figs/testLabelLogits.csv', index=False)
+    print("Finished Evaluation")

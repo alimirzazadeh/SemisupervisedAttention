@@ -233,6 +233,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
             LossEvaluator.plotLosses(batchDirectory=batchDirectory)
             print('Unsup Iter Reloaded: ', unsupiter_reloaded)
             print('Sup Iter Reloaded: ', supiter_reloaded)
+    print('\n \n BEST SUP LOSS OVERALL: ', LossEvaluator.bestSupSum, '\n\n')
+    print('\n \n BEST F1 SCORE SUM OVERALL: ', LossEvaluator.bestF1Sum, '\n\n')
     saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
 
 def saveCheckpoint(EPOCH, net, optimizer, batchDirectory=''):

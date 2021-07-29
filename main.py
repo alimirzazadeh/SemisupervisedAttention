@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
     print(model.fc.weight)
 
-    if sys.argv[1] == 'loadCheckpoint':
+    if sys.argv[1] != 'noLoadCheckpoint':
         whichCheckpoint = 6
         if len(all_checkpoints) > 0:
 
@@ -90,10 +90,11 @@ if __name__ == '__main__':
                 # PATH = '/scratch/users/alimirz1/saved_batches/...'
                 # PATH = '/scratch/users/alimirz1/saved_batches/exp_11/saved_checkpoints/model_59.pt'
                 # PATH = '/scratch/users/alimirz1/saved_batches/pre_gradFix/savingAfter15Sup/saved_checkpoints/model_14.pt'
-                PATH = '/scratch/users/alimirz1/saved_batches/hot_bench/saved_checkpoints/model_best.pt'
+                # PATH = '/scratch/users/alimirz1/saved_batches/hot_bench/saved_checkpoints/model_best.pt'
+                PATH = '/scratch/users/alimirz1/saved_batches/hot_bench_2s_saved/saved_checkpoints/' + sys.argv[1]
             else:
                 # + all_checkpoints[whichCheckpoint]
-                PATH = 'saved_checkpoints/model_14.pt'
+                PATH = 'saved_checkpoints/' + sys.argv[1]
 
             print('Loading Saved Model', PATH)
 

@@ -149,6 +149,7 @@ class Evaluator:
         axs[1, 1].set_title('Accuracy')
         plt.savefig(batchDirectory+'saved_figs/AllPlots.png')
         # plt.legend()
+        plt.close()
 
     def calculateF1score(self, tp, fp, fn):
         recall = tp / (tp + fn)

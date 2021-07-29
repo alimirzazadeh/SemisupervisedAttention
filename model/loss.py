@@ -172,8 +172,8 @@ class CAMLoss(nn.Module):
                 if visualize:
                     # print(firstCompare.shape, secondCompare.shape)
                     # print(firstCompare.dtype, secondCompare.dtype)
-                    hmps.append(firstCompare.detach().numpy())
-                    gbimgs.append(secondCompare.detach().numpy())
+                    hmps.append(firstCompare.detach().cpu().numpy())
+                    gbimgs.append(secondCompare.detach().cpu().numpy())
 
                 if similarityMetric == 0:
                     firstCompare = sigmoidIt(firstCompare)

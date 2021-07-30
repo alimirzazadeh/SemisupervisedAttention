@@ -20,7 +20,7 @@ class VanillaGrad:
 
         one_hot = torch.zeros((1, output.size()[-1]), dtype=torch.float32)
         one_hot[0][index] = 1
-        one_hot = torch.sum(one_hot.cuda() * output.cuda())
+        one_hot = torch.sum(one_hot.to(torch.device("cuda:0" if self.use_cuda else "cpu")) * output.to(torch.device("cuda:0" if self.use_cuda else "cpu")))
         grad = torch.autograd.grad(one_hot, x, create_graph=True)
         grad = grad[0][0, :, :, :]
         grad = torch.moveaxis(grad, 0, 2)
@@ -50,7 +50,7 @@ class SmoothGrad(VanillaGrad):
 
             one_hot = torch.zeros((1, output.size()[-1]), dtype=torch.float32)
             one_hot[0][index] = 1
-            one_hot = torch.sum(one_hot.cuda() * output.cuda())
+            one_hot = torch.sum(one_hot.to(torch.device("cuda:0" if self.use_cuda else "cpu")) * output.to(torch.device("cuda:0" if self.use_cuda else "cpu")))
 
             if x_plus_noise.grad is not None:
                 x_plus_noise.grad.data.zero_()

@@ -45,8 +45,10 @@ if __name__ == '__main__':
         batchDirectory = ''
     # Load the CIFAR Dataset
     # suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
-    suptrainloader, unsuptrainloader, testloader = loadPascalData(
-        batch_size=batch_size)
+    # suptrainloader, unsuptrainloader, testloader = loadPascalData(
+    #     batch_size=batch_size)
+    suptrainloader, unsuptrainloader, testloader = loadCifarData(
+    batch_size=batch_size)
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
@@ -144,9 +146,7 @@ if __name__ == '__main__':
         #         counter += 1
         #     plt.show()
 
-        idx2label = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus',
-                     'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse',
-                     'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
+        idx2label = ['plane', 'car', 'bird', 'cat','deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 
         for i in range(3):
             images, labels = dataiter.next()

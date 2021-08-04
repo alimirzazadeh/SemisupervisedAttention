@@ -136,4 +136,3 @@ dmypy.json
 /saved_checkpoints/*
 /saved_iterations/*
 /saved_batches/*
-script.sh

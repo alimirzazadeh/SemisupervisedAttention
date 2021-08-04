@@ -18,11 +18,11 @@ def loadCifarData(batch_size=4, num_workers=2,shuffle=True):
     ])
     batch_size = 4
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                            download=True, transform=transform)
+                                            download=False, transform=transform)
 
-    supervisedRatio = 0.3
-    supervisedTrainSet = torch.utils.data.Subset(trainset, list(range(int(len(trainset)*supervisedRatio))))
-    unsupervisedTrainSet = torch.utils.data.Subset(trainset, list(range(int(len(trainset)*supervisedRatio),50000)))
+    print(int(len(trainset)))
+    supervisedTrainSet = trainset
+    unsupervisedTrainSet  = torch.utils.data.Subset(trainset, list(range( 250 )))
 
     suptrainloader = torch.utils.data.DataLoader(supervisedTrainSet, batch_size=batch_size,
                                               shuffle=shuffle, num_workers=num_workers)
@@ -31,7 +31,7 @@ def loadCifarData(batch_size=4, num_workers=2,shuffle=True):
                                               shuffle=shuffle, num_workers=num_workers)
 
     testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                           download=True, transform=transform)
+                                           download=False, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
                                              shuffle=False, num_workers=num_workers)
     return suptrainloader, unsuptrainloader, testloader

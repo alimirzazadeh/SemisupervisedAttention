@@ -55,8 +55,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
     # criteron = nn.MultiLabelSoftMarginLoss(weight=weight)
         
     
-    # criteron = torch.nn.CrossEntropyLoss()
-    criteron = nn.BCEWithLogitsLoss()
+    criteron = torch.nn.CrossEntropyLoss()
+    # criteron = nn.BCEWithLogitsLoss()
 
     if trackLoss:
         imgPath = batchDirectory + 'saved_figs/track_lossImg.npy'
@@ -192,14 +192,11 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                     inputs = inputs.to(device)
                     labels = labels.to(device)
 
-                    # print(labelLogit)
-                    outputs = model(inputs) 
+                    outputs = model(inputs)
                     l1 = criteron(outputs, labels)
-                    _, preds = torch.max(outputs, 1)
-                    # print(preds)
-                    # print(labels)
-                    for pred in range(preds.shape[0]):
-                        running_corrects += labels[pred, int(preds[pred])]
+
+                    for pred in range(outputs.shape[0]):
+                        running_corrects += labels[pred]
                     # running_corrects += torch.sum(preds == labels.data)
                 else:
                     customTrain(model)
@@ -224,11 +221,11 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
             counter += 1
             
         # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
-        if True: #epoch % 10 == 5:
+        if epoch % 10 == 0:
             print('Epoch {}/{}'.format(epoch, numEpochs - 1))
             model.eval()
             optimizer.zero_grad()
-            LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
+            LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=False, batchDirectory=batchDirectory) #training!='supervised')
             LossEvaluator.plotLosses(batchDirectory=batchDirectory)
             print('Unsup Iter Reloaded: ', unsupiter_reloaded)
             print('Sup Iter Reloaded: ', supiter_reloaded)

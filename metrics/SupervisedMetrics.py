@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import torch.nn as nn
 import numpy as np
 import pandas as pd
+import sklearn
+from sklearn.preprocessing import OneHotEncoder
 
 
 class Evaluator:
@@ -39,13 +41,10 @@ class Evaluator:
                 labels = labels.to(device)
                 outputs = model(inputs)
                 l1 = criteron(outputs, labels)
-
-                _, preds = torch.max(outputs, 1)
-
                 running_loss += l1.item()
-                # running_corrects += torch.sum(preds == labels.data)
-                for pred in range(preds.shape[0]):
-                    running_corrects += labels[pred, int(preds[pred])]
+                # running_corr1ects += torch.sum(preds == labels.data)
+                for pred in range(outputs.shape[0]):
+                    running_corrects += labels[pred]
                     m = nn.Sigmoid()
                     pred_probability = m(outputs[pred])
                     pred_logits = (pred_probability > 0.5).int()

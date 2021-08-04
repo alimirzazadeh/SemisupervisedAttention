@@ -9,7 +9,7 @@ from torch import nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from torch.utils.data import TensorDataset, DataLoader, SequentialSampler, RandomSampler
-from transformers import *
+from transformers import get_linear_schedule_with_warmup, AdamW
 from tqdm.auto import tqdm
 import numpy as np
 import warnings
@@ -17,7 +17,7 @@ import random
 import time
 import datetime
 import copy
-from mayanshell.validation import StreamMetrics
+from metrics import StreamMetrics
 from ipdb import set_trace as bp
 
 def load_valid_weights_only(model, state_dict_path):

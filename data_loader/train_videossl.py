@@ -26,10 +26,10 @@ from video_transforms import *
 
 if __name__ == "main":
     
-    data_path='/home/fdubost/babul/experiments/256/'
+    data_path='/home/alimirz1/babul/fdubost/experiments/256/'
     output_folder='/home/alimirz1/'
-    frame_path='/home/fdubost/babul/experiments/258/frames/'
-    train_split = '/home/fdubost/babul/experiments/257/model_splits.json'
+    frame_path='/home/alimirz1/babul/fdubost/experiments/258/frames/'
+    train_split = '/home/alimirz1/babul/fdubost/experiments/257/model_splits.json'
     stride = 10
     frame_size = 80
         

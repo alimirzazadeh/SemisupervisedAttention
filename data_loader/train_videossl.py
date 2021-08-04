@@ -24,7 +24,7 @@ from video_model import VideoModel
 # import matplotlib.animation as animation
 from video_transforms import *
 
-if __name__ == "main":
+if __name__ == '__main__':
     
     data_path='/home/alimirz1/babul/fdubost/experiments/256/'
     output_folder='/home/alimirz1/'

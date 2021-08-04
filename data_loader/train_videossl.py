@@ -31,7 +31,7 @@ if __name__ == '__main__':
     output_folder='/home/alimirz1/'
     frame_path='/home/alimirz1/babul/fdubost/experiments/258/frames/'
     train_split = '/home/alimirz1/babul/fdubost/experiments/257/model_splits.json'
-    stride = 10
+    stride = 1
     frame_size = 80
         
     with open(data_path+'video_table.json', 'r') as f:
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         
     indices = list(range(len(splits['train']['segments'])))
     
-    indices = indices[::10] ################################################################
+    indices = indices[::stride] ################################################################
             
     if 'crop_list' not in splits['train']:
         crop_list = None

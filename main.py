@@ -59,7 +59,8 @@ if __name__ == '__main__':
         os.makedirs(batchDirectory + "saved_checkpoints")
         print("Made Saved_Checkpoints folder")
 
-    model = models.resnet50(pretrained=True)
+    # model = models.resnet50(pretrained=True)
+    model =  torchvision.models.video.r3d_18(pretrained=True)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -118,15 +119,20 @@ if __name__ == '__main__':
     target_layer = model.layer4[-1]  # this is the layer before the pooling
 
     print(model.fc.weight)
-    model.conv1.padding_mode = 'reflect'
+    # model.conv1.padding_mode = 'reflect'
+    model.stem[0].padding_mode = 'reflect'
     for x in model.layer1:
-        x.conv2.padding_mode = 'reflect'
+        x.conv1[0].padding_mode = 'reflect'
+        x.conv2[0].padding_mode = 'reflect'
     for x in model.layer2:
-        x.conv2.padding_mode = 'reflect'
+        x.conv1[0].padding_mode = 'reflect'
+        x.conv2[0].padding_mode = 'reflect'
     for x in model.layer3:
-        x.conv2.padding_mode = 'reflect'
+        x.conv1[0].padding_mode = 'reflect'
+        x.conv2[0].padding_mode = 'reflect'
     for x in model.layer4:
-        x.conv2.padding_mode = 'reflect'
+        x.conv1[0].padding_mode = 'reflect'
+        x.conv2[0].padding_mode = 'reflect'
 
     use_cuda = torch.cuda.is_available()
     # load a few images from CIFAR and save

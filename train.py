@@ -22,7 +22,7 @@ def customTrain(model):
     def _freeze_norm_stats(net):
         try:
             for m in net.modules():
-                if isinstance(m, nn.BatchNorm2d):
+                if isinstance(m, nn.BatchNorm3d):
                     m.eval()
     
         except ValueError:  

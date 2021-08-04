@@ -6,6 +6,7 @@ import torch
 from torch import nn
 import torchvision
 from torchvision import models, transforms
+from ipdb import set_trace as bp
 # import mayanshell
 # from mayanshell.model.deep_model import DeepModel
 # from mayanshell.validation import compute_metrics
@@ -139,5 +140,5 @@ if __name__ == '__main__':
             'batch_size': 12,
         }
     )
-                   
+    bp()
     print('done!')

@@ -5,7 +5,7 @@ from torchvision import datasets, models, transforms
 import os
 import pims
 from PIL import Image
-from video_transforms import *
+from data_loader.video_transforms import *
 import numpy as np
 import warnings
 import random

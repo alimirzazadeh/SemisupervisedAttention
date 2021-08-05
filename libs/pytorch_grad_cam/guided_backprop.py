@@ -60,7 +60,6 @@ class GuidedBackpropReLUModel:
             input_img = input_img.cuda()
 
         input_img = input_img.requires_grad_(True)
-        bp()
         output = self.forward(input_img)
 
         if target_category is None:

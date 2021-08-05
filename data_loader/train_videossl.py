@@ -25,13 +25,14 @@ from data_loader.video_model import VideoModel
 # import matplotlib.animation as animation
 from data_loader.video_transforms import ToFloatTensorInZeroOne, GroupColorJitter, RandomCutOut, RandomCrop, RandomHorizontalFlip, Resize, Normalize, CenterCrop
 
-def loadVideoData():
+def loadVideoData(batch_size=1):
     data_path='/home/alimirz1/babul/fdubost/experiments/256/'
     output_folder='/home/alimirz1/'
     frame_path='/home/alimirz1/babul/fdubost/experiments/258/frames/'
     train_split = '/home/alimirz1/babul/fdubost/experiments/285/model_splits.json'
     stride = 1
     frame_size = 80
+    
         
     with open(data_path+'video_table.json', 'r') as f:
         video_table = json.load(f)
@@ -118,7 +119,7 @@ def loadVideoData():
         frames_of_interest = foi,
         transform_frames_of_interest = False,
         options = {
-            'batch_size': 12,
+            'batch_size': batch_size,
             'norm_vals': VideoModel.default_dataloader_options[
                 'norm_vals'
             ],
@@ -137,7 +138,7 @@ def loadVideoData():
         frames_of_interest = foi,
         transform_frames_of_interest = False,
         options = {
-            'batch_size': 12,
+            'batch_size': batch_size,
             'norm_vals': VideoModel.default_dataloader_options[
                 'norm_vals'
             ],
@@ -172,7 +173,7 @@ def loadVideoData():
         extra_frames = 0,
         crop_list = crop_list_dev,
         options = {
-            'batch_size': 12,
+            'batch_size': batch_size,
         }
     )
     
@@ -185,7 +186,7 @@ def loadVideoData():
         extra_frames = 0,
         crop_list = crop_list_dev,
         options = {
-            'batch_size': 12,
+            'batch_size': batch_size,
         }
     )
 

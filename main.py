@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    # model.fc = nn.Linear(int(model.fc.in_features), 5)
+    model.fc = nn.Linear(int(model.fc.in_features), 5)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     # lr = [1e-5, 5e-3]
@@ -138,8 +138,8 @@ if __name__ == '__main__':
     # load a few images from CIFAR and save
     if sys.argv[2] == 'visualLoss':
         from model.loss import CAMLoss
-        CAMLossInstance = CAMLoss(
-            model, target_layer, use_cuda, resolutionMatch, similarityMetric)
+        # CAMLossInstance = CAMLoss(
+        #     model, target_layer, use_cuda, resolutionMatch, similarityMetric)
         dataiter = iter(validloader)
 
         device = torch.device("cuda:0" if use_cuda else "cpu")

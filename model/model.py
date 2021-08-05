@@ -26,7 +26,7 @@ class Conv3DSimple(nn.Conv3d):
             kernel_size=(3, 3, 3),
             stride=stride,
             padding=padding,
-            padding_mode='reflect',
+            padding_mode='replicate',
             bias=False)
 
     @staticmethod
@@ -166,7 +166,7 @@ class BasicStem(nn.Sequential):
     def __init__(self):
         super(BasicStem, self).__init__(
             nn.Conv3d(3, 64, kernel_size=(3, 7, 7), stride=(1, 2, 2),
-                      padding=(1, 3, 3), padding_mode='reflect', bias=False),
+                      padding=(1, 3, 3), padding_mode='replicate', bias=False),
             nn.BatchNorm3d(64),
             nn.ReLU(inplace=True))
 

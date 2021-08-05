@@ -6,6 +6,7 @@ from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 # from data_loader.new_pascal_runner import loadPascalData
 # from data_loader.cifar_data_loader import loadCifarData
 from data_loader.train_videossl import loadVideoData
+from ipdb import set_trace as bp
 import os
 import numpy as np
 from torch import nn
@@ -66,7 +67,7 @@ if __name__ == '__main__':
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     model.fc = nn.Linear(int(model.fc.in_features), 5)
-
+    bp()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     # lr = [1e-5, 5e-3]
     # optimizer = optim.SGD([

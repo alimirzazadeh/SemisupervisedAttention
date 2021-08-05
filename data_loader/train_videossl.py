@@ -23,7 +23,7 @@ from data_loader.video_model import VideoModel
 # import numpy as np
 # import matplotlib.pyplot as plt
 # import matplotlib.animation as animation
-from data_loader.video_transforms import *
+from data_loader.video_transforms import ToFloatTensorInZeroOne, GroupColorJitter, RandomCutOut, RandomCrop, RandomHorizontalFlip, Resize, Normalize, CenterCrop
 
 def loadVideoData():
     data_path='/home/alimirz1/babul/fdubost/experiments/256/'
@@ -150,6 +150,17 @@ def loadVideoData():
         crop_list_dev = None
     else:
         crop_list_dev = splits['dev']['crop_list']
+       
+        
+    crop = frame_size
+    dev_transform_list = [
+        ToFloatTensorInZeroOne(),
+        CenterCrop((crop, crop)),
+        Normalize(*VideoModel.default_dataloader_options[
+            'norm_vals'
+        ])
+    ]
+    dev_transform = transforms.Compose(dev_transform_list)
     
     dev_dl = VideoModel.default_dataloader(
         id_to_video_files,
@@ -157,6 +168,7 @@ def loadVideoData():
         splits['dev']['labels'][::1],
         frames_path = frames_path,
         training = False,
+        transform = dev_transform,
         extra_frames = 0,
         crop_list = crop_list_dev,
         options = {

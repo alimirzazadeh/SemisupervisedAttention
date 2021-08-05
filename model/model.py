@@ -1,6 +1,6 @@
 import torch.nn as nn
 
-from ..utils import load_state_dict_from_url
+import torch
 
 
 __all__ = ['r3d_18', 'mc3_18', 'r2plus1d_18']
@@ -277,7 +277,7 @@ def _video_resnet(arch, pretrained=False, progress=True, **kwargs):
     model = VideoResNet(**kwargs)
 
     if pretrained:
-        state_dict = load_state_dict_from_url(model_urls[arch],
+        state_dict = torch.hub.load_state_dict_from_url(model_urls[arch],
                                               progress=progress)
         model.load_state_dict(state_dict)
     return model

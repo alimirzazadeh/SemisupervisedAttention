@@ -17,7 +17,7 @@ import random
 import time
 import datetime
 import copy
-from metrics import StreamMetrics
+from data_loader.metrics import StreamMetrics
 from ipdb import set_trace as bp
 
 def load_valid_weights_only(model, state_dict_path):

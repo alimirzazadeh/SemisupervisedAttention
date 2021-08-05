@@ -176,7 +176,7 @@ if __name__ == '__main__':
             images = images.to(device)
             labels = labels.to(device)
             # images.to("cpu")
-            # model.to(device)
+            model.to(device)
             with torch.no_grad():
                 # calculate outputs by running images through the network
                 outputs = model(images)

@@ -103,7 +103,7 @@ if __name__ == '__main__':
                 PATH = '/scratch/users/alimirz1/saved_batches/hot_bench_2s_saved/saved_checkpoints/' + sys.argv[1]
             else:
                 # + all_checkpoints[whichCheckpoint]
-                PATH = 'saved_checkpoints/7_31_21/model_best_alt.pt'
+                PATH = 'saved_checkpoints/hot_bench_150s_model_best.pt'
                 PATH2 = 'saved_checkpoints/7_31_21/model_best_sup.pt'
 
                 # loss = checkpoint['loss']

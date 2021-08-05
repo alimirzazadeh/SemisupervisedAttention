@@ -161,6 +161,20 @@ def loadVideoData():
             'batch_size': 12,
         }
     )
+    
+    test_dl = VideoModel.default_dataloader(
+        id_to_video_files,
+        splits['test']['segments'][::1],
+        splits['test']['labels'][::1],
+        frames_path = frames_path,
+        training = False,
+        extra_frames = 0,
+        crop_list = crop_list_dev,
+        options = {
+            'batch_size': 12,
+        }
+    )
+
     # bp()
     print('done!')
-    return dl_sup, dl_unsup, dev_dl, dev_dl
+    return dl_sup, dl_unsup, dev_dl, test_dl

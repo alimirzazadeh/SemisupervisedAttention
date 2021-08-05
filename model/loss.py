@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import torch.nn.functional as F
-
+from ipdb import set_trace as bp
 import torch
 
 
@@ -93,7 +93,7 @@ class CAMLoss(nn.Module):
                     #     gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
 
                     gb_correlate = torch.abs(gb_correlate)
-                    gb_correlate = torch.sum(gb_correlate, axis=2)
+                    gb_correlate = torch.sum(gb_correlate, axis=-1)
                     return gb_correlate
 
                 def standardize(arr):
@@ -118,6 +118,7 @@ class CAMLoss(nn.Module):
                     secondCompare = standardize(gb_correlate)
                 elif resolutionMatch == 2:
                     ww = -8
+                    bp()
                     sigma = torch.mean(gb_correlate) + \
                         torch.std(gb_correlate) / 2
                     TAc = 1 / (1 + torch.exp(ww * (gb_correlate - sigma)))
@@ -180,11 +181,11 @@ class CAMLoss(nn.Module):
                         arr -= np.min(arr)
                         arr /= np.max(arr)
                         return np.moveaxis(arr,0,-1)
-                    hmps.append(reshapeNormalize(cv2.resize(firstCompare.detach().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
-                    gbimgs.append(reshapeNormalize(cv2.resize(secondCompare.detach().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
-                    imgs.append(normalize(thisImgTensor.detach().numpy()))
-                    maskimgs.append(normalize(newImgTensor.detach().numpy()))
-                    gbitself.append(4 * reshapeNormalize(gb_correlate.detach().numpy()))
+                    hmps.append(reshapeNormalize(cv2.resize(firstCompare.cpu().detach().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
+                    gbimgs.append(reshapeNormalize(cv2.resize(secondCompare.cpu().detach().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
+                    imgs.append(normalize(thisImgTensor.cpu().detach().numpy()))
+                    maskimgs.append(normalize(newImgTensor.cpu().detach().numpy()))
+                    gbitself.append(4 * reshapeNormalize(gb_correlate.cpu().detach().numpy()))
 
                 if similarityMetric == 0:
                     firstCompare = sigmoidIt(firstCompare)

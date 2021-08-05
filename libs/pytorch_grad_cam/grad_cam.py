@@ -14,4 +14,4 @@ class GradCAM(BaseCAM):
                         target_category,
                         activations,
                         grads):
-        return torch.mean(grads, axis=(2, 3))
+        return torch.mean(grads, axis=(3, 4))

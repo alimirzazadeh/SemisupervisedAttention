@@ -22,7 +22,7 @@ def customTrain(model):
     def _freeze_norm_stats(net):
         try:
             for m in net.modules():
-                if isinstance(m, nn.BatchNorm2d):
+                if isinstance(m, nn.BatchNorm3d):
                     m.eval()
     
         except ValueError:  
@@ -56,8 +56,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     # criteron = nn.MultiLabelSoftMarginLoss(weight=weight)
         
     
-    # criteron = torch.nn.CrossEntropyLoss()
-    criteron = nn.BCEWithLogitsLoss()
+    criteron = torch.nn.CrossEntropyLoss()
+    # criteron = nn.BCEWithLogitsLoss()
 
     if trackLoss:
         imgPath = batchDirectory + 'saved_figs/track_lossImg.npy'
@@ -95,8 +95,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         
         # if scheduler:
         #     scheduler.step()        
-        running_corrects = 0
-        running_loss = 0.0
+        # running_corrects = 0
+        # running_loss = 0.0
 
         supiter = iter(suptrainloader)
         unsupiter = iter(unsuptrainloader)
@@ -196,11 +196,11 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                     # print(labelLogit)
                     outputs = model(inputs) 
                     l1 = criteron(outputs, labels)
-                    _, preds = torch.max(outputs, 1)
+                    # _, preds = torch.max(outputs, 1)
                     # print(preds)
                     # print(labels)
-                    for pred in range(preds.shape[0]):
-                        running_corrects += labels[pred, int(preds[pred])]
+                    # for pred in range(preds.shape[0]):
+                    #     running_corrects += labels[pred, int(preds[pred])]
                     # running_corrects += torch.sum(preds == labels.data)
                 else:
                     customTrain(model)

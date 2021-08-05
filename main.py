@@ -3,12 +3,14 @@ from train import train
 from evaluate import evaluate
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
-from data_loader.new_pascal_runner import loadPascalData
-from data_loader.cifar_data_loader import loadCifarData
+# from data_loader.new_pascal_runner import loadPascalData
+# from data_loader.cifar_data_loader import loadCifarData
+from data_loader.train_videossl import loadVideoData
+from ipdb import set_trace as bp
 import os
 import numpy as np
 from torch import nn
-import torchvision.models as models
+from model.model import r3d_18
 import torchvision.transforms as transforms
 import torchvision
 import torch
@@ -46,8 +48,7 @@ if __name__ == '__main__':
         batchDirectory = ''
     # Load the CIFAR Dataset
     # suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
-    suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(
-        batch_size=batch_size)
+    suptrainloader, unsuptrainloader, validloader, testloader = loadVideoData()
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
@@ -59,12 +60,13 @@ if __name__ == '__main__':
         os.makedirs(batchDirectory + "saved_checkpoints")
         print("Made Saved_Checkpoints folder")
 
-    model = models.resnet50(pretrained=True)
-
+    # model = models.resnet50(pretrained=True)
+    #model =  torchvision.models.video.r3d_18(pretrained=True)
+    model = r3d_18(pretrained=True)
+    
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    model.fc = nn.Linear(int(model.fc.in_features), 20)
-
+    model.fc = nn.Linear(int(model.fc.in_features), 5)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     # lr = [1e-5, 5e-3]
     # optimizer = optim.SGD([
@@ -111,15 +113,20 @@ if __name__ == '__main__':
     target_layer = model.layer4[-1]  # this is the layer before the pooling
 
     print(model.fc.weight)
-    model.conv1.padding_mode = 'reflect'
-    for x in model.layer1:
-        x.conv2.padding_mode = 'reflect'
-    for x in model.layer2:
-        x.conv2.padding_mode = 'reflect'
-    for x in model.layer3:
-        x.conv2.padding_mode = 'reflect'
-    for x in model.layer4:
-        x.conv2.padding_mode = 'reflect'
+    # model.conv1.padding_mode = 'reflect'
+    # model.stem[0].padding_mode = 'reflect'
+    # for x in model.layer1:
+    #     x.conv1[0].padding_mode = 'reflect'
+    #     x.conv2[0].padding_mode = 'reflect'
+    # for x in model.layer2:
+    #     x.conv1[0].padding_mode = 'reflect'
+    #     x.conv2[0].padding_mode = 'reflect'
+    # for x in model.layer3:
+    #     x.conv1[0].padding_mode = 'reflect'
+    #     x.conv2[0].padding_mode = 'reflect'
+    # for x in model.layer4:
+    #     x.conv1[0].padding_mode = 'reflect'
+    #     x.conv2[0].padding_mode = 'reflect'
 
     use_cuda = torch.cuda.is_available()
     # load a few images from CIFAR and save
@@ -141,7 +148,7 @@ if __name__ == '__main__':
             images = images.to(device)
             labels = labels.to(device)
             # images.to("cpu")
-            # model.to(device)
+            model.to(device)
             with torch.no_grad():
                 # calculate outputs by running images through the network
                 loadCheckpoint(PATH, model)
@@ -160,17 +167,14 @@ if __name__ == '__main__':
                 predicted = predicted.tolist()
                 predicted2 = predicted2.tolist()
                 print(predicted, predicted2)
-                if predicted != predicted2:
-                    predictedNames = [idx2label[p] for p in predicted]
-                    labels = labels.numpy()
-                    actualLabels = [labels[p, predicted[p]]
-                                    for p in range(len(predicted))]
-                    predictedNames2 = [idx2label[p] for p in predicted2]
-                    actualLabels2 = [labels[p, predicted2[p]]
-                                    for p in range(len(predicted2))]
-                    print("DIFFERING!", actualLabels, actualLabels2)
-                    print("\n\n Val: ", val, val2, "\n\n")
-                    print("\n\n Mean: ", mean, mean2, "\n\n")
+                predictedNames = [idx2label[p] for p in predicted]
+                labels = labels.tolist()
+                actualLabels = labels == predicted
+                predictedNames2 = [idx2label[p] for p in predicted]
+                actualLabels2 = labels == predicted
+                print("DIFFERING!", actualLabels, actualLabels2)
+                print("\n\n Val: ", val, val2, "\n\n")
+                print("\n\n Mean: ", mean, mean2, "\n\n")
                     
             
             if predicted != predicted2:

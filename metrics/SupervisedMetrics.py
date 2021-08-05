@@ -43,21 +43,22 @@ class Evaluator:
                 _, preds = torch.max(outputs, 1)
                 
                 running_loss += l1.item()
-                # running_corrects += torch.sum(preds == labels.data)
-                for pred in range(preds.shape[0]):
-                    running_corrects += labels[pred, int(preds[pred])]
-                    m = nn.Sigmoid()
-                    pred_probability = m(outputs[pred])
-                    pred_logits = (pred_probability > 0.5).int()
+                running_corrects += torch.sum(preds == labels.data)
+                
+                # for pred in range(inputs.shape[0]):
+                #     running_corrects += (labels[pred] == preds).int().item()
+                #     m = nn.Sigmoid()
+                #     pred_probability = m(outputs[pred])
+                #     pred_logits = (pred_probability > 0.5).int()
                     
-                    if tp == None:
-                        tp = (pred_logits + labels[pred] > 1).int()
-                        fp = (torch.subtract(pred_logits, labels[pred]) > 0).int()
-                        fn = (torch.subtract(pred_logits, labels[pred]) < 0).int()
-                    else:
-                        tp += (pred_logits + labels[pred] > 1).int()
-                        fp += (torch.subtract(pred_logits, labels[pred]) > 0).int()
-                        fn += (torch.subtract(pred_logits, labels[pred]) < 0).int()
+                if tp == None:
+                    tp = (preds + labels.data > 1).int()
+                    fp = (torch.subtract(preds, labels.data) > 0).int()
+                    fn = (torch.subtract(preds, labels.data) < 0).int()
+                else:
+                    tp += (preds + labels.data > 1).int()
+                    fp += (torch.subtract(preds, labels.data) > 0).int()
+                    fn += (torch.subtract(preds, labels.data) < 0).int()
                     
                     # if labels[pred, int(preds[pred])] == 1:
                     #     tp += 1

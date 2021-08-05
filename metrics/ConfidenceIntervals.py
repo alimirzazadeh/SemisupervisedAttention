@@ -26,9 +26,9 @@ def custom_metric(data_methodx):
     fn = None
     
     for preds in data_methodx.to_numpy():
-        
-        labels = preds[:int(len(preds) / 2)]
-        pred_logits = preds[int(len(preds) / 2):]
+        assert(len(preds) == 2)
+        labels = preds[0]
+        pred_logits = preds[1]
         if tp == None:
             tp = np.sum((pred_logits + labels > 1))
             fp = np.sum((np.subtract(pred_logits, labels) > 0))
@@ -131,6 +131,7 @@ if __name__ == '__main__':
     else:
         PATH1 = '../saved_figs/8_3_21_comparison/testLabelLogits_sup.csv'
         PATH2 = '../saved_figs/8_3_21_comparison/testLabelLogits_c4.csv'
+
         
     #load data
     data_method1 = pd.read_csv(PATH1) #CHANGE

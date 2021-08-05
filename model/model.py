@@ -324,7 +324,7 @@ def mc3_18(pretrained=False, progress=True, **kwargs):
 
 
 
-[docs]def r2plus1d_18(pretrained=False, progress=True, **kwargs):
+def r2plus1d_18(pretrained=False, progress=True, **kwargs):
     """Constructor for the 18 layer deep R(2+1)D network as in
     https://arxiv.org/abs/1711.11248
 

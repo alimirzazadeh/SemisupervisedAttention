@@ -129,8 +129,9 @@ if __name__ == '__main__':
         PATH1 = '/scratch/users/alimirz1/saved_batches/medium_alt_gb_pears_2/saved_checkpoints/model_best.pt'
         PATH2 = '/scratch/users/alimirz1/saved_batches/medium_alt_gb_pears_2/saved_checkpoints/model_best.pt'
     else:
-        PATH1 = '../saved_figs/8_3_21_comparison/testLabelLogits_fullsup.csv'
-        PATH2 = '../saved_figs/8_3_21_comparison/testLabelLogits_c3.csv'
+        PATH1 = '../saved_figs/8_3_21_comparison/testLabelLogits_sup.csv'
+        PATH2 = '../saved_figs/8_3_21_comparison/testLabelLogits_c4.csv'
+
         
     #load data
     data_method1 = pd.read_csv(PATH1) #CHANGE

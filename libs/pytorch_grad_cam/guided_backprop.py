@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from torch.autograd import Function
+from ipdb import set_trace as bp
 
 
 class GuidedBackpropReLU(Function):
@@ -59,7 +60,7 @@ class GuidedBackpropReLUModel:
             input_img = input_img.cuda()
 
         input_img = input_img.requires_grad_(True)
-
+        bp()
         output = self.forward(input_img)
 
         if target_category is None:

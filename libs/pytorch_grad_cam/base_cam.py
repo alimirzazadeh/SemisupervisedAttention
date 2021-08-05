@@ -49,7 +49,7 @@ class BaseCAM:
                       grads,
                       eigen_smooth=False):
         weights = self.get_cam_weights(input_tensor, target_category, activations, grads)
-        bp()
+        # bp()
         weighted_activations = weights[:, :, :, None, None] * activations
         if eigen_smooth:
             cam = get_2d_projection(weighted_activations)
@@ -103,13 +103,14 @@ class BaseCAM:
         # print(input_tensor.shape[-2:][::-1])
         # img = cv2.resize(img, input_tensor.shape[-2:][::-1])
         # print(img.shape)
-        img = img.reshape((1,1,img.shape[0],img.shape[1]))
+        # img = img.reshape((1,1,img.shape[0],img.shape[1]))
         if upSample:
             img = torch.nn.functional.upsample_bilinear(img.double(),size=list(input_tensor.shape[-2:][::-1]))
         # print(img.shape)
         # img = img - torch.min(img)
         # img = img / torch.max(img)
-        result = img[0,0,:,:]
+        # result = img[0,0,:,:]
+        result = img
         # result = np.float32(result)
         if returnTarget:
             target_categories = out_output.argsort()[0][-3:][::-1]

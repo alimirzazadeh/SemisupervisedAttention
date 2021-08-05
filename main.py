@@ -104,9 +104,9 @@ if __name__ == '__main__':
                 # PATH = '/scratch/users/alimirz1/saved_batches/hot_bench/saved_checkpoints/model_best.pt'
                 PATH = '/scratch/users/alimirz1/saved_batches/hot_bench_2s_saved/saved_checkpoints/' + sys.argv[1]
             elif os.path.isdir('/home/alimirz1'):
+                print('in here')
                 PATH = '/home/alimirz1/babul/fdubost/experiments/290/model.pth'
                 PATH2 = '/home/alimirz1/babul/fdubost/experiments/282/model.pth'
-                
             else:
                 # + all_checkpoints[whichCheckpoint]
                 PATH = 'saved_checkpoints/7_31_21/model_best_alt.pt'

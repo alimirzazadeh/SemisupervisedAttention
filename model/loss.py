@@ -118,7 +118,6 @@ class CAMLoss(nn.Module):
                     secondCompare = standardize(gb_correlate)
                 elif resolutionMatch == 2:
                     ww = -8
-                    bp()
                     sigma = torch.mean(gb_correlate) + \
                         torch.std(gb_correlate) / 2
                     TAc = 1 / (1 + torch.exp(ww * (gb_correlate - sigma)))
@@ -181,8 +180,9 @@ class CAMLoss(nn.Module):
                         arr -= np.min(arr)
                         arr /= np.max(arr)
                         return np.moveaxis(arr,0,-1)
-                    hmps.append(reshapeNormalize(cv2.resize(firstCompare.cpu().detach().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
-                    gbimgs.append(reshapeNormalize(cv2.resize(secondCompare.cpu().detach().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
+                    bp()
+                    hmps.append(reshapeNormalize(cv2.resize(firstCompare.cpu().detach().numpy(),(2,256,256),interpolation=cv2.INTER_NEAREST)))
+                    gbimgs.append(reshapeNormalize(cv2.resize(secondCompare.cpu().detach().numpy(),(2,256,256),interpolation=cv2.INTER_NEAREST)))
                     imgs.append(normalize(thisImgTensor.cpu().detach().numpy()))
                     maskimgs.append(normalize(newImgTensor.cpu().detach().numpy()))
                     gbitself.append(4 * reshapeNormalize(gb_correlate.cpu().detach().numpy()))

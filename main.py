@@ -185,7 +185,7 @@ if __name__ == '__main__':
                 predicted = predicted.tolist()
                 # print(predicted)
                 predictedNames = [idx2label[p] for p in predicted]
-                labels = labels.numpy()
+                labels = labels.cpu().numpy()
                 actualLabels = [labels[p, predicted[p]]
                                 for p in range(len(predicted))]
                 # print(predictedNames)

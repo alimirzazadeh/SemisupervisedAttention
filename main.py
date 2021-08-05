@@ -139,8 +139,8 @@ if __name__ == '__main__':
     # load a few images from CIFAR and save
     if sys.argv[2] == 'visualLoss':
         from model.loss import CAMLoss
-        # CAMLossInstance = CAMLoss(
-        #     model, target_layer, use_cuda, resolutionMatch, similarityMetric)
+        CAMLossInstance = CAMLoss(
+            model, target_layer, use_cuda, resolutionMatch, similarityMetric)
         dataiter = iter(validloader)
 
         device = torch.device("cuda:0" if use_cuda else "cpu")
@@ -185,9 +185,10 @@ if __name__ == '__main__':
                 predicted = predicted.tolist()
                 # print(predicted)
                 predictedNames = [idx2label[p] for p in predicted]
-                labels = labels.cpu().numpy()
-                actualLabels = [labels[p, predicted[p]]
-                                for p in range(len(predicted))]
+                labels = labels.tolist()
+                actualLabels = labels == predicted
+                # actualLabels = [labels[p, predicted[p]]
+                #                 for p in range(len(predicted))]
                 # print(predictedNames)
                 print(actualLabels)
                 # print(predictedNames)

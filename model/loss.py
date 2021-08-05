@@ -116,6 +116,7 @@ class CAMLoss(nn.Module):
                     secondCompare = standardize(gb_correlate)
                 elif resolutionMatch == 2:
                     ww = -8
+                    bp()
                     sigma = torch.mean(gb_correlate) + \
                         torch.std(gb_correlate) / 2
                     TAc = 1 / (1 + torch.exp(ww * (gb_correlate - sigma)))
@@ -131,7 +132,6 @@ class CAMLoss(nn.Module):
                     secondCompare = standardize(new_cam_result)
                 elif resolutionMatch == 3:
                     ww = -32
-                    bp()
                     sigma = torch.mean(cam_result) + torch.std(cam_result) / 2
                     TAc = 1 / (1 + torch.exp(ww * (cam_result - sigma)))
                     TAc = TAc.unsqueeze(0)
@@ -170,8 +170,8 @@ class CAMLoss(nn.Module):
                 if visualize:
                     # print(firstCompare.shape, secondCompare.shape)
                     # print(firstCompare.dtype, secondCompare.dtype)
-                    hmps.append(firstCompare.detach().numpy())
-                    gbimgs.append(secondCompare.detach().numpy())
+                    hmps.append(firstCompare.cpu().detach().numpy())
+                    gbimgs.append(secondCompare.cpu().detach().numpy())
 
                 if similarityMetric == 0:
                     firstCompare = sigmoidIt(firstCompare)

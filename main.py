@@ -95,22 +95,21 @@ if __name__ == '__main__':
         
     if sys.argv[1] != 'noLoadCheckpoint':
         whichCheckpoint = 6
-        if len(all_checkpoints) > 0:
 
-            if os.path.isdir('/scratch/'):
-                # PATH = '/scratch/users/alimirz1/saved_batches/...'
-                # PATH = '/scratch/users/alimirz1/saved_batches/exp_11/saved_checkpoints/model_59.pt'
-                # PATH = '/scratch/users/alimirz1/saved_batches/pre_gradFix/savingAfter15Sup/saved_checkpoints/model_14.pt'
-                # PATH = '/scratch/users/alimirz1/saved_batches/hot_bench/saved_checkpoints/model_best.pt'
-                PATH = '/scratch/users/alimirz1/saved_batches/hot_bench_2s_saved/saved_checkpoints/' + sys.argv[1]
-            elif os.path.isdir('/home/alimirz1'):
-                print('in here')
-                PATH = '/home/alimirz1/babul/fdubost/experiments/290/model.pth'
-                PATH2 = '/home/alimirz1/babul/fdubost/experiments/282/model.pth'
-            else:
-                # + all_checkpoints[whichCheckpoint]
-                PATH = 'saved_checkpoints/7_31_21/model_best_alt.pt'
-                PATH2 = 'saved_checkpoints/7_31_21/model_best_sup.pt'
+        if os.path.isdir('/scratch/'):
+            # PATH = '/scratch/users/alimirz1/saved_batches/...'
+            # PATH = '/scratch/users/alimirz1/saved_batches/exp_11/saved_checkpoints/model_59.pt'
+            # PATH = '/scratch/users/alimirz1/saved_batches/pre_gradFix/savingAfter15Sup/saved_checkpoints/model_14.pt'
+            # PATH = '/scratch/users/alimirz1/saved_batches/hot_bench/saved_checkpoints/model_best.pt'
+            PATH = '/scratch/users/alimirz1/saved_batches/hot_bench_2s_saved/saved_checkpoints/' + sys.argv[1]
+        elif os.path.isdir('/home/alimirz1'):
+            print('in here')
+            PATH = '/home/alimirz1/babul/fdubost/experiments/290/model.pth'
+            PATH2 = '/home/alimirz1/babul/fdubost/experiments/282/model.pth'
+        else:
+            # + all_checkpoints[whichCheckpoint]
+            PATH = 'saved_checkpoints/7_31_21/model_best_alt.pt'
+            PATH2 = 'saved_checkpoints/7_31_21/model_best_sup.pt'
 
                 # loss = checkpoint['loss']
 

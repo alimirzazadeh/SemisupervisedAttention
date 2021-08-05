@@ -146,7 +146,7 @@ if __name__ == '__main__':
                      'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse',
                      'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
 
-        for i in range(6):
+        for i in range(15):
             images, labels = dataiter.next()
             images = images.to(device)
             labels = labels.to(device)

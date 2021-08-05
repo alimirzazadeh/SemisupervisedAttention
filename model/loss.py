@@ -17,6 +17,7 @@ import cv2
 import torch.nn.functional as F
 from ipdb import set_trace as bp
 import torch
+from scipy import ndimage
 
 
 class CAMLoss(nn.Module):
@@ -181,8 +182,8 @@ class CAMLoss(nn.Module):
                         arr /= np.max(arr)
                         return np.moveaxis(arr,0,-1)
                     bp()
-                    hmps.append(reshapeNormalize(cv2.resize(firstCompare.cpu().detach().numpy(),(2,256,256),interpolation=cv2.INTER_NEAREST)))
-                    gbimgs.append(reshapeNormalize(cv2.resize(secondCompare.cpu().detach().numpy(),(2,256,256),interpolation=cv2.INTER_NEAREST)))
+                    hmps.append(reshapeNormalize(ndimage.zoom(firstCompare.cpu().detach().numpy(),(1,16,16),mode='nearest')))
+                    gbimgs.append(reshapeNormalize(ndimage.zoom(secondCompare.cpu().detach().numpy(),(1,16,16),mode='nearest')))
                     imgs.append(normalize(thisImgTensor.cpu().detach().numpy()))
                     maskimgs.append(normalize(newImgTensor.cpu().detach().numpy()))
                     gbitself.append(4 * reshapeNormalize(gb_correlate.cpu().detach().numpy()))

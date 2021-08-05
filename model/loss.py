@@ -237,7 +237,7 @@ class CAMLoss(nn.Module):
             # cv2.imwrite('./saved_figs/sampleImage_GuidedBackprop.jpg', final_gb_frame)
             # final_frame = cv2.hconcat(imgs)
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM.jpg', final_frame)
-            bp()
+            # bp()
             final_gb_frame = reshapeVideoIntoImages(gbimgs)
             final_hmp_frame = reshapeVideoIntoImages(hmps)
             final_img_frame = reshapeVideoIntoImages(imgs)

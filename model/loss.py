@@ -275,8 +275,8 @@ class CAMLoss(nn.Module):
             # print(np.min(final_hmp_frame), np.max(final_hmp_frame), np.median(final_hmp_frame))
             # print(np.min(final_gb_frame), np.max(final_gb_frame), np.median(final_gb_frame))
             # print(final_gb_frame.dtype, final_hmp_frame.dtype)
-            final_gb_frame = cv2.copyMakeBorder(final_gb_frame,0,0,0,final_img_frame.shape[1] - final_gb_frame.shape[1],cv2.BORDER_DEFAULT)
-            final_hmp_frame = cv2.copyMakeBorder(final_hmp_frame,0,0,0,final_img_frame.shape[1] - final_hmp_frame.shape[1],cv2.BORDER_DEFAULT)
+            final_gb_frame = cv2.copyMakeBorder(final_gb_frame,0,0,0,final_img_frame.shape[1] - final_gb_frame.shape[1],cv2.BORDER_CONSTANT)
+            final_hmp_frame = cv2.copyMakeBorder(final_hmp_frame,0,0,0,final_img_frame.shape[1] - final_hmp_frame.shape[1],cv2.BORDER_CONSTANT)
             data = np.array(cv2.vconcat([final_img_frame.astype(
                 'float64'), final_hmp_frame.astype('float64'), final_gbitself_frame.astype('float64')
                 , final_newimg_frame.astype('float64'), final_gb_frame.astype('float64')]))

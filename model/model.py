@@ -226,20 +226,20 @@ class VideoResNet(nn.Module):
 
     def forward(self, x):
         print('printing shapes')
-        print(x.shape)
+        # print(x.shape)
         x = self.stem(x)
-        print(x.shape)
+        # print(x.shape)
         x = self.layer1(x)
-        print(x.shape)
+        # print(x.shape)
         x = self.layer2(x)
-        print(x.shape)
+        # print(x.shape)
         x = self.layer3(x)
-        print(x.shape)
+        # print(x.shape)
         x = self.layer4(x)
-        print(x.shape)
+        # print(x.shape)
 
         x = self.avgpool(x)
-        print(x.shape)
+        # print(x.shape)
         # Flatten the layer to fc
         x = x.flatten(1)
         x = self.fc(x)

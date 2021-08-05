@@ -69,7 +69,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     
     print('evaluating')
     model.eval()
-    LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #unsupervised=training!='supervised')
+    LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=False, batchDirectory=batchDirectory) #unsupervised=training!='supervised')
     LossEvaluator.plotLosses(batchDirectory=batchDirectory)
     print('finished evaluating')
         

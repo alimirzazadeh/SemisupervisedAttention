@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import torch.nn as nn
 import numpy as np
 import pandas as pd
+from ipdb import set_trace as bp
 
 class Evaluator:
     def __init__(self):
@@ -37,6 +38,7 @@ class Evaluator:
                 inputs, labels = data
                 inputs = inputs.to(device)
                 labels = labels.to(device)
+                bp()
                 outputs = model(inputs) 
                 l1 = criteron(outputs, labels)
                 

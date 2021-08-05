@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import torch.nn.functional as F
-
+from ipdb import set_trace as bp
 import torch
 
 
@@ -91,7 +91,7 @@ class CAMLoss(nn.Module):
                     #     gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
 
                     gb_correlate = torch.abs(gb_correlate)
-                    gb_correlate = torch.sum(gb_correlate, axis=2)
+                    gb_correlate = torch.sum(gb_correlate, axis=-1)
                     return gb_correlate
 
                 def standardize(arr):
@@ -131,6 +131,7 @@ class CAMLoss(nn.Module):
                     secondCompare = standardize(new_cam_result)
                 elif resolutionMatch == 3:
                     ww = -32
+                    bp()
                     sigma = torch.mean(cam_result) + torch.std(cam_result) / 2
                     TAc = 1 / (1 + torch.exp(ww * (cam_result - sigma)))
                     TAc = TAc.unsqueeze(0)

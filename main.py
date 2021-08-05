@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
     def loadCheckpoint(path, model):
         checkpoint = torch.load(path, map_location=device)
-        model.load_state_dict(checkpoint['model_state_dict'])
+        model.load_state_dict(checkpoint)
         # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         try:
             epoch = checkpoint['epoch']

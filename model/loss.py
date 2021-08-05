@@ -181,7 +181,6 @@ class CAMLoss(nn.Module):
                         arr -= np.min(arr)
                         arr /= np.max(arr)
                         return np.moveaxis(arr,0,-1)
-                    bp()
                     hmps.append(reshapeNormalize(ndimage.zoom(firstCompare.cpu().detach().numpy(),(1,16,16),mode='nearest')))
                     gbimgs.append(reshapeNormalize(ndimage.zoom(secondCompare.cpu().detach().numpy(),(1,16,16),mode='nearest')))
                     imgs.append(normalize(thisImgTensor.cpu().detach().numpy()))
@@ -227,16 +226,23 @@ class CAMLoss(nn.Module):
                 print('.')
 
         if visualize:
+            def reshapeVideoIntoImages(arr):
+                hconcat_imgs = []
+                for i in range(arr[0].shape[0]):
+                    hconcat_imgs.append(arr[0][i,:,:,:])
+                final_frame = cv2.hconcat(hconcat_imgs)   
+                return final_frame
             # fig.canvas.draw()
 
-            final_gb_frame = cv2.hconcat(gbimgs)
             # cv2.imwrite('./saved_figs/sampleImage_GuidedBackprop.jpg', final_gb_frame)
             # final_frame = cv2.hconcat(imgs)
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM.jpg', final_frame)
-            final_hmp_frame = cv2.hconcat(hmps)
-            final_img_frame = cv2.hconcat(imgs)
-            final_newimg_frame = cv2.hconcat(maskimgs)
-            final_gbitself_frame = cv2.hconcat(gbitself)
+            bp()
+            final_gb_frame = reshapeVideoIntoImages(gbimgs)
+            final_hmp_frame = reshapeVideoIntoImages(hmps)
+            final_img_frame = reshapeVideoIntoImages(imgs)
+            final_newimg_frame = reshapeVideoIntoImages(maskimgs)
+            final_gbitself_frame = reshapeVideoIntoImages(gbitself)
             print(final_gb_frame.shape)
             print(final_hmp_frame.shape)
             print(final_img_frame.shape)

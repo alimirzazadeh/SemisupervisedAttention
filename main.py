@@ -9,7 +9,7 @@ from data_loader.train_videossl import loadVideoData
 import os
 import numpy as np
 from torch import nn
-import model.model import r3d_18
+from model.model import r3d_18
 import torchvision.transforms as transforms
 import torchvision
 import torch

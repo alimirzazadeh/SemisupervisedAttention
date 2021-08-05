@@ -19,6 +19,7 @@ def visualizeImageBatch(images, labels, resnetLabels=""):
         npimg = npimg / np.max(npimg)
         # print("Image Characteristics:")
         # print(np.max(npimg), np.min(npimg), np.mean(npimg))
+        print(npimg.shape)
         plt.imshow(np.transpose(npimg, (1, 2, 0)))
         classes = str(labels)
         titleString = ' '.join('%5s' % classes)

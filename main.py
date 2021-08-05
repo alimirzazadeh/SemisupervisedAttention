@@ -9,7 +9,7 @@ from data_loader.train_videossl import loadVideoData
 import os
 import numpy as np
 from torch import nn
-import torchvision.models as models
+import model.model import r3d_18
 import torchvision.transforms as transforms
 import torchvision
 import torch
@@ -60,8 +60,9 @@ if __name__ == '__main__':
         print("Made Saved_Checkpoints folder")
 
     # model = models.resnet50(pretrained=True)
-    model =  torchvision.models.video.r3d_18(pretrained=True)
-
+    #model =  torchvision.models.video.r3d_18(pretrained=True)
+    model = r3d_18(pretrained=True)
+    
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     model.fc = nn.Linear(int(model.fc.in_features), 5)
@@ -120,19 +121,19 @@ if __name__ == '__main__':
 
     print(model.fc.weight)
     # model.conv1.padding_mode = 'reflect'
-    model.stem[0].padding_mode = 'reflect'
-    for x in model.layer1:
-        x.conv1[0].padding_mode = 'reflect'
-        x.conv2[0].padding_mode = 'reflect'
-    for x in model.layer2:
-        x.conv1[0].padding_mode = 'reflect'
-        x.conv2[0].padding_mode = 'reflect'
-    for x in model.layer3:
-        x.conv1[0].padding_mode = 'reflect'
-        x.conv2[0].padding_mode = 'reflect'
-    for x in model.layer4:
-        x.conv1[0].padding_mode = 'reflect'
-        x.conv2[0].padding_mode = 'reflect'
+    # model.stem[0].padding_mode = 'reflect'
+    # for x in model.layer1:
+    #     x.conv1[0].padding_mode = 'reflect'
+    #     x.conv2[0].padding_mode = 'reflect'
+    # for x in model.layer2:
+    #     x.conv1[0].padding_mode = 'reflect'
+    #     x.conv2[0].padding_mode = 'reflect'
+    # for x in model.layer3:
+    #     x.conv1[0].padding_mode = 'reflect'
+    #     x.conv2[0].padding_mode = 'reflect'
+    # for x in model.layer4:
+    #     x.conv1[0].padding_mode = 'reflect'
+    #     x.conv2[0].padding_mode = 'reflect'
 
     use_cuda = torch.cuda.is_available()
     # load a few images from CIFAR and save

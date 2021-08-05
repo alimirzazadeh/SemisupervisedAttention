@@ -18,7 +18,7 @@ import json
 import os
 # sys.path.append('../py')
 # from video_dataset import VideoClipDataset
-from video_model import VideoModel
+from data_loader.video_model import VideoModel
 # from fc_model import FCModel
 # import numpy as np
 # import matplotlib.pyplot as plt

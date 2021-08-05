@@ -20,7 +20,7 @@ import copy
 from PIL import Image
 # from rubiksnet.models import RubiksNet
 
-from video_dataset import *
+from data_loader.video_dataset import *
 
 def make_weights_for_balanced_classes(labels):
     # https://discuss.pytorch.org/t/balanced-sampling-between-classes-with-torchvision-dataloader/2703/3

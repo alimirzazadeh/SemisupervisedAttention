@@ -5,6 +5,7 @@ import ttach as tta
 from libs.pytorch_grad_cam.activations_and_gradients import ActivationsAndGradients
 from libs.pytorch_grad_cam.utils.svd_on_activations import get_2d_projection
 import json
+from ipdb import set_trace as bp
 
 
 class BaseCAM:
@@ -48,6 +49,7 @@ class BaseCAM:
                       grads,
                       eigen_smooth=False):
         weights = self.get_cam_weights(input_tensor, target_category, activations, grads)
+        bp()
         weighted_activations = weights[:, :, None, None] * activations
         if eigen_smooth:
             cam = get_2d_projection(weighted_activations)

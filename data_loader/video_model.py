@@ -5,7 +5,7 @@ Currently supports 3D ResNet.
 '''
 
 import mayanshell
-from deep_model import DeepModel
+from data_loader.deep_model import DeepModel
 import torch
 from torch import nn
 from torchvision import models as tv_models

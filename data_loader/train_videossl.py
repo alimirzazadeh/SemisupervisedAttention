@@ -102,7 +102,7 @@ def loadVideoData():
         
            
     train_transform = transforms.Compose(transform_list)
-    
+    bp()
     to_shuffle = True
     dl_sup = VideoModel.default_dataloader(
         id_to_video_files,

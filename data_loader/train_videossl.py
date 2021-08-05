@@ -153,10 +153,10 @@ def loadVideoData(batch_size=1):
         crop_list_dev = splits['dev']['crop_list']
        
         
-    crop = frame_size
+    # crop = frame_size
     dev_transform_list = [
         ToFloatTensorInZeroOne(),
-        CenterCrop((crop, crop)),
+        Resize((frame_size, frame_size)),
         Normalize(*VideoModel.default_dataloader_options[
             'norm_vals'
         ])

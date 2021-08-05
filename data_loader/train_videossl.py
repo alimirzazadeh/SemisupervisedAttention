@@ -23,7 +23,7 @@ from data_loader.video_model import VideoModel
 # import numpy as np
 # import matplotlib.pyplot as plt
 # import matplotlib.animation as animation
-from video_transforms import *
+from data_loader.video_transforms import *
 
 def loadVideoData():
     data_path='/home/alimirz1/babul/fdubost/experiments/256/'

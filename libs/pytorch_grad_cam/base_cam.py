@@ -50,7 +50,7 @@ class BaseCAM:
                       eigen_smooth=False):
         weights = self.get_cam_weights(input_tensor, target_category, activations, grads)
         bp()
-        weighted_activations = weights[:, :, None, None] * activations
+        weighted_activations = weights[:, :, :, None, None] * activations
         if eigen_smooth:
             cam = get_2d_projection(weighted_activations)
         else:

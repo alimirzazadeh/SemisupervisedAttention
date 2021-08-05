@@ -29,7 +29,7 @@ def loadVideoData():
     data_path='/home/alimirz1/babul/fdubost/experiments/256/'
     output_folder='/home/alimirz1/'
     frame_path='/home/alimirz1/babul/fdubost/experiments/258/frames/'
-    train_split = '/home/alimirz1/babul/fdubost/experiments/257/model_splits.json'
+    train_split = '/home/alimirz1/babul/fdubost/experiments/285/model_splits.json'
     stride = 1
     frame_size = 80
         
@@ -67,9 +67,12 @@ def loadVideoData():
     indices = list(range(len(splits['train']['segments'])))
     
     # indices = indices[::stride] ################################################################
-    splitNumber = 100
-    unsup_indices = indices[:splitNumber]
-    sup_indices = indices[splitNumber:]
+    #indices = indices * 2
+    #splitNumber = int(len(indices) / 2)
+    #sup_indices = indices[splitNumber:]
+    #bp()
+    unsup_indices = indices[::2]
+    sup_indices = indices[1::2]
         
     if 'crop_list' not in splits['train']:
         crop_list = None
@@ -102,7 +105,6 @@ def loadVideoData():
         
            
     train_transform = transforms.Compose(transform_list)
-    bp()
     to_shuffle = True
     dl_sup = VideoModel.default_dataloader(
         id_to_video_files,

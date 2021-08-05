@@ -26,9 +26,9 @@ def custom_metric(data_methodx):
     fn = None
     
     for preds in data_methodx.to_numpy():
-        
-        labels = preds[:int(len(preds) / 2)]
-        pred_logits = preds[int(len(preds) / 2):]
+        assert(len(preds) == 2)
+        labels = preds[0]
+        pred_logits = preds[1]
         if tp == None:
             tp = np.sum((pred_logits + labels > 1))
             fp = np.sum((np.subtract(pred_logits, labels) > 0))

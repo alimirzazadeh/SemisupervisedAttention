@@ -25,8 +25,7 @@ from video_model import VideoModel
 # import matplotlib.animation as animation
 from video_transforms import *
 
-if __name__ == '__main__':
-    
+def loadVideoData():
     data_path='/home/alimirz1/babul/fdubost/experiments/256/'
     output_folder='/home/alimirz1/'
     frame_path='/home/alimirz1/babul/fdubost/experiments/258/frames/'
@@ -67,8 +66,11 @@ if __name__ == '__main__':
         
     indices = list(range(len(splits['train']['segments'])))
     
-    indices = indices[::stride] ################################################################
-            
+    # indices = indices[::stride] ################################################################
+    splitNumber = 100
+    unsup_indices = indices[:splitNumber]
+    sup_indices = indices[splitNumber:]
+        
     if 'crop_list' not in splits['train']:
         crop_list = None
     else:
@@ -102,10 +104,29 @@ if __name__ == '__main__':
     train_transform = transforms.Compose(transform_list)
     
     to_shuffle = True
-    dl = VideoModel.default_dataloader(
+    dl_sup = VideoModel.default_dataloader(
         id_to_video_files,
-        [splits['train']['segments'][i] for i in indices],
-        [splits['train']['labels'][i] for i in indices],
+        [splits['train']['segments'][i] for i in sup_indices],
+        [splits['train']['labels'][i] for i in sup_indices],
+        frames_path = frames_path,
+        training = to_shuffle, # do not shuffle if using temporal batches
+        transform = train_transform,
+        extra_frames = 0,
+        crop_list = crop_list,
+        frames_of_interest = foi,
+        transform_frames_of_interest = False,
+        options = {
+            'batch_size': 12,
+            'norm_vals': VideoModel.default_dataloader_options[
+                'norm_vals'
+            ],
+            'balanced_sampling': True,
+        }
+    )
+    dl_unsup = VideoModel.default_dataloader(
+        id_to_video_files,
+        [splits['train']['segments'][i] for i in unsup_indices],
+        [splits['train']['labels'][i] for i in unsup_indices],
         frames_path = frames_path,
         training = to_shuffle, # do not shuffle if using temporal batches
         transform = train_transform,
@@ -140,5 +161,6 @@ if __name__ == '__main__':
             'batch_size': 12,
         }
     )
-    bp()
+    # bp()
     print('done!')
+    return dl_sup, dl_unsup, dev_dl, dev_dl

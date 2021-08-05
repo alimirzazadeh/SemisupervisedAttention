@@ -3,8 +3,9 @@ from train import train
 from evaluate import evaluate
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
-from data_loader.new_pascal_runner import loadPascalData
-from data_loader.cifar_data_loader import loadCifarData
+# from data_loader.new_pascal_runner import loadPascalData
+# from data_loader.cifar_data_loader import loadCifarData
+from data_loader.train_videossl import loadVideoData
 import os
 import numpy as np
 from torch import nn
@@ -46,8 +47,7 @@ if __name__ == '__main__':
         batchDirectory = ''
     # Load the CIFAR Dataset
     # suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
-    suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(
-        batch_size=batch_size)
+    suptrainloader, unsuptrainloader, validloader, testloader = loadVideoData()
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:

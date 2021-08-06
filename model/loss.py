@@ -16,6 +16,7 @@ import numpy as np
 import cv2
 import torch.nn.functional as F
 from ipdb import set_trace as bp
+from matplotlib import cm 
 import torch
 from scipy import ndimage
 
@@ -175,7 +176,7 @@ class CAMLoss(nn.Module):
                     def reshapeNormalize(arr):
                         arr -= np.min(arr)
                         arr /= np.max(arr)
-                        arr = np.repeat(np.expand_dims(arr,axis=0),3,axis=0)
+                        arr = cm.jet(arr)[:,:,:3]
                         return np.moveaxis(arr,0,-1)
                     def normalize(arr):
                         arr -= np.min(arr)

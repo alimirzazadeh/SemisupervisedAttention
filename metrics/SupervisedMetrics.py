@@ -55,7 +55,7 @@ class Evaluator:
                 #     pred_logits = (pred_probability > 0.5).int()
                 preds_logit = torch.zeros(preds.shape[0])
                 labels_logit = torch.zeros(preds.shape[0])
-                for i in preds_logit.shape[0]:
+                for i in range(preds_logit.shape[0]):
                     preds_logit[preds[i]] += 1
                     labels_logit[labels[i]] += 1
                     

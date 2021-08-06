@@ -88,7 +88,10 @@ if __name__ == '__main__':
 
     def loadCheckpoint(path, model):
         checkpoint = torch.load(path, map_location=device)
-        model.load_state_dict(checkpoint)
+        try:
+            model.load_state_dict(checkpoint)
+        except:
+            model.load_state_dict(checkpoint['model_state_dict'])
         # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         try:
             epoch = checkpoint['epoch']
@@ -107,7 +110,7 @@ if __name__ == '__main__':
         elif os.path.isdir('/home/alimirz1'):
             print('in here')
             PATH = '/home/alimirz1/babul/fdubost/experiments/299/model.pth'
-            PATH2 = '/home/alimirz1/babul/fdubost/experiments/282/model.pth'
+            PATH2 = '/home/alimirz1/SemisupervisedAttention/saved_batches/299_unsup_v2/saved_checkpoints/model_49.pt'
         else:
             # + all_checkpoints[whichCheckpoint]
             PATH = 'saved_checkpoints/7_31_21/model_best_alt.pt'

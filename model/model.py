@@ -225,7 +225,7 @@ class VideoResNet(nn.Module):
                     nn.init.constant_(m.bn3.weight, 0)
 
     def forward(self, x):
-        print('printing shapes')
+        # print('printing shapes')
         # print(x.shape)
         x = self.stem(x)
         # print(x.shape)

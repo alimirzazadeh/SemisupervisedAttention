@@ -44,6 +44,8 @@ if __name__ == '__main__':
     if os.path.isdir('/scratch/'):
         batchDirectory = '/scratch/users/alimirz1/saved_batches/' + \
             sys.argv[6] + '/'
+    elif os.path.isdir('/home/alimirz1/'):
+        batchDirectory = 'saved_batches/' + sys.argv[6] + '/'
     else:
         batchDirectory = ''
     # Load the CIFAR Dataset

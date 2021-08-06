@@ -41,6 +41,7 @@ class Evaluator:
                 #bp()
                 outputs = model(inputs) 
                 l1 = criteron(outputs, labels)
+                bp()
                 
                 _, preds = torch.max(outputs, 1)
                 

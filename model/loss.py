@@ -248,7 +248,6 @@ class CAMLoss(nn.Module):
             print(final_img_frame.shape)
             print(final_newimg_frame.shape)
             print(final_gbitself_frame.shape)
-            bp()
 
             def normalize(arr):
                 # arr = arr / np.linalg.norm(arr)

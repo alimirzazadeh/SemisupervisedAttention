@@ -52,29 +52,31 @@ class Evaluator:
                 #     m = nn.Sigmoid()
                 #     pred_probability = m(outputs[pred])
                 #     pred_logits = (pred_probability > 0.5).int()
-                preds_logit = torch.zeros(preds.shape[0])
-                labels_logit = torch.zeros(preds.shape[0])
-                for i in range(preds_logit.shape[0]):
-                    preds_logit[preds[i]] += 1
-                    labels_logit[labels[i]] += 1
+                numClasses = outputs.shape[1]
+                tp = torch.zeros(numClasses)
+                fp = torch.zeros(numClasses)
+                fn = torch.zeros(numClasses)
+                
+                # preds_logit = torch.zeros(preds.shape[0])
+                # labels_logit = torch.zeros(preds.shape[0])
+                # for i in range(preds_logit.shape[0]):
+                #     preds_logit[preds[i]] += 1
+                #     labels_logit[labels[i]] += 1
+                for i in range(outputs.shape[0]):
+                    if preds[i] == labels[i]:
+                        tp[preds[i].item()] += 1
+                    else:
+                        fp[preds[i].item()] += 1
+                        fn[labels[i].item()] += 1
                     
-                if tp == None:
-                    tp = (preds_logit + labels_logit.data > 1).int()
-                    fp = (torch.subtract(preds_logit, labels_logit.data) > 0).int()
-                    fn = (torch.subtract(preds_logit, labels_logit.data) < 0).int()
-                else:
-                    tp += (preds_logit + labels_logit.data > 1).int()
-                    fp += (torch.subtract(preds_logit, labels_logit.data) > 0).int()
-                    fn += (torch.subtract(preds_logit, labels_logit.data) < 0).int()
-                    
-                    # if labels[pred, int(preds[pred])] == 1:
-                    #     tp += 1
-                    # else:
-                    #     fp += 1
-                    # fn += 
-                    # print(labels[pred, int(preds[pred])])
-                # print(running_corrects.item())
-                # del l1, inputs, labels, outputs, preds
+                # if labels[pred, int(preds[pred])] == 1:
+                #     tp += 1
+                # else:
+                #     fp += 1
+                # fn += 
+                # print(labels[pred, int(preds[pred])])
+            # print(running_corrects.item())
+            # del l1, inputs, labels, outputs, preds
             print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))
             supervised_loss = float(running_loss / datasetSize)
             print('\n Test Model Supervised Loss: %.3f' % supervised_loss)

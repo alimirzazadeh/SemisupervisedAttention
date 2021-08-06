@@ -17,6 +17,9 @@ from torch import nn
 from metrics.SupervisedMetrics import Evaluator
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 
+from pdb import set_trace as bp
+
+
 def customTrain(model):
     def _freeze_norm_stats(net):
         try:
@@ -195,8 +198,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                     outputs = model(inputs)
                     l1 = criteron(outputs, labels)
 
-                    for pred in range(outputs.shape[0]):
-                        running_corrects += labels[pred]
+                    # for pred in range(outputs.shape[0]):
+                    #     running_corrects += labels[pred]
                     # running_corrects += torch.sum(preds == labels.data)
                 else:
                     customTrain(model)
@@ -221,14 +224,14 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
             counter += 1
             
         # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
-        if epoch % 10 == 0:
-            print('Epoch {}/{}'.format(epoch, numEpochs - 1))
-            model.eval()
-            optimizer.zero_grad()
-            LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=False, batchDirectory=batchDirectory) #training!='supervised')
-            LossEvaluator.plotLosses(batchDirectory=batchDirectory)
-            print('Unsup Iter Reloaded: ', unsupiter_reloaded)
-            print('Sup Iter Reloaded: ', supiter_reloaded)
+        # if epoch % 10 == 0:
+        print('Epoch {}/{}'.format(epoch, numEpochs - 1))
+        model.eval()
+        optimizer.zero_grad()
+        LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=False, batchDirectory=batchDirectory) #training!='supervised')
+        LossEvaluator.plotLosses(batchDirectory=batchDirectory)
+        print('Unsup Iter Reloaded: ', unsupiter_reloaded)
+        print('Sup Iter Reloaded: ', supiter_reloaded)
     saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
 
 def saveCheckpoint(EPOCH, net, optimizer, batchDirectory=''):

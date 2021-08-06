@@ -12,6 +12,7 @@ import sklearn
 from sklearn.preprocessing import OneHotEncoder
 
 
+
 class Evaluator:
     def __init__(self):
         self.supervised_losses = []
@@ -41,26 +42,49 @@ class Evaluator:
                 labels = labels.to(device)
                 outputs = model(inputs)
                 l1 = criteron(outputs, labels)
-                running_loss += l1.item()
-                # running_corr1ects += torch.sum(preds == labels.data)
-                for pred in range(outputs.shape[0]):
-                    running_corrects += labels[pred]
-                    m = nn.Sigmoid()
-                    pred_probability = m(outputs[pred])
-                    pred_logits = (pred_probability > 0.5).int()
 
-                    if tp == None:
-                        tp = (pred_logits + labels[pred] > 1).int()
-                        fp = (torch.subtract(
-                            pred_logits, labels[pred]) > 0).int()
-                        fn = (torch.subtract(
-                            pred_logits, labels[pred]) < 0).int()
+                _, preds = torch.max(outputs, 1)
+                print(preds)
+                print(labels)
+                running_loss += l1.item()
+                running_corrects += torch.sum(preds == labels.data)
+
+                numClasses = outputs.shape[1]
+                if tp == None:
+                    tp = torch.zeros(numClasses)
+                    fp = torch.zeros(numClasses)
+                    fn = torch.zeros(numClasses)
+                
+                # preds_logit = torch.zeros(preds.shape[0])
+                # labels_logit = torch.zeros(preds.shape[0])
+                # for i in range(preds_logit.shape[0]):
+                #     preds_logit[preds[i]] += 1
+                #     labels_logit[labels[i]] += 1
+                for i in range(outputs.shape[0]):
+                    if preds[i] == labels[i]:
+                        tp[preds[i].item()] += 1
                     else:
-                        tp += (pred_logits + labels[pred] > 1).int()
-                        fp += (torch.subtract(pred_logits,
-                                              labels[pred]) > 0).int()
-                        fn += (torch.subtract(pred_logits,
-                                              labels[pred]) < 0).int()
+                        fp[preds[i].item()] += 1
+                        fn[labels[i].item()] += 1
+
+                # # running_corr1ects += torch.sum(preds == labels.data)
+                # for pred in range(outputs.shape[0]):
+                #     m = nn.Sigmoid()
+                #     pred_probability = m(outputs[pred])
+                #     pred_logits = (pred_probability > 0.5).int()
+
+                #     if tp == None:
+                #         tp = (pred_logits + labels[pred] > 1).int()
+                #         fp = (torch.subtract(
+                #             pred_logits, labels[pred]) > 0).int()
+                #         fn = (torch.subtract(
+                #             pred_logits, labels[pred]) < 0).int()
+                #     else:
+                #         tp += (pred_logits + labels[pred] > 1).int()
+                #         fp += (torch.subtract(pred_logits,
+                #                               labels[pred]) > 0).int()
+                #         fn += (torch.subtract(pred_logits,
+                #                               labels[pred]) < 0).int()
 
                     # if labels[pred, int(preds[pred])] == 1:
                     #     tp += 1
@@ -70,10 +94,9 @@ class Evaluator:
                     # print(labels[pred, int(preds[pred])])
                 # print(running_corrects.item())
                 # del l1, inputs, labels, outputs, preds
-            print('\n Test Model Accuracy: %.3f' %
-                  float(running_corrects.item() / datasetSize))
-            print('\n Test Model Supervised Loss: %.3f' %
-                  float(running_loss / datasetSize))
+            print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))
+            supervised_loss = float(running_loss / datasetSize)
+            print('\n Test Model Supervised Loss: %.3f' % supervised_loss)
             f1_score = self.calculateF1score(tp, fp, fn)
 
             try:
@@ -84,14 +107,19 @@ class Evaluator:
                              self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', header=False)
             self.counter += 1
 
-            f1_sum = np.nansum(f1_score.data.cpu().numpy())
+            f1_sum = np.nansum(f1_score.data.cpu().numpy()) / numClasses
 
             if f1_sum > self.bestF1Sum:
                 self.bestF1Sum = f1_sum
-                self.saveCheckpoint(
-                    model, optimizer, batchDirectory=batchDirectory)
-            print('\n F1 Score: \n', f1_score.data.cpu().numpy())
-            print('\n F1 Score Sum: \n', f1_sum)
+                print("\n Best F1 Score so far: ", self.bestF1Sum)
+            #     self.saveCheckpoint(
+            #         model, optimizer, batchDirectory=batchDirectory)
+            # print('\n F1 Score: \n', f1_score.data.cpu().numpy())
+            # print('\n F1 Score Sum: \n', f1_sum)
+
+            if supervised_loss < self.bestSupSum:
+                self.bestSupSum = supervised_loss
+                self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory)
 
             if storeLoss:
                 self.supervised_losses.append(

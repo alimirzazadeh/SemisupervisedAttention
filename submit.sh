@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#BATCH --job-name=exp_krish38
+#BATCH --job-name=exp_krish35
 #
 #SBATCH --time=48:00:00
 #SBATCH --ntasks=1
@@ -8,10 +8,10 @@
 #SBATCH --gres=gpu:1
 #SBATCH --partition=owners	
 #SBATCH -C GPU_MEM:32GB
-#SBATCH -e /scratch/groups/rubin/krish05m/AttentionMap/saved_batches/exp_krish38.err
-#SBATCH -o /scratch/groups/rubin/krish05m/AttentionMap/saved_batches/exp_krish38.out
+#SBATCH -e /scratch/groups/rubin/krish05m/AttentionMap/saved_batches/exp_krish35.err
+#SBATCH -o /scratch/groups/rubin/krish05m/AttentionMap/saved_batches/exp_krish35.out
 
-export BATCH_DIRECTORY=exp_krish38
+export BATCH_DIRECTORY=exp_krish35
 export LEARNING_RATE=0.000005
 export NUM_EPOCHS=100
 export BATCH_SIZE=4
@@ -23,4 +23,4 @@ mkdir /scratch/groups/rubin/krish05m/AttentionMap/saved_batches/$BATCH_DIRECTORY
 ml python/3.9.0
 ml opencv/4.5.2
 
-python3 main.py noloadCheckpoint noVisualLoss train noTrackLoss supervised $BATCH_DIRECTORY $LEARNING_RATE $NUM_EPOCHS $BATCH_SIZE $RESOLUTION_MATCH $SIMILARITY_METRIC $ALPHA
+python3 main.py loadCheckpoint noVisualLoss train noTrackLoss supervised $BATCH_DIRECTORY $LEARNING_RATE $NUM_EPOCHS $BATCH_SIZE $RESOLUTION_MATCH $SIMILARITY_METRIC $ALPHA

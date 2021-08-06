@@ -15,6 +15,7 @@ import cv2
 import sys
 sys.path.append("./")
 
+from pdb import set_trace as bp
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -37,6 +38,8 @@ if __name__ == '__main__':
     print('Resolution Match Mode: ', resolutionMatch)
     print('Similarity Metric Mode: ', similarityMetric)
     print('Alpha: ', alpha)
+
+
 
     if os.path.isdir('/scratch/'):
         batchDirectory = '/scratch/groups/rubin/krish05m/AttentionMap/saved_batches/' + \
@@ -85,7 +88,7 @@ if __name__ == '__main__':
 
     if sys.argv[1] == 'loadCheckpoint':
         whichCheckpoint = 6
-        PATH = "/scratch/groups/rubin/model_best.pt"
+        PATH = "/scratch/groups/rubin/cifar_resnet50.pt"
         print('Loading Saved Model', PATH)
         if False:
             net_state_dict = model.state_dict()
@@ -96,7 +99,7 @@ if __name__ == '__main__':
             model.load_state_dict(net_state_dict)
         else:
             checkpoint = torch.load(PATH, map_location=device)
-            model.load_state_dict(checkpoint['model_state_dict'])
+            # model.load_state_dict(checkpoint['model_state_dict'])
             # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             # epoch = checkpoint['epoch']
             # loss = checkpoint['loss']

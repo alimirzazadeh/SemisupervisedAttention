@@ -160,8 +160,8 @@ def loadVideoData(batch_size=1):
     precrop = 112
     dev_transform_list = [
         ToFloatTensorInZeroOne(),
-        Resize((precrop, precrop)),
-        CenterCrop((80,80)),
+        Resize((frame_size, frame_size)),
+        # CenterCrop((80,80)),
         Normalize(*VideoModel.default_dataloader_options[
             'norm_vals'
         ])

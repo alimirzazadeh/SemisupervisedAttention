@@ -173,13 +173,16 @@ class CAMLoss(nn.Module):
                 if visualize:
                     # print(firstCompare.shape, secondCompare.shape)
                     # print(firstCompare.dtype, secondCompare.dtype)
-                    def reshapeNormalize(arr):
+                    def reshapeNormalize(arr, multiplier = 1):
                         arr -= np.min(arr)
                         arr /= np.max(arr)
+                        if multiplier != 1:
+                            arr *= multiplier
+                            arr = np.clip(arr,0,1)
                         bp()
                         arr_f = np.repeat(np.expand_dims(arr,axis=-1),3,axis=-1)
                         for i in range(arr.shape[0]):
-                            arr_seg = cm.jet(arr[0,:,:])[:,:,:3]
+                            arr_seg = cm.viridis(arr[0,:,:])[:,:,:3]
                             arr_f[i] = arr_seg
                         return arr_f
                     def normalize(arr):
@@ -190,7 +193,7 @@ class CAMLoss(nn.Module):
                     gbimgs.append(reshapeNormalize(ndimage.zoom(secondCompare.cpu().detach().numpy(),(1,16,16),mode='nearest',order=0,grid_mode=True)))
                     imgs.append(normalize(thisImgTensor.cpu().detach().numpy()))
                     maskimgs.append(normalize(newImgTensor.cpu().detach().numpy()))
-                    gbitself.append(4 * reshapeNormalize(gb_correlate.cpu().detach().numpy()))
+                    gbitself.append(reshapeNormalize(gb_correlate.cpu().detach().numpy(),multiplier=4))
 
                 if similarityMetric == 0:
                     firstCompare = sigmoidIt(firstCompare)

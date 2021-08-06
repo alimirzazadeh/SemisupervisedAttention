@@ -53,15 +53,20 @@ class Evaluator:
                 #     m = nn.Sigmoid()
                 #     pred_probability = m(outputs[pred])
                 #     pred_logits = (pred_probability > 0.5).int()
+                preds_logit = torch.zeros(preds.shape[0].item())
+                labels_logit = torch.zeros(preds.shape[0].item())
+                for i in preds_logit.shape[0]:
+                    preds_logit[preds[i]] += 1
+                    labels_logit[labels[i]] += 1
                     
                 if tp == None:
-                    tp = (preds + labels.data > 1).int()
-                    fp = (torch.subtract(preds, labels.data) > 0).int()
-                    fn = (torch.subtract(preds, labels.data) < 0).int()
+                    tp = (preds_logit + labels_logit.data > 1).int()
+                    fp = (torch.subtract(preds_logit, labels_logit.data) > 0).int()
+                    fn = (torch.subtract(preds_logit, labels_logit.data) < 0).int()
                 else:
-                    tp += (preds + labels.data > 1).int()
-                    fp += (torch.subtract(preds, labels.data) > 0).int()
-                    fn += (torch.subtract(preds, labels.data) < 0).int()
+                    tp += (preds_logit + labels_logit.data > 1).int()
+                    fp += (torch.subtract(preds_logit, labels_logit.data) > 0).int()
+                    fn += (torch.subtract(preds_logit, labels_logit.data) < 0).int()
                     
                     # if labels[pred, int(preds[pred])] == 1:
                     #     tp += 1

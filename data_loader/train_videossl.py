@@ -72,8 +72,12 @@ def loadVideoData(batch_size=1):
     #splitNumber = int(len(indices) / 2)
     #sup_indices = indices[splitNumber:]
     #bp()
-    unsup_indices = indices[::2]
-    sup_indices = indices[1::2]
+    
+    ###############################################
+    # unsup_indices = indices[::2]
+    # sup_indices = indices[1::2]
+    unsup_indices = indices
+    sup_indices = unsup_indices
         
     if 'crop_list' not in splits['train']:
         crop_list = None

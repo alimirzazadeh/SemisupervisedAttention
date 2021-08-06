@@ -48,7 +48,7 @@ if __name__ == '__main__':
         batchDirectory = ''
     # Load the CIFAR Dataset
     # suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
-    suptrainloader, unsuptrainloader, validloader, testloader = loadVideoData()
+    suptrainloader, unsuptrainloader, validloader, testloader = loadVideoData(batch_size = batch_size)
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
@@ -104,13 +104,14 @@ if __name__ == '__main__':
             PATH = '/scratch/users/alimirz1/saved_batches/hot_bench_2s_saved/saved_checkpoints/' + sys.argv[1]
         elif os.path.isdir('/home/alimirz1'):
             print('in here')
-            PATH = '/home/alimirz1/babul/fdubost/experiments/290/model.pth'
+            PATH = '/home/alimirz1/babul/fdubost/experiments/299/model.pth'
             PATH2 = '/home/alimirz1/babul/fdubost/experiments/282/model.pth'
         else:
             # + all_checkpoints[whichCheckpoint]
             PATH = 'saved_checkpoints/7_31_21/model_best_alt.pt'
             PATH2 = 'saved_checkpoints/7_31_21/model_best_sup.pt'
-
+        
+        loadCheckpoint(PATH, model)
                 # loss = checkpoint['loss']
 
     target_layer = model.layer4[-1]  # this is the layer before the pooling

@@ -54,9 +54,10 @@ class Evaluator:
                 #     pred_probability = m(outputs[pred])
                 #     pred_logits = (pred_probability > 0.5).int()
                 numClasses = outputs.shape[1]
-                tp = torch.zeros(numClasses)
-                fp = torch.zeros(numClasses)
-                fn = torch.zeros(numClasses)
+                if tp == None:
+                    tp = torch.zeros(numClasses)
+                    fp = torch.zeros(numClasses)
+                    fn = torch.zeros(numClasses)
                 
                 # preds_logit = torch.zeros(preds.shape[0])
                 # labels_logit = torch.zeros(preds.shape[0])
@@ -89,7 +90,7 @@ class Evaluator:
                 pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())),index=[self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', header=False)
             self.counter += 1
             
-            f1_sum = np.nansum(f1_score.data.cpu().numpy())
+            f1_sum = np.nansum(f1_score.data.cpu().numpy()) / numClasses
             
             if f1_sum > self.bestF1Sum:
                 self.bestF1Sum = f1_sum

@@ -177,7 +177,7 @@ class CAMLoss(nn.Module):
                         arr -= np.min(arr)
                         arr /= np.max(arr)
                         bp()
-                        arr_f = np.repeat(np.expand_dims(arr,axis=0),3,axis=-1)
+                        arr_f = np.repeat(np.expand_dims(arr,axis=-1),3,axis=-1)
                         for i in range(arr.shape[0]):
                             arr_seg = cm.jet(arr[0,:,:])[:,:,:3]
                             arr_f[i] = arr_seg

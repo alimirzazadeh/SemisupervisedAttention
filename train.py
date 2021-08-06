@@ -77,6 +77,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     print("\n\nTotal Supervised Dataset: ", supdatasetSize)
     unsupdatasetSize = len(unsuptrainloader.dataset)
     print("Total Unsupervised Dataset: ", unsupdatasetSize)
+    validLoaderSize = len(validloader.dataset)
+    print("Total Validation Dataset: ", validLoaderSize)
 
     if training == 'supervised':
         totalDatasetSize = int(supdatasetSize / batch_size)

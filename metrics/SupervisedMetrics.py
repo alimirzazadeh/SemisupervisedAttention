@@ -38,7 +38,7 @@ class Evaluator:
                 inputs, labels = data
                 inputs = inputs.to(device)
                 labels = labels.to(device)
-                bp()
+                #bp()
                 outputs = model(inputs) 
                 l1 = criteron(outputs, labels)
                 

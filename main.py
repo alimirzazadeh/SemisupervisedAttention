@@ -99,7 +99,7 @@ if __name__ == '__main__':
             model.load_state_dict(net_state_dict)
         else:
             checkpoint = torch.load(PATH, map_location=device)
-            # model.load_state_dict(checkpoint['model_state_dict'])
+            model.load_state_dict(checkpoint)
             # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             # epoch = checkpoint['epoch']
             # loss = checkpoint['loss']

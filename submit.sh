@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#BATCH --job-name=exp_krish35
+#BATCH --job-name=exp_krish36
 #
 #SBATCH --time=48:00:00
 #SBATCH --ntasks=1
@@ -8,10 +8,10 @@
 #SBATCH --gres=gpu:1
 #SBATCH --partition=owners	
 #SBATCH -C GPU_MEM:32GB
-#SBATCH -e /scratch/groups/rubin/krish05m/AttentionMap/saved_batches/exp_krish35.err
-#SBATCH -o /scratch/groups/rubin/krish05m/AttentionMap/saved_batches/exp_krish35.out
+#SBATCH -e /scratch/groups/rubin/krish05m/AttentionMap/saved_batches/exp_krish36.err
+#SBATCH -o /scratch/groups/rubin/krish05m/AttentionMap/saved_batches/exp_krish36.out
 
-export BATCH_DIRECTORY=exp_krish35
+export BATCH_DIRECTORY=exp_krish36
 export LEARNING_RATE=0.000005
 export NUM_EPOCHS=100
 export BATCH_SIZE=4

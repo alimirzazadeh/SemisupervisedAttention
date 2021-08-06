@@ -25,7 +25,7 @@ def visualizeLossPerformance(CAMLossInstance, inputs, labels=['sentinel'], imgLa
         l1 = [str(round(x,3)) for x in l1]
         plt.title(arrToStr(l1))
         # print('losses, ',l1)
-        print('saving to: ' + './'+batchDirectory+'saved_figs/checkpointvis_'+imgTitle+'.png',dpi=300)
+        print('saving to: ' + './'+batchDirectory+'saved_figs/checkpointvis_'+imgTitle+'.png')
         plt.savefig('./'+batchDirectory+'saved_figs/checkpointvis_'+imgTitle+'.png',dpi=300)
         plt.clf()
         # visualizeImageBatch(inputs, labels, resnetLabels=arrToStr(imgLabels))

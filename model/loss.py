@@ -179,7 +179,7 @@ class CAMLoss(nn.Module):
                         if multiplier != 1:
                             arr *= multiplier
                             arr = np.clip(arr,0,1)
-                        bp()
+                        # bp()
                         arr_f = np.repeat(np.expand_dims(arr,axis=-1),3,axis=-1)
                         for i in range(arr.shape[0]):
                             arr_seg = cm.viridis(arr[0,:,:])[:,:,:3]

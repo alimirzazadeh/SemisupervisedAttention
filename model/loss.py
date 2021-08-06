@@ -176,8 +176,12 @@ class CAMLoss(nn.Module):
                     def reshapeNormalize(arr):
                         arr -= np.min(arr)
                         arr /= np.max(arr)
-                        arr = cm.jet(arr)[:,:,:3]
-                        return np.moveaxis(arr,0,-1)
+                        bp()
+                        arr_f = np.repeat(np.expand_dims(arr,axis=0),3,axis=-1)
+                        for i in range(arr.shape[0]):
+                            arr_seg = cm.jet(arr[0,:,:])[:,:,:3]
+                            arr_f[i] = arr_seg
+                        return arr_f
                     def normalize(arr):
                         arr -= np.min(arr)
                         arr /= np.max(arr)

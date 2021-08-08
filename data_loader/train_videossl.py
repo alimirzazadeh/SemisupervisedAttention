@@ -29,7 +29,7 @@ def loadVideoData(batch_size=1):
     data_path='/home/alimirz1/babul/fdubost/experiments/256/'
     output_folder='/home/alimirz1/'
     frame_path='/home/alimirz1/babul/fdubost/experiments/258/frames/'
-    train_split = '/home/alimirz1/babul/fdubost/experiments/285/model_splits.json'
+    train_split = '/home/alimirz1/babul/fdubost/experiments/314/model_splits.json'
     stride = 1
     frame_size = 80
     
@@ -76,13 +76,10 @@ def loadVideoData(batch_size=1):
     ###############################################
     # unsup_indices = indices[::2]
     # sup_indices = indices[1::2]
-    unsup_indices = indices
-    sup_indices = unsup_indices
+    unsup_indices = list(range(len(splits['unlabeled']['segments'])))
+    sup_indices = indices
         
-    if 'crop_list' not in splits['train']:
-        crop_list = None
-    else:
-        crop_list = splits['train']['crop_list'][stride]
+    crop_list = None
             
     
     
@@ -130,10 +127,13 @@ def loadVideoData(batch_size=1):
             'balanced_sampling': True,
         }
     )
+    
+    
+    
     dl_unsup = VideoModel.default_dataloader(
         id_to_video_files,
-        [splits['train']['segments'][i] for i in unsup_indices],
-        [splits['train']['labels'][i] for i in unsup_indices],
+        [splits['unlabeled']['segments'][i] for i in unsup_indices],
+        [splits['unlabeled']['labels'][i] for i in unsup_indices],
         frames_path = frames_path,
         training = to_shuffle, # do not shuffle if using temporal batches
         transform = train_transform,
@@ -145,8 +145,7 @@ def loadVideoData(batch_size=1):
             'batch_size': batch_size,
             'norm_vals': VideoModel.default_dataloader_options[
                 'norm_vals'
-            ],
-            'balanced_sampling': True,
+            ]
         }
     )
     

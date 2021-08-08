@@ -34,6 +34,9 @@ def customTrain(model):
 
 def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, trackLoss=False, training='alternating', batchDirectory='', scheduler=None, batch_size=4):
     print('alpha: ', alpha)
+    perEpochEval = False
+    
+    
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric)
     LossEvaluator = Evaluator()
     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
@@ -226,15 +229,20 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
             #    running_corrects = 0            
             counter += 1
             
-        # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
-        if True: #epoch % 10 == 5:
-            print('Epoch {}/{}'.format(epoch, numEpochs - 1))
+            # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
+            if not perEpochEval and counter % 50 == 25:
+                print('Epoch {} counter {}'.format(epoch, counter))
+                model.eval()
+                optimizer.zero_grad()
+                LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
+                LossEvaluator.plotLosses(batchDirectory=batchDirectory)
+        if perEpochEval:
+            print('Epoch {} of {}'.format(epoch, numEpochs))
             model.eval()
             optimizer.zero_grad()
             LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
             LossEvaluator.plotLosses(batchDirectory=batchDirectory)
-            print('Unsup Iter Reloaded: ', unsupiter_reloaded)
-            print('Sup Iter Reloaded: ', supiter_reloaded)
+
     print('\n \n BEST SUP LOSS OVERALL: ', LossEvaluator.bestSupSum, '\n\n')
     print('\n \n BEST F1 SCORE SUM OVERALL: ', LossEvaluator.bestF1Sum, '\n\n')
     saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)

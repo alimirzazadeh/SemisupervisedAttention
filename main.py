@@ -109,6 +109,7 @@ if __name__ == '__main__':
             PATH = '/scratch/users/alimirz1/saved_batches/hot_bench_2s_saved/saved_checkpoints/' + sys.argv[1]
         elif os.path.isdir('/home/alimirz1'):
             print('in here')
+            #PATH = '/home/alimirz1/SemisupervisedAttention/saved_batches/exp_22/saved_checkpoints/model_best.pt'
             PATH = '/home/alimirz1/babul/fdubost/experiments/282/model.pth'
             PATH2 = '/home/alimirz1/SemisupervisedAttention/saved_batches/299_unsup_v2/saved_checkpoints/model_49.pt'
         else:

@@ -106,9 +106,9 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         unsupiter_reloaded = 0
         
 
-        #if epoch % 20 == 19:
-        #    saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
-        #    print("saved checkpoint successfully")
+        if epoch % 50 == 25:
+            saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
+            print("saved checkpoint successfully")
         
         counter = 0
 

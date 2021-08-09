@@ -1,10 +1,10 @@
 This is a semi-supervised learning approach to improving video classification performance for hospital video.
 
-**Running Command:**
+#Running Command in batch script
 
 python3 main.py ```[loadCheckpoint/noLoadCheckpoint]``` ```[visualLoss/noVisualLoss]``` ```[train/noTrain]``` ```[trackLoss/noTrackLoss]``` ```[supervised/unsupervised/alternating]```
 
-Various Parameters:
+#Parameter Description
 
 Warm vs Cold start
 - Use ```loadCheckpoint``` to load in a checkpoint for warm start. Specify the path in the ```main.py``` file

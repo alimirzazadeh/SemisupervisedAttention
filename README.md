@@ -3,7 +3,7 @@
 **Goal**: This is a semi-supervised learning approach to improving video classification performance for hospital video. <br>
 **Current Progress**: Working on using this for video data, outperforms supervised benchmark on Pascal/CIFAR
 
-# Description of Running Ali's code
+# Description of Running Ali's code #
 
 ## Batch Script ##
 
@@ -31,11 +31,11 @@ ml opencv/4.5.2
 python3 main.py noloadCheckpoint noVisualLoss train notrackLoss supervised $BATCH_DIRECTORY $LEARNING_RATE $NUM_EPOCHS $BATCH_SIZE $RESOLUTION_MATCH $SIMILARITY_METRIC $ALPHA
 ```
 
-##Running Command in batch script##
+## Running Command in batch script ##
 
 python3 main.py ```[loadCheckpoint/noLoadCheckpoint]``` ```[visualLoss/noVisualLoss]``` ```[train/noTrain]``` ```[trackLoss/noTrackLoss]``` ```[supervised/unsupervised/alternating]```
 
-##Parameter Description##
+## Parameter Description ##
 
 Warm vs Cold start
 - Use ```loadCheckpoint``` to load in a checkpoint for warm start. Specify the path in the ```main.py``` file

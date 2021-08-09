@@ -1,7 +1,8 @@
 This is a semi-supervised learning approach to improving video classification performance for hospital video.
 
-Running Command:
-python3 main.py [loadCheckpoint/noLoadCheckpoint] [visualLoss/noVisualLoss] [train/noTrain] [trackLoss/noTrackLoss] [supervised/unsupervised/alternating]
+**Running Command:**
+
+python3 main.py ```[loadCheckpoint/noLoadCheckpoint]``` ```[visualLoss/noVisualLoss]``` ```[train/noTrain]``` ```[trackLoss/noTrackLoss]``` ```[supervised/unsupervised/alternating]```
 
 Various Parameters:
 

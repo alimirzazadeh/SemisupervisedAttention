@@ -24,12 +24,15 @@ from data_loader.video_model import VideoModel
 # import matplotlib.pyplot as plt
 # import matplotlib.animation as animation
 from data_loader.video_transforms import ToFloatTensorInZeroOne, GroupColorJitter, RandomCutOut, RandomCrop, RandomHorizontalFlip, Resize, Normalize, CenterCrop
+import json
 
 def loadVideoData(batch_size=1):
-    data_path='/home/alimirz1/babul/fdubost/experiments/256/'
-    output_folder='/home/alimirz1/'
-    frame_path='/home/alimirz1/babul/fdubost/experiments/258/frames/'
-    train_split = '/home/alimirz1/babul/fdubost/experiments/314/model_splits.json'
+    with open('../zaman_launch.json') as f:
+        data = json.load(f)
+    data_path= data['data_path']
+    output_folder= data['output_folder']
+    frame_path= data['frame_path']
+    train_split = data['train_split']
     stride = 1
     frame_size = 80
     
@@ -65,7 +68,7 @@ def loadVideoData(batch_size=1):
         
     #     print(metadata)
         
-    indices = list(range(len(splits['train']['segments'])))
+    sup_indices = list(range(len(splits['train']['segments'])))
     
     # indices = indices[::stride] ################################################################
     #indices = indices * 2
@@ -77,8 +80,7 @@ def loadVideoData(batch_size=1):
     # unsup_indices = indices[::2]
     # sup_indices = indices[1::2]
     unsup_indices = list(range(len(splits['unlabeled']['segments'])))
-    sup_indices = indices
-        
+
     crop_list = None
             
     

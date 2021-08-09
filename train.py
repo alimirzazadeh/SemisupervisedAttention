@@ -35,6 +35,7 @@ def customTrain(model):
 def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, trackLoss=False, training='alternating', batchDirectory='', scheduler=None, batch_size=4):
     print('alpha: ', alpha)
     perEpochEval = False
+    savingCheckpoints = False
     
     
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric)
@@ -109,7 +110,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         unsupiter_reloaded = 0
         
 
-        if epoch % 50 == 25:
+        if savingCheckpoints and epoch % 50 == 25:
             saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
             print("saved checkpoint successfully")
         

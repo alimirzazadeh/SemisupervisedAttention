@@ -17,6 +17,7 @@ import torch
 import cv2
 import sys
 sys.path.append("./")
+import json
 
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
@@ -70,15 +71,7 @@ if __name__ == '__main__':
 
     model.fc = nn.Linear(int(model.fc.in_features), 5)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    # lr = [1e-5, 5e-3]
-    # optimizer = optim.SGD([
-    #     {'params': list(model.parameters())[:-1], 'lr': lr[0], 'momentum': 0.9},
-    #     {'params': list(model.parameters())[-1], 'lr': lr[1], 'momentum': 0.9}
-    #     ])
-    # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, 12, eta_min=0, last_epoch=-1)
 
-    # optimizer = torch.optim.SGD(model.parameters(),
-    #                            lr=learning_rate, momentum=0.9, weight_decay=0.0001)
     scheduler = None
 
     all_checkpoints = os.listdir('saved_checkpoints')
@@ -110,8 +103,11 @@ if __name__ == '__main__':
         elif os.path.isdir('/home/alimirz1'):
             print('in here')
             #PATH = '/home/alimirz1/SemisupervisedAttention/saved_batches/exp_22/saved_checkpoints/model_best.pt'
-            PATH = '/home/alimirz1/babul/fdubost/experiments/282/model.pth'
-            PATH2 = '/home/alimirz1/SemisupervisedAttention/saved_batches/299_unsup_v2/saved_checkpoints/model_49.pt'
+            with open('zaman_launch.json') as f:
+                data = json.load(f)
+
+            PATH = data['loading_checkpoint_path']
+            PATH2 = data['visual_loss_comparison_checkpoint_path']
         else:
             # + all_checkpoints[whichCheckpoint]
             PATH = 'saved_checkpoints/7_31_21/model_best_alt.pt'

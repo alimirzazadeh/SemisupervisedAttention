@@ -1,8 +1,0 @@
-{
-"loading_checkpoint_path": "/home/alimirz1/babul/fdubost/experiments/282/model.pth", 
-"visual_loss_comparison_checkpoint_path": "/home/alimirz1/SemisupervisedAttention/saved_batches/299_unsup_v2/saved_checkpoints/model_49.pt",
-"data_path": "/home/alimirz1/babul/fdubost/experiments/318/",
-"output_folder": "/home/alimirz1/",
-"frame_path": "/home/alimirz1/babul/fdubost/experiments/320/frames/",
-"train_split": "/home/alimirz1/babul/fdubost/experiments/314/model_splits.json"
-}

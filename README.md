@@ -40,5 +40,5 @@ export ALPHA=8
 mkdir /scratch/users/alimirz1/saved_batches/$BATCH_DIRECTORY
 ml python/3.9.0
 ml opencv/4.5.2
-python3 main.py noloadCheckpoint novisualoss train notrackloss alternating $BATCH_DIRECTORY $LEARNING_RATE $NUM_EPOCHS $BATCH_SIZE $RESOLUTION_MATCH $SIMILARITY_METRIC $ALPHA
+python3 main.py noloadCheckpoint novisualLoss train notrackloss alternating $BATCH_DIRECTORY $LEARNING_RATE $NUM_EPOCHS $BATCH_SIZE $RESOLUTION_MATCH $SIMILARITY_METRIC $ALPHA
 ```

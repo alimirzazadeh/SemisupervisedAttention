@@ -285,5 +285,5 @@ def resnet34(pretrained=False, progress=True, **kwargs):
 def resnet50(pretrained=False, progress=True, **kwargs):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     return _resnet(
-        "resnet50", Bottleneck, [3, 4, 6, 3], pretrained, progress, device, **kwargs
+        "resnet50", Bottleneck, [3, 4, 6, 3], pretrained, progress, **kwargs
     )

@@ -20,6 +20,7 @@ class Evaluator:
         self.unsupervised_losses = []
         self.f1_scoresum = []
         self.bestF1Sum = 0
+        self.bestSupSum = 999999
         self.counter = 0
 
     def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss=False, batchDirectory=''):

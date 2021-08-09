@@ -2,7 +2,7 @@ import torch.optim as optim
 from train import train
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
-from resnet import resnet50
+from model.resnet import resnet50
 from data_loader.new_pascal_runner import loadPascalData
 from data_loader.cifar_data_loader import loadCifarData
 import os

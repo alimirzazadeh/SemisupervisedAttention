@@ -2,6 +2,7 @@ import torch.optim as optim
 from train import train
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
+from resnet import resnet50
 from data_loader.new_pascal_runner import loadPascalData
 from data_loader.cifar_data_loader import loadCifarData
 import os
@@ -63,7 +64,8 @@ if __name__ == '__main__':
         os.makedirs(batchDirectory + "saved_checkpoints")
         print("Made Saved_Checkpoints folder")
 
-    model = models.resnet50(pretrained=True)
+    # model = models.resnet50(pretrained=True)
+    model = resnet50(pretrained=True)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -85,28 +87,6 @@ if __name__ == '__main__':
     epoch = 0
 
     print(model.fc.weight)
-
-    if sys.argv[1] == 'loadCheckpoint':
-        whichCheckpoint = 6
-        PATH = "/scratch/groups/rubin/cifar_resnet50.pt"
-        print('Loading Saved Model', PATH)
-        if False:
-            net_state_dict = model.state_dict()
-            pretrained_dict34 = torch.load(PATH, map_location=device)
-            pretrained_dict_1 = {
-                k: v for k, v in pretrained_dict34.items() if k in net_state_dict}
-            net_state_dict.update(pretrained_dict_1)
-            model.load_state_dict(net_state_dict)
-        else:
-            checkpoint = torch.load(PATH, map_location=device)
-            model.load_state_dict(checkpoint)
-            # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            # epoch = checkpoint['epoch']
-            # loss = checkpoint['loss']
-
-    target_layer = model.layer4[-1]  # this is the layer before the pooling
-
-    print(model.fc.weight)
     model.conv1.padding_mode = 'reflect'
     for x in model.layer1:
         x.conv2.padding_mode = 'reflect'
@@ -116,6 +96,15 @@ if __name__ == '__main__':
         x.conv2.padding_mode = 'reflect'
     for x in model.layer4:
         x.conv2.padding_mode = 'reflect'
+
+    if sys.argv[1] == 'loadCheckpoint':
+        whichCheckpoint = 6
+        PATH = "/scratch/groups/rubin/cifar_resnet50.pt"
+        print('Loading Saved Model', PATH)
+        checkpoint = torch.load(PATH, map_location=device)
+        model.load_state_dict(checkpoint)
+
+    target_layer = model.layer4[-1]  # this is the layer before the pooling
 
     use_cuda = torch.cuda.is_available()
     # load a few images from CIFAR and save

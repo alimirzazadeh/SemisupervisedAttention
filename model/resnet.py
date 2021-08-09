@@ -263,7 +263,7 @@ def _resnet(arch, block, layers, pretrained, progress, **kwargs):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = ResNet(block, layers, **kwargs)
     if pretrained:
-        checkpoint = torch.load("/scratch/groups/rubin/cifar_resnet50.pt", map_location=device)
+        checkpoint = torch.load("/scratch/groups/rubin/cifar_best.pt", map_location=device)
         model.load_state_dict(checkpoint)
     return model
 

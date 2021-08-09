@@ -65,11 +65,11 @@ if __name__ == '__main__':
         print("Made Saved_Checkpoints folder")
 
     # model = models.resnet50(pretrained=True)
-    model = resnet50(pretrained=True)
+    model = resnet50(pretrained=False)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    model.fc = nn.Linear(int(model.fc.in_features), 10)
+    # model.fc = nn.Linear(int(model.fc.in_features), 10)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     # lr = [1e-5, 5e-3]
@@ -87,22 +87,34 @@ if __name__ == '__main__':
     epoch = 0
 
     print(model.fc.weight)
-    model.conv1.padding_mode = 'reflect'
-    for x in model.layer1:
-        x.conv2.padding_mode = 'reflect'
-    for x in model.layer2:
-        x.conv2.padding_mode = 'reflect'
-    for x in model.layer3:
-        x.conv2.padding_mode = 'reflect'
-    for x in model.layer4:
-        x.conv2.padding_mode = 'reflect'
+    # model.conv1.padding_mode = 'reflect'
+    # for x in model.layer1:
+    #     x.conv2.padding_mode = 'reflect'
+    # for x in model.layer2:
+    #     x.conv2.padding_mode = 'reflect'
+    # for x in model.layer3:
+    #     x.conv2.padding_mode = 'reflect'
+    # for x in model.layer4:
+    #     x.conv2.padding_mode = 'reflect'
+
+    def loadCheckpoint(path, model):
+        checkpoint = torch.load(path, map_location=device)
+        try:
+            model.load_state_dict(checkpoint)
+        except:
+            model.load_state_dict(checkpoint['model_state_dict'])
+        # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        try:
+            epoch = checkpoint['epoch']
+        except:
+            epoch = 0
 
     if sys.argv[1] == 'loadCheckpoint':
-        whichCheckpoint = 6
-        PATH = "/scratch/groups/rubin/cifar_resnet50.pt"
+        PATH = "/scratch/groups/rubin/cifar_best.pt"
         print('Loading Saved Model', PATH)
-        checkpoint = torch.load(PATH, map_location=device)
-        model.load_state_dict(checkpoint)
+        loadCheckpoint(PATH, model)
+
+    print(model.fc.weight)
 
     target_layer = model.layer4[-1]  # this is the layer before the pooling
 
@@ -172,8 +184,6 @@ if __name__ == '__main__':
     # need to set params?
 
     # model.fc = nn.Linear(int(model.fc.in_features), 10)
-
-    print("done")
 
     whichTraining = sys.argv[5]
     if whichTraining not in ['supervised', 'unsupervised', 'alternating']:

@@ -45,8 +45,6 @@ class Evaluator:
                 l1 = criteron(outputs, labels)
 
                 _, preds = torch.max(outputs, 1)
-                print(preds)
-                print(labels)
                 running_loss += l1.item()
                 running_corrects += torch.sum(preds == labels.data)
 
@@ -95,7 +93,8 @@ class Evaluator:
                     # print(labels[pred, int(preds[pred])])
                 # print(running_corrects.item())
                 # del l1, inputs, labels, outputs, preds
-            print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))
+            acc = float(running_corrects.item() / datasetSize)
+            print('\n Test Model Accuracy: %.3f' % acc)
             supervised_loss = float(running_loss / datasetSize)
             print('\n Test Model Supervised Loss: %.3f' % supervised_loss)
             f1_score = self.calculateF1score(tp, fp, fn)
@@ -103,9 +102,18 @@ class Evaluator:
             try:
                 pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())), index=[self.counter]).to_csv(
                     batchDirectory+'saved_figs/f1_scores.csv', mode='a', header=False)
+                pd.DataFrame(dict(enumerate(supervised_loss.data.cpu().numpy())), index=[self.counter]).to_csv(
+                    batchDirectory+'saved_figs/loss_sup.csv', mode='a', header=False)
+                pd.DataFrame(dict(enumerate(acc.data.cpu().numpy())), index=[self.counter]).to_csv(
+                    batchDirectory+'saved_figs/accuracy.csv', mode='a', header=False)
             except:
                 pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())), index=[
                              self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', header=False)
+                pd.DataFrame(dict(enumerate(supervised_loss.data.cpu().numpy())), index=[
+                             self.counter]).to_csv(batchDirectory+'saved_figs/loss_sup.csv', header=False)
+                pd.DataFrame(dict(enumerate(acc.data.cpu().numpy())), index=[
+                             self.counter]).to_csv(batchDirectory+'saved_figs/accuracy.csv', header=False)
+
             self.counter += 1
 
             f1_sum = np.nansum(f1_score.data.cpu().numpy()) / numClasses

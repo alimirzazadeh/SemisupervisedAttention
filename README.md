@@ -1,5 +1,4 @@
-This is a semi-supervised learning approach to improving video classification performance.
-For Hospital Video.
+This is a semi-supervised learning approach to improving video classification performance for Hospital Video.
 
 How To Run:
 python3 main.py [loadCheckpoint/noLoadCheckpoint] [visualLoss/noVisualLoss] [train/noTrain] [trackLoss/noTrackLoss] [supervised/unsupervised/alternating]

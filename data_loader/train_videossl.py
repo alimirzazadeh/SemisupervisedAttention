@@ -27,7 +27,7 @@ from data_loader.video_transforms import ToFloatTensorInZeroOne, GroupColorJitte
 import json
 
 def loadVideoData(batch_size=1, unsup_batch_size=12):
-    with open('../zaman_launch.json') as f:
+    with open('./zaman_launch.json') as f:
         data = json.load(f)
     data_path= data['data_path']
     output_folder= data['output_folder']
@@ -90,9 +90,9 @@ def loadVideoData(batch_size=1, unsup_batch_size=12):
             GroupColorJitter(0.8, 0.8, 0.8, 0.4)
         ], p = .8),
         ToFloatTensorInZeroOne(),
-        transforms.RandomApply([
-            RandomCutOut((0.1, 0.4))
-        ], p = .5),
+        # transforms.RandomApply([
+        #     RandomCutOut((0.1, 0.4))
+        # ], p = .5),
         RandomCrop((0.9, 0.9)),
         RandomHorizontalFlip(),
     #     transforms.RandomApply([

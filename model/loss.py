@@ -15,8 +15,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import torch.nn.functional as F
-
+from ipdb import set_trace as bp
+from matplotlib import cm 
 import torch
+from scipy import ndimage
 
 
 class CAMLoss(nn.Module):
@@ -53,6 +55,8 @@ class CAMLoss(nn.Module):
             fig, axs = plt.subplots(3, input_tensor.shape[0])
             gbimgs = []
             imgs = []
+            maskimgs = []
+            gbitself = []
             hmps = []
             correlations = []
 
@@ -91,7 +95,7 @@ class CAMLoss(nn.Module):
                     #     gb_correlate = (gb_correlate - torch.mean(gb_correlate)) / gb_correlate_std
 
                     gb_correlate = torch.abs(gb_correlate)
-                    gb_correlate = torch.sum(gb_correlate, axis=2)
+                    gb_correlate = torch.sum(gb_correlate, axis=-1)
                     return gb_correlate
 
                 def standardize(arr):
@@ -169,8 +173,27 @@ class CAMLoss(nn.Module):
                 if visualize:
                     # print(firstCompare.shape, secondCompare.shape)
                     # print(firstCompare.dtype, secondCompare.dtype)
-                    hmps.append(firstCompare.detach().numpy())
-                    gbimgs.append(secondCompare.detach().numpy())
+                    def reshapeNormalize(arr, multiplier = 1):
+                        arr -= np.min(arr)
+                        arr /= np.max(arr)
+                        if multiplier != 1:
+                            arr *= multiplier
+                            arr = np.clip(arr,0,1)
+                        # bp()
+                        arr_f = np.repeat(np.expand_dims(arr,axis=-1),3,axis=-1)
+                        for i in range(arr.shape[0]):
+                            arr_seg = cm.viridis(arr[0,:,:])[:,:,:3]
+                            arr_f[i] = arr_seg
+                        return arr_f
+                    def normalize(arr):
+                        arr -= np.min(arr)
+                        arr /= np.max(arr)
+                        return np.moveaxis(arr,0,-1)
+                    hmps.append(reshapeNormalize(ndimage.zoom(firstCompare.cpu().detach().numpy(),(1,16,16),mode='nearest',order=0,grid_mode=True)))
+                    gbimgs.append(reshapeNormalize(ndimage.zoom(secondCompare.cpu().detach().numpy(),(1,16,16),mode='nearest',order=0,grid_mode=True)))
+                    imgs.append(normalize(thisImgTensor.cpu().detach().numpy()))
+                    maskimgs.append(normalize(newImgTensor.cpu().detach().numpy()))
+                    gbitself.append(reshapeNormalize(gb_correlate.cpu().detach().numpy(),multiplier=4))
 
                 if similarityMetric == 0:
                     firstCompare = sigmoidIt(firstCompare)
@@ -211,13 +234,28 @@ class CAMLoss(nn.Module):
                 print('.')
 
         if visualize:
+            def reshapeVideoIntoImages(arr):
+                hconcat_imgs = []
+                for i in range(arr[0].shape[0]):
+                    hconcat_imgs.append(arr[0][i,:,:,:])
+                final_frame = cv2.hconcat(hconcat_imgs)   
+                return final_frame
             # fig.canvas.draw()
 
-            final_gb_frame = cv2.hconcat(gbimgs)
             # cv2.imwrite('./saved_figs/sampleImage_GuidedBackprop.jpg', final_gb_frame)
             # final_frame = cv2.hconcat(imgs)
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM.jpg', final_frame)
-            final_hmp_frame = cv2.hconcat(hmps)
+            # bp()
+            final_gb_frame = reshapeVideoIntoImages(gbimgs)
+            final_hmp_frame = reshapeVideoIntoImages(hmps)
+            final_img_frame = reshapeVideoIntoImages(imgs)
+            final_newimg_frame = reshapeVideoIntoImages(maskimgs)
+            final_gbitself_frame = reshapeVideoIntoImages(gbitself)
+            print(final_gb_frame.shape)
+            print(final_hmp_frame.shape)
+            print(final_img_frame.shape)
+            print(final_newimg_frame.shape)
+            print(final_gbitself_frame.shape)
 
             def normalize(arr):
                 # arr = arr / np.linalg.norm(arr)
@@ -244,9 +282,11 @@ class CAMLoss(nn.Module):
             # print(np.min(final_hmp_frame), np.max(final_hmp_frame), np.median(final_hmp_frame))
             # print(np.min(final_gb_frame), np.max(final_gb_frame), np.median(final_gb_frame))
             # print(final_gb_frame.dtype, final_hmp_frame.dtype)
-
-            data = np.array(cv2.vconcat([final_hmp_frame.astype(
-                'float64'), final_gb_frame.astype('float64')]))
+            final_gb_frame = cv2.copyMakeBorder(final_gb_frame,0,0,0,final_img_frame.shape[1] - final_gb_frame.shape[1],cv2.BORDER_CONSTANT)
+            final_hmp_frame = cv2.copyMakeBorder(final_hmp_frame,0,0,0,final_img_frame.shape[1] - final_hmp_frame.shape[1],cv2.BORDER_CONSTANT)
+            data = np.array(cv2.vconcat([final_img_frame.astype(
+                'float64'), final_hmp_frame.astype('float64'), final_gbitself_frame.astype('float64')
+                , final_newimg_frame.astype('float64'), final_gb_frame.astype('float64')]))
             return correlations, data
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
 

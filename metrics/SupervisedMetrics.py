@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import torch.nn as nn
 import numpy as np
 import pandas as pd
+from ipdb import set_trace as bp
 
 class Evaluator:
     def __init__(self):
@@ -39,34 +40,44 @@ class Evaluator:
                 labels = labels.to(device)
                 outputs = model(inputs) 
                 l1 = criteron(outputs, labels)
+                # bp()
                 
                 _, preds = torch.max(outputs, 1)
                 
                 running_loss += l1.item()
-                # running_corrects += torch.sum(preds == labels.data)
-                for pred in range(preds.shape[0]):
-                    running_corrects += labels[pred, int(preds[pred])]
-                    m = nn.Sigmoid()
-                    pred_probability = m(outputs[pred])
-                    pred_logits = (pred_probability > 0.5).int()
-                    
-                    if tp == None:
-                        tp = (pred_logits + labels[pred] > 1).int()
-                        fp = (torch.subtract(pred_logits, labels[pred]) > 0).int()
-                        fn = (torch.subtract(pred_logits, labels[pred]) < 0).int()
+                running_corrects += torch.sum(preds == labels.data)
+                
+                # for pred in range(inputs.shape[0]):
+                #     running_corrects += (labels[pred] == preds).int().item()
+                #     m = nn.Sigmoid()
+                #     pred_probability = m(outputs[pred])
+                #     pred_logits = (pred_probability > 0.5).int()
+                numClasses = outputs.shape[1]
+                if tp == None:
+                    tp = torch.zeros(numClasses)
+                    fp = torch.zeros(numClasses)
+                    fn = torch.zeros(numClasses)
+                
+                # preds_logit = torch.zeros(preds.shape[0])
+                # labels_logit = torch.zeros(preds.shape[0])
+                # for i in range(preds_logit.shape[0]):
+                #     preds_logit[preds[i]] += 1
+                #     labels_logit[labels[i]] += 1
+                for i in range(outputs.shape[0]):
+                    if preds[i] == labels[i]:
+                        tp[preds[i].item()] += 1
                     else:
-                        tp += (pred_logits + labels[pred] > 1).int()
-                        fp += (torch.subtract(pred_logits, labels[pred]) > 0).int()
-                        fn += (torch.subtract(pred_logits, labels[pred]) < 0).int()
+                        fp[preds[i].item()] += 1
+                        fn[labels[i].item()] += 1
                     
-                    # if labels[pred, int(preds[pred])] == 1:
-                    #     tp += 1
-                    # else:
-                    #     fp += 1
-                    # fn += 
-                    # print(labels[pred, int(preds[pred])])
-                # print(running_corrects.item())
-                # del l1, inputs, labels, outputs, preds
+                # if labels[pred, int(preds[pred])] == 1:
+                #     tp += 1
+                # else:
+                #     fp += 1
+                # fn += 
+                # print(labels[pred, int(preds[pred])])
+            # print(running_corrects.item())
+            # del l1, inputs, labels, outputs, preds
             print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))
             supervised_loss = float(running_loss / datasetSize)
             print('\n Test Model Supervised Loss: %.3f' % supervised_loss)
@@ -78,7 +89,7 @@ class Evaluator:
                 pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())),index=[self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', header=False)
             self.counter += 1
             
-            f1_sum = np.nansum(f1_score.data.cpu().numpy())
+            f1_sum = np.nansum(f1_score.data.cpu().numpy()) / numClasses
             
             if f1_sum > self.bestF1Sum:
                 self.bestF1Sum = f1_sum

@@ -74,8 +74,8 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=4, unsup
                                            target_transform=encode_labels)
 
     #dataset_train = torch.utils.data.Subset(dataset_train_orig, list(range(0,50))) 
-    dataset_train = balancedMiniDataset(dataset_train_orig, 2, len(dataset_train_orig))
-    unsup_train = torch.utils.data.Subset(dataset_train_orig, list(range(500,1500))) #len(dataset_train_orig))))
+    dataset_train, unsup_train = balancedMiniDataset(dataset_train_orig, 1, len(dataset_train_orig))
+    # unsup_train = torch.utils.data.Subset(dataset_train_orig, list(range(500,1500))) #len(dataset_train_orig))))
     
     dataset_valid = PascalVOC_Dataset(data_dir,
                                       year='2012',
@@ -104,15 +104,18 @@ def balancedMiniDataset(trainset, size, limit):
     iterating = True
     step = 1500
     subsetToInclude = []
+    subsetToNotInclude = list(range(1500))
     while iterating and step < limit:
         label = trainset[step][1].numpy()
         if np.all(counter + label <= size) and np.sum(label).item() == 1:
             counter += label
             print(counter, step)
             subsetToInclude.append(step)
-        
+        else:
+            subsetToNotInclude.append(step)
         if np.sum(counter) >= size * len(trainset[0][1]):
             print("Completely Balanced Dataset")
             iterating = False
         step += 1
-    return torch.utils.data.Subset(trainset, subsetToInclude)
+    subsetToNotInclude += list(range(step, len(trainset)))
+    return torch.utils.data.Subset(trainset, subsetToInclude), torch.utils.data.Subset(trainset, subsetToNotInclude) 

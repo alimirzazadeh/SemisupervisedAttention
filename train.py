@@ -22,7 +22,7 @@ def customTrain(model):
     def _freeze_norm_stats(net):
         try:
             for m in net.modules():
-                if isinstance(m, nn.BatchNorm2d):
+                if isinstance(m, nn.BatchNorm3d):
                     m.eval()
     
         except ValueError:  
@@ -34,6 +34,10 @@ def customTrain(model):
 
 def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, trackLoss=False, training='alternating', batchDirectory='', scheduler=None, batch_size=4):
     print('alpha: ', alpha)
+    perEpochEval = False
+    savingCheckpoints = False
+    
+    
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric)
     LossEvaluator = Evaluator()
     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
@@ -48,16 +52,16 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     # def criteron(pred_label, target_label):
     #     m = nn.BCEWithLogitsLoss()
     #     return m(pred_label, target_label)
-    weight = torch.tensor([0.87713311, 1.05761317, 0.73638968, 1.11496746, 0.78593272, 1.33506494,
-                           0.4732965, 0.514, 0.47548566, 1.9469697, 0.97348485, 0.43670348,
-                           1.15765766, 1.06639004, 0.13186249, 1.05544148, 1.71906355, 1.04684318,
-                           1.028, 0.93624772])
-    weight = weight.to(device)
+    # weight = torch.tensor([0.87713311, 1.05761317, 0.73638968, 1.11496746, 0.78593272, 1.33506494,
+    #                        0.4732965, 0.514, 0.47548566, 1.9469697, 0.97348485, 0.43670348,
+    #                        1.15765766, 1.06639004, 0.13186249, 1.05544148, 1.71906355, 1.04684318,
+    #                        1.028, 0.93624772])
+    # weight = weight.to(device)
     # criteron = nn.MultiLabelSoftMarginLoss(weight=weight)
         
     
-    # criteron = torch.nn.CrossEntropyLoss()
-    criteron = nn.BCEWithLogitsLoss()
+    criteron = torch.nn.CrossEntropyLoss()
+    # criteron = nn.BCEWithLogitsLoss()
 
     if trackLoss:
         imgPath = batchDirectory + 'saved_figs/track_lossImg.npy'
@@ -77,6 +81,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     print("\n\nTotal Supervised Dataset: ", supdatasetSize)
     unsupdatasetSize = len(unsuptrainloader.dataset)
     print("Total Unsupervised Dataset: ", unsupdatasetSize)
+    validLoaderSize = len(validloader.dataset)
+    print("Total Validation Dataset: ", validLoaderSize)
 
     if training == 'supervised':
         totalDatasetSize = int(supdatasetSize / batch_size)
@@ -95,8 +101,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         
         # if scheduler:
         #     scheduler.step()        
-        running_corrects = 0
-        running_loss = 0.0
+        # running_corrects = 0
+        # running_loss = 0.0
 
         supiter = iter(suptrainloader)
         unsupiter = iter(unsuptrainloader)
@@ -104,9 +110,9 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         unsupiter_reloaded = 0
         
 
-        #if epoch % 20 == 19:
-        #    saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
-        #    print("saved checkpoint successfully")
+        if savingCheckpoints and epoch % 50 == 25:
+            saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
+            print("saved checkpoint successfully")
         
         counter = 0
 
@@ -211,15 +217,20 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
             #    running_corrects = 0            
             counter += 1
             
-        # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
-        if True: #epoch % 10 == 5:
-            print('Epoch {}/{}'.format(epoch, numEpochs - 1))
+            # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
+            if not perEpochEval and counter % 50 == 25:
+                print('Epoch {} counter {}'.format(epoch, counter))
+                model.eval()
+                optimizer.zero_grad()
+                LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
+                LossEvaluator.plotLosses(batchDirectory=batchDirectory)
+        if perEpochEval:
+            print('Epoch {} of {}'.format(epoch, numEpochs))
             model.eval()
             optimizer.zero_grad()
             LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
             LossEvaluator.plotLosses(batchDirectory=batchDirectory)
-            print('Unsup Iter Reloaded: ', unsupiter_reloaded)
-            print('Sup Iter Reloaded: ', supiter_reloaded)
+
     print('\n \n BEST SUP LOSS OVERALL: ', LossEvaluator.bestSupSum, '\n\n')
     print('\n \n BEST F1 SCORE SUM OVERALL: ', LossEvaluator.bestF1Sum, '\n\n')
     saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)

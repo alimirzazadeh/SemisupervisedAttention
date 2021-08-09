@@ -26,9 +26,9 @@ def custom_metric(data_methodx):
     fn = None
     
     for preds in data_methodx.to_numpy():
-        
-        labels = preds[:int(len(preds) / 2)]
-        pred_logits = preds[int(len(preds) / 2):]
+        assert(len(preds) == 2)
+        labels = preds[0]
+        pred_logits = preds[1]
         if tp == None:
             tp = np.sum((pred_logits + labels > 1))
             fp = np.sum((np.subtract(pred_logits, labels) > 0))
@@ -42,7 +42,7 @@ def custom_metric(data_methodx):
     return f1_score_sum
 
 
-def boostrapping_CI(data,nbr_runs=100):
+def boostrapping_CI(data,nbr_runs=1000):
     #Confidence Interval Estimation of an ROC Curve: An Application of Generalized Half Normal and Weibull Distributions
     
     nbr_scans = len(data.index)
@@ -129,8 +129,9 @@ if __name__ == '__main__':
         PATH1 = '/scratch/users/alimirz1/saved_batches/medium_alt_gb_pears_2/saved_checkpoints/model_best.pt'
         PATH2 = '/scratch/users/alimirz1/saved_batches/medium_alt_gb_pears_2/saved_checkpoints/model_best.pt'
     else:
-        PATH1 = '../saved_figs/testLabelLogits.csv'
-        PATH2 = '../saved_figs/testLabelLogits1.csv'
+        PATH1 = '../saved_figs/8_3_21_comparison/testLabelLogits_sup.csv'
+        PATH2 = '../saved_figs/8_3_21_comparison/testLabelLogits_c4.csv'
+
         
     #load data
     data_method1 = pd.read_csv(PATH1) #CHANGE

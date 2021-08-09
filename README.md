@@ -33,8 +33,8 @@ export BATCH_DIRECTORY=exp14
 export LEARNING_RATE=0.000005
 export NUM_EPOCHS=50
 export BATCH_SIZE=4
-export RESOLUTION_MATCH=1
-export SIMILARITY_METRIC=1
+export RESOLUTION_MATCH=2
+export SIMILARITY_METRIC=0
 export ALPHA=8
 mkdir /scratch/users/alimirz1/saved_batches/$BATCH_DIRECTORY
 ml python/3.9.0

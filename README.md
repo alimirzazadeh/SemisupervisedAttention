@@ -1,6 +1,6 @@
 # Project Description
 
-**Goal**: This is a semi-supervised learning approach to improving video classification performance for hospital video.
+**Goal**: This is a semi-supervised learning approach to improving video classification performance for hospital video. <br>
 **Current Progress**: Working on using this for video data, outperforms supervised benchmark on Pascal/CIFAR
 
 # Description of Running Ali's code

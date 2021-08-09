@@ -34,6 +34,9 @@ if __name__ == '__main__':
     similarityMetric = int(sys.argv[11])  # 2
     alpha = int(sys.argv[12])  # 2
 
+
+    unsup_batch_size = 12
+
     print('Training Mode: ', sys.argv[5])
     print('Learning Rate: ', learning_rate)
     print('Number of Epochs: ', numEpochs)
@@ -51,7 +54,9 @@ if __name__ == '__main__':
         batchDirectory = ''
     # Load the CIFAR Dataset
     # suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
-    suptrainloader, unsuptrainloader, validloader, testloader = loadVideoData(batch_size = batch_size)
+    
+    suptrainloader, unsuptrainloader, validloader, testloader = loadVideoData(
+        batch_size=batch_size, unsup_batch_size=unsup_batch_size)
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:

@@ -89,8 +89,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     elif training == 'unsupervised':
         totalDatasetSize = int(unsupdatasetSize / batch_size)
     elif training == 'alternating':
-        totalDatasetSize = int((alpha * supdatasetSize + unsupdatasetSize) / batch_size)
-        trainingRatio = alpha * (supdatasetSize / (alpha * supdatasetSize + unsupdatasetSize))
+        totalDatasetSize = int((supdatasetSize + unsupdatasetSize) / batch_size)
+        # trainingRatio = alpha * (supdatasetSize / (alpha * supdatasetSize + unsupdatasetSize))
     
     print("Total Dataset: ", totalDatasetSize)
     
@@ -143,28 +143,24 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
             
             if alternating:
                 # if i % 2 == 0:
-                if random.random() <= trainingRatio:
-                    try:
-                        data = supiter.next()
-                        supervised = True
-                        # print(str(i),' s')
-                    except StopIteration:
-                        supiter = iter(suptrainloader)
-                        supiter_reloaded += 1
-                        data = supiter.next()
-                        supervised = True  
-                        # print(str(i),' -s')                  
-                else:
-                    try:
-                        data = unsupiter.next()
-                        supervised = False
-                        # print(str(i),' u')
-                    except StopIteration:
-                        unsupiter = iter(unsuptrainloader)
-                        unsupiter_reloaded += 1
-                        data = unsupiter.next()
-                        supervised = False
-                        # print(str(i),' -u')
+                try:
+                    data = supiter.next()
+                    # print(str(i),' s')
+                except StopIteration:
+                    supiter = iter(suptrainloader)
+                    supiter_reloaded += 1
+                    data = supiter.next()
+                    # print(str(i),' -s')                  
+                try:
+                    data_u = unsupiter.next()
+                    # print(str(i),' u')
+                except StopIteration:
+                    unsupiter = iter(unsuptrainloader)
+                    unsupiter_reloaded += 1
+                    data_u = unsupiter.next()
+                
+                inputs_u, labels_u = data_u
+                    # print(str(i),' -u')
             elif supervised:
                 data = supiter.next()
                 #print('s')
@@ -172,50 +168,41 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                 data = unsupiter.next()
                 #print('u')
 
-            if trackLoss and counter % 100 == 0:
-                dataiter = iter(validloader)
-                images, labels = dataiter.next()
-                CAMLossInstance.cam_model.activations_and_grads.register_hooks()
-                thisLoss, thisFig = visualizeLossPerformance(CAMLossInstance, images,use_cuda=use_cuda, saveFig=False, batchDirectory=batchDirectory)
-
-                allLossImg = np.append(allLossImg,np.expand_dims(thisFig,0).astype(int), axis=0)
-                allLossNum = np.append(allLossNum,np.expand_dims(thisLoss,0), axis=0)
-
-                print('saved')
 
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
+            
     
             # zero the parameter gradients
             
             with torch.set_grad_enabled(True):
 
                 ####FOR SUPERVISED OR UNSUPERVISED
-                if supervised:
+                    
+                if alternating or supervised:
                     model.train()
                     optimizer.zero_grad()
-                    # print('supervised')
                     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
                     inputs = inputs.to(device)
                     labels = labels.to(device)
-
-                    # print(labelLogit)
                     outputs = model(inputs) 
                     l1 = criteron(outputs, labels)
-                    # _, preds = torch.max(outputs, 1)
-                    # print(preds)
-                    # print(labels)
-                    # for pred in range(preds.shape[0]):
-                    #     running_corrects += labels[pred, int(preds[pred])]
-                    # running_corrects += torch.sum(preds == labels.data)
-                else:
+                    _, preds = torch.max(outputs, 1)
+                    for pred in range(preds.shape[0]):
+                        running_corrects += labels[pred, int(preds[pred])]
+                if alternating or not supervised:
                     customTrain(model)
                     optimizer.zero_grad()
                     # print('unsupervised')
                     CAMLossInstance.cam_model.activations_and_grads.register_hooks()
-                    l1 = CAMLossInstance(inputs, target_category)
+                    if alternating:
+                        l2 = CAMLossInstance(inputs_u, target_category)
+                    else:
+                        l1 = CAMLossInstance(inputs, target_category)
                     
                 optimizer.zero_grad()
+                if alternating:
+                    l1 = l1 + alpha * l2
                 l1.backward()
                 optimizer.step()
                 

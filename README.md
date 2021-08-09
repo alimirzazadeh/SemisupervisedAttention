@@ -1,20 +1,27 @@
-This is a semi-supervised learning approach to improving video classification performance for Hospital Video.
+This is a semi-supervised learning approach to improving video classification performance for hospital video.
 
-How To Run:
+Running Command:
 python3 main.py [loadCheckpoint/noLoadCheckpoint] [visualLoss/noVisualLoss] [train/noTrain] [trackLoss/noTrackLoss] [supervised/unsupervised/alternating]
 
-How To Train:
-run main with either Checkpoint, noVisualLoss, train, noTrackLoss
+Various Parameters:
 
-How to Run Model on the Testing Set and save figures:
-run main with Load certain Checkpoint, visualLoss, noTrain, noTrackLoss
+Warm vs Cold start
+- Use ```loadCheckpoint``` to load in a checkpoint for warm start. Specify the path in the ```main.py``` file
+- Use ```noLoadCheckpoint``` if you want don't want a warm start.
 
-How to Observe Testing Loss throughout Training:
-python3 visualizer/loss_visualizer.py
+Visualizing Attention Maps
+- Use ```visualLoss``` if you want to compare various attention maps for a certain batch of images
+- Typically don't run ```visualLoss``` and ```train``` together
 
-How to save a training iteration:
-python3 project_saver.py
+Training Model
+- Use ```train``` to train the model on a certain number of epochs
+- ```noTrain``` if you don't want to train the model at all
 
+Type of training
+- There are three types of training (supervised, unsupervised, and alternating)
+- Only need to specify the ```alpha``` value for ```alternating```
+
+Use ```trackLoss``` to track the loss throughout the training
 
 BATCH SCRIPT TO RUN:
 
@@ -39,5 +46,5 @@ export ALPHA=8
 mkdir /scratch/users/alimirz1/saved_batches/$BATCH_DIRECTORY
 ml python/3.9.0
 ml opencv/4.5.2
-python3 main.py noloadCheckpoint novisualLoss train notrackloss alternating $BATCH_DIRECTORY $LEARNING_RATE $NUM_EPOCHS $BATCH_SIZE $RESOLUTION_MATCH $SIMILARITY_METRIC $ALPHA
+python3 main.py noloadCheckpoint noVisualLoss train notrackLoss supervised $BATCH_DIRECTORY $LEARNING_RATE $NUM_EPOCHS $BATCH_SIZE $RESOLUTION_MATCH $SIMILARITY_METRIC $ALPHA
 ```

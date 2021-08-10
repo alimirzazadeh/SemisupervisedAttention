@@ -51,8 +51,7 @@ if __name__ == '__main__':
     # suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
     # suptrainloader, unsuptrainloader, testloader = loadPascalData(
     #     batch_size=batch_size)
-    suptrainloader, unsuptrainloader, testloader = loadCifarData(
-    batch_size=batch_size)
+    suptrainloader, unsuptrainloader, validloader, testloader = loadCifarData(batch_size=batch_size)
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
@@ -122,8 +121,7 @@ if __name__ == '__main__':
     # load a few images from CIFAR and save
     if sys.argv[2] == 'visualLoss':
         from model.loss import CAMLoss
-        CAMLossInstance = CAMLoss(
-            model, target_layer, use_cuda, resolutionMatch, similarityMetric)
+        CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric)
         dataiter = iter(testloader)
 
         device = torch.device("cuda:0" if use_cuda else "cpu")
@@ -192,5 +190,5 @@ if __name__ == '__main__':
     if sys.argv[3] == 'train':
         trackLoss = sys.argv[4] == 'trackLoss'
         print(trackLoss)
-        train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
+        train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
               similarityMetric, alpha, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, scheduler=scheduler, batch_size=batch_size)

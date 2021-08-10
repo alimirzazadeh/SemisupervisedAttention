@@ -22,6 +22,9 @@ class Evaluator:
         self.bestF1Sum = 0
         self.bestSupSum = 999999
         self.counter = 0
+        self.sup_loss = []
+        self.val_acc = []
+        self.f1 = []
 
     def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss=False, batchDirectory=''):
         # model.eval()
@@ -93,38 +96,32 @@ class Evaluator:
                     # print(labels[pred, int(preds[pred])])
                 # print(running_corrects.item())
                 # del l1, inputs, labels, outputs, preds
+            
+            results = pd.DataFrame()
+
             acc = float(running_corrects.item() / datasetSize)
             print('\n Test Model Accuracy: %.3f' % acc)
             supervised_loss = float(running_loss / datasetSize)
             print('\n Test Model Supervised Loss: %.3f' % supervised_loss)
             f1_score = self.calculateF1score(tp, fp, fn)
+            f1_sum = np.nansum(f1_score.data.cpu().numpy()) / numClasses
 
-            try:
-                pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())), index=[self.counter]).to_csv(
-                    batchDirectory+'saved_figs/f1_scores.csv', mode='a', header=False)
-                pd.DataFrame(dict(enumerate(supervised_loss.data.cpu().numpy())), index=[self.counter]).to_csv(
-                    batchDirectory+'saved_figs/loss_sup.csv', mode='a', header=False)
-                pd.DataFrame(dict(enumerate(acc.data.cpu().numpy())), index=[self.counter]).to_csv(
-                    batchDirectory+'saved_figs/accuracy.csv', mode='a', header=False)
-            except:
-                pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())), index=[
-                             self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', header=False)
-                pd.DataFrame(dict(enumerate(supervised_loss.data.cpu().numpy())), index=[
-                             self.counter]).to_csv(batchDirectory+'saved_figs/loss_sup.csv', header=False)
-                pd.DataFrame(dict(enumerate(acc.data.cpu().numpy())), index=[
-                             self.counter]).to_csv(batchDirectory+'saved_figs/accuracy.csv', header=False)
+            self.val_acc.append(acc)
+            self.sup_loss.append(supervised_loss)
+            self.f1.append(f1_sum)
+
+            results['Epoch'] = self.counter
+            results['Accuracy'] = self.val_acc
+            results['Supervised Loss'] = self.sup_loss
+            results['F1 score'] = self.f1
 
             self.counter += 1
 
-            f1_sum = np.nansum(f1_score.data.cpu().numpy()) / numClasses
+            results.to_csv(batchDirectory+'saved_figs/results.csv', header=True)
 
             if f1_sum > self.bestF1Sum:
                 self.bestF1Sum = f1_sum
                 print("\n Best F1 Score so far: ", self.bestF1Sum)
-            #     self.saveCheckpoint(
-            #         model, optimizer, batchDirectory=batchDirectory)
-            # print('\n F1 Score: \n', f1_score.data.cpu().numpy())
-            # print('\n F1 Score Sum: \n', f1_sum)
 
             if supervised_loss < self.bestSupSum:
                 self.bestSupSum = supervised_loss
@@ -136,13 +133,11 @@ class Evaluator:
                 self.accuracies.append(
                     float(running_corrects.item() / datasetSize))
                 self.f1_scoresum.append(f1_sum)
-        # print('..')
 
     def evaluateModelUnsupervisedPerformance(self, model, testloader, CAMLossInstance, device, optimizer, target_category=None, storeLoss=False):
         # model.eval()
         running_loss = 0.0
         datasetSize = len(testloader.dataset)
-        # print('.')
         with torch.set_grad_enabled(True):
             for i, data in enumerate(testloader, 0):
                 optimizer.zero_grad()

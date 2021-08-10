@@ -34,7 +34,7 @@ def customTrain(model):
     model.apply(_freeze_norm_stats)
             
 
-def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, trackLoss=False, training='alternating', batchDirectory='', scheduler=None, batch_size=4):
+def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, trackLoss=False, training='alternating', batchDirectory='', scheduler=None, batch_size=4):
     print('alpha: ', alpha)
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric)
     LossEvaluator = Evaluator()
@@ -71,7 +71,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
     
     print('evaluating')
     model.eval()
-    LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #unsupervised=training!='supervised')
+    LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #unsupervised=training!='supervised')
     LossEvaluator.plotLosses(batchDirectory=batchDirectory)
     print('finished evaluating')
         
@@ -132,7 +132,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
             #    print('Epoch: ', epoch, 'Batch: ', i)
             #    model.eval()
             #    optimizer.zero_grad()
-            #    LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True) #training!='supervised')
+            #    LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True) #training!='supervised')
             #    LossEvaluator.plotLosses(batchDirectory=batchDirectory)
             
             
@@ -169,7 +169,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
                 #print('u')
 
             if trackLoss and counter % 100 == 0:
-                dataiter = iter(testloader)
+                dataiter = iter(validloader)
                 images, labels = dataiter.next()
                 CAMLossInstance.cam_model.activations_and_grads.register_hooks()
                 thisLoss, thisFig = visualizeLossPerformance(CAMLossInstance, images,use_cuda=use_cuda, saveFig=False, batchDirectory=batchDirectory)
@@ -228,7 +228,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, testloader, optimi
         print('Epoch {}/{}'.format(epoch, numEpochs - 1))
         model.eval()
         optimizer.zero_grad()
-        LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=False, batchDirectory=batchDirectory) #training!='supervised')
+        LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=False, batchDirectory=batchDirectory) #training!='supervised')
         LossEvaluator.plotLosses(batchDirectory=batchDirectory)
         print('Unsup Iter Reloaded: ', unsupiter_reloaded)
         print('Sup Iter Reloaded: ', supiter_reloaded)

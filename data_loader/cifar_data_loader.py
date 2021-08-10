@@ -8,8 +8,13 @@ import torch
 import torchvision
 from torchvision.transforms import Compose, Normalize, ToTensor, Resize
 import numpy as np
+import random
+
+from pdb import set_trace as bp
+
 
 def loadCifarData(batch_size=4, num_workers=2,shuffle=True):
+    VALSET_SIZE = 500
     # transform = transforms.ToTensor()
     transform = Compose([
         Resize(256),
@@ -19,40 +24,41 @@ def loadCifarData(batch_size=4, num_workers=2,shuffle=True):
     batch_size = 4
     trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                             download=False, transform=transform)
+    random.seed(10)
+    randomlist = random.sample(range(0, len(trainset)), VALSET_SIZE)
+    validset = torch.utils.data.Subset(trainset, randomlist)
 
-    print(int(len(trainset)))
-    supervisedTrainSet = trainset
-    unsupervisedTrainSet  = torch.utils.data.Subset(trainset, list(range( 250 )))
+    print("Finished balanced mini dataset")
+    supervisedTrainSet = balancedMiniDataset(trainset, 2, int(len(trainset)))
+    unsupervisedTrainSet  = torch.utils.data.Subset(trainset, list(range(250)))
+    suptrainloader = torch.utils.data.DataLoader(supervisedTrainSet, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+    unsuptrainloader = torch.utils.data.DataLoader(unsupervisedTrainSet, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
-    suptrainloader = torch.utils.data.DataLoader(supervisedTrainSet, batch_size=batch_size,
-                                              shuffle=shuffle, num_workers=num_workers)
+    testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=False, transform=transform)
+    validloader = torch.utils.data.DataLoader(validset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    return suptrainloader, unsuptrainloader, validloader, testloader
 
-    unsuptrainloader = torch.utils.data.DataLoader(unsupervisedTrainSet, batch_size=batch_size,
-                                              shuffle=shuffle, num_workers=num_workers)
-
-    testset = torchvision.datasets.CIFAR10(root='./data', train=False,
-                                           download=False, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size,
-                                             shuffle=False, num_workers=num_workers)
-    return suptrainloader, unsuptrainloader, testloader
-
-def balancedMiniDataset(trainset, size):
-    counter = np.zeros(10)
-    subsetToInclude = []
+def balancedMiniDataset(trainset, size, limit):
+    counter = np.zeros(trainset[0][1])
     iterating = True
-    step = 0
-    while iterating:
+    step = 1500
+    subsetToInclude = []
+    subsetToNotInclude = list(range(1500))
+    while iterating and step < limit:
         label = trainset[step][1]
-        if counter[label] < size:
+        if np.all(counter + label <= size) and np.sum(label).item() == 1:
+            counter += label
+            print(counter, step)
             subsetToInclude.append(step)
-            counter[label] += 1
-        
-        if np.sum(counter) == 100:
+        else:
+            subsetToNotInclude.append(step)
+        if np.sum(counter) >= size * trainset[0][1]:
+            print("Completely Balanced Dataset")
             iterating = False
-        elif np.sum(counter) > 100:
-            print("error, too many data")
         step += 1
-    return torch.utils.data.Subset(trainset, subsetToInclude)
+    subsetToNotInclude += list(range(step, len(trainset)))
+    return torch.utils.data.Subset(trainset, subsetToInclude), torch.utils.data.Subset(trainset, subsetToNotInclude) 
     
 def getLabelWord(arr):
     classes = ('plane', 'car', 'bird', 'cat','deer', 'dog', 'frog', 'horse', 'ship', 'truck')

@@ -94,8 +94,7 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
     else:
         unsup_train = large_unsup
 
-    #dataset_train = dataset_train_orig
-    #unsup_train = torch.utils.data.Subset(dataset_train_orig, list(range(500,540))) #len(dataset_train_orig))))
+
     
     dataset_valid = PascalVOC_Dataset(data_dir,
                                       year='2012',

@@ -14,24 +14,34 @@ import torchvision
 import torch
 import cv2
 import sys
+import json
+import distutils.util
 sys.path.append("./")
 
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
-# from data_loader.pascal_runner import loadPascalData
-# from model.loss import calculateLoss
 
 if __name__ == '__main__':
+    whichTraining = sys.argv[5] #alternating
     learning_rate = float(sys.argv[7])  # 0.00001
     numEpochs = int(sys.argv[8])  # 400
     batch_size = int(sys.argv[9])  # 4
     resolutionMatch = int(sys.argv[10])  # 2
     similarityMetric = int(sys.argv[11])  # 2
     alpha = int(sys.argv[12])  # 2
+    unsup_batch_size = int(sys.argv[13]) #12
+    fullyBalanced = bool(distutils.util.strtobool(sys.argv[14])) #True
+    useNewUnsupervised=bool(distutils.util.strtobool(sys.argv[15])) #True
+    numOutputClasses = int(sys.argv[17]) #20
+    try:
+        unsupDatasetSize=int(sys.argv[16]) #None
+    except:
+        unsupDatasetSize=None
 
-    print('Training Mode: ', sys.argv[5])
+
+    print('Training Mode: ', whichTraining)
     print('Learning Rate: ', learning_rate)
     print('Number of Epochs: ', numEpochs)
     print('Batch Size: ', batch_size)
@@ -39,15 +49,27 @@ if __name__ == '__main__':
     print('Similarity Metric Mode: ', similarityMetric)
     print('Alpha: ', alpha)
 
+
+
+    #json contains the paths required to launch on sherlock
+    with open('zaman_launch.json') as f:
+        sherlock_json = json.load(f)
+
+
+
+    #checks if on sherlock, otherwise creates folder in the batchDirectory in home repo (usually when running on cpu)
     if os.path.isdir('/scratch/'):
-        batchDirectory = '/scratch/users/alimirz1/saved_batches/' + \
+        batchDirectory = sherlock_json['batch_directory_path'] + \
             sys.argv[6] + '/'
     else:
         batchDirectory = ''
-    # Load the CIFAR Dataset
-    # suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
+
+
     suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(
-        batch_size=batch_size)
+        batch_size=batch_size, unsup_batch_size=unsup_batch_size, fullyBalanced=fullyBalanced, 
+        useNewUnsupervised=useNewUnsupervised, unsupDatasetSize=unsupDatasetSize)
+
+
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
@@ -63,18 +85,14 @@ if __name__ == '__main__':
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    model.fc = nn.Linear(int(model.fc.in_features), 20)
+    model.fc = nn.Linear(int(model.fc.in_features), numOutputClasses)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    # lr = [1e-5, 5e-3]
-    # optimizer = optim.SGD([
-    #     {'params': list(model.parameters())[:-1], 'lr': lr[0], 'momentum': 0.9},
-    #     {'params': list(model.parameters())[-1], 'lr': lr[1], 'momentum': 0.9}
-    #     ])
+
+
     # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, 12, eta_min=0, last_epoch=-1)
 
-    # optimizer = torch.optim.SGD(model.parameters(),
-    #                            lr=learning_rate, momentum=0.9, weight_decay=0.0001)
+
     scheduler = None
 
     all_checkpoints = os.listdir('saved_checkpoints')
@@ -85,13 +103,12 @@ if __name__ == '__main__':
     if sys.argv[1] != 'noLoadCheckpoint':
         whichCheckpoint = 6
         if len(all_checkpoints) > 0:
-
             if os.path.isdir('/scratch/'):
                 # PATH = '/scratch/users/alimirz1/saved_batches/...'
                 # PATH = '/scratch/users/alimirz1/saved_batches/exp_11/saved_checkpoints/model_59.pt'
                 # PATH = '/scratch/users/alimirz1/saved_batches/pre_gradFix/savingAfter15Sup/saved_checkpoints/model_14.pt'
                 # PATH = '/scratch/users/alimirz1/saved_batches/hot_bench/saved_checkpoints/model_best.pt'
-                PATH = '/scratch/users/alimirz1/saved_batches/hot_bench_150s_saved/saved_checkpoints/' + sys.argv[1]
+                PATH = sherlock_json['load_checkpoint_path'] + 'saved_checkpoints/' + sys.argv[1]
             else:
                 # + all_checkpoints[whichCheckpoint]
                 PATH = 'saved_checkpoints/' + sys.argv[1]
@@ -199,7 +216,7 @@ if __name__ == '__main__':
 
     print("done")
 
-    whichTraining = sys.argv[5]
+    
     if whichTraining not in ['supervised', 'unsupervised', 'alternating']:
         print('invalid Training. will alternate')
         whichTraining = 'alternating'
@@ -207,7 +224,7 @@ if __name__ == '__main__':
         trackLoss = sys.argv[4] == 'trackLoss'
         print(trackLoss)
         train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
-              similarityMetric, alpha, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, scheduler=scheduler, batch_size=batch_size)
+              similarityMetric, alpha, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size)
         print("Training Complete. Evaluating on Test Set...")
         checkpoint = torch.load(batchDirectory + "saved_checkpoints/model_best.pt", map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])

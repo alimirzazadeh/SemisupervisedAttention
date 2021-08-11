@@ -250,4 +250,4 @@ class CAMLoss(nn.Module):
             return correlations, data
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
 
-        return correlation_pearson  # / input_tensor.shape[0]
+        return correlation_pearson  / input_tensor.shape[0]

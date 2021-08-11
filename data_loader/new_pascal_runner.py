@@ -54,8 +54,15 @@ def encode_labels(target):
 
     return torch.from_numpy(k)
 
-
-def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
+#Parameters:
+# download_data: set to True only the first time running on new system to download the Pascal VOC dataset, otherwise set to False
+# batch_size: the batch size for supervised, validation, and test dataset
+# unsup_batch size: the batch size for unsupervised dataset
+# fullyBalanced: set to True if you want exactly numClasses * number of Instances per class images in the supervised dataset (can go up to 14 per class)
+#                if set to False, because this is multilabel it will include multilabel images in the supervised dataset as well (can go up to 150 per class)
+# useNewUnsupervised: if set to True, will only include images not in supervised set, if False only uses images in supervised set
+# unsupDatasetSize: if not None, sets the size of the unsupervised dataset
+def loadPascalData(data_dir='../data/', download_data=False, batch_size=4, unsup_batch_size=12, fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None):
 
     transformations = transforms.Compose([
         transforms.Resize((256, 256)),
@@ -84,19 +91,22 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
                                            target_transform=encode_labels)
  
 
-    fullyBalanced = True
-    useNewUnsupervised = True
-
     dataset_train, large_unsup = balancedMiniDataset(dataset_train_orig, 2, len(dataset_train_orig), fullyBalanced=fullyBalanced)
     
+
+    ### useNewUnsupervised determines if the unsupservised data is the same as supervised data or the unused parts of trainset
     if not useNewUnsupervised:
         unsup_train = dataset_train
     else:
         unsup_train = large_unsup
 
-    #dataset_train = dataset_train_orig
-    #unsup_train = torch.utils.data.Subset(dataset_train_orig, list(range(500,540))) #len(dataset_train_orig))))
-    
+
+    # If not None, unsupDatasetSize selects subset of the entire usable unsupervised dataset
+    if unsupDatasetSize is not None:
+        unsup_train = torch.utils.data.Subset(unsup_train, list(range(unsupDatasetSize)))
+
+
+
     dataset_valid = PascalVOC_Dataset(data_dir,
                                       year='2012',
                                       image_set='val',
@@ -104,13 +114,14 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
                                       transform=transformations_valid,
                                       target_transform=encode_labels)
 
-    dataset_valid = torch.utils.data.Subset(dataset_valid, list(range(0, 500)))
-    dataset_test = torch.utils.data.Subset(dataset_valid, list(range(500,len(dataset_valid))))
+    valid_dataset_split = 500
+    dataset_valid = torch.utils.data.Subset(dataset_valid, list(range(0, valid_dataset_split)))
+    dataset_test = torch.utils.data.Subset(dataset_valid, list(range(valid_dataset_split,len(dataset_valid))))
 
     train_loader = DataLoader(
         dataset_train, batch_size=batch_size, num_workers=4, shuffle=True)
     unsup_loader = DataLoader(
-        unsup_train, batch_size=batch_size, num_workers=4, shuffle=True)
+        unsup_train, batch_size=unsup_batch_size, num_workers=4, shuffle=True)
     valid_loader = DataLoader(
         dataset_valid, batch_size=batch_size, num_workers=4)
     test_loader = DataLoader(

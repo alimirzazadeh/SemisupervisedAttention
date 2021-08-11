@@ -4,7 +4,6 @@ from evaluate import evaluate
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 from data_loader.new_pascal_runner import loadPascalData
-from data_loader.cifar_data_loader import loadCifarData
 import os
 import numpy as np
 from torch import nn
@@ -60,22 +59,41 @@ if __name__ == '__main__':
     except:
         saveRecurringCheckpoint=None
 
+
+    #json contains the paths required to launch on sherlock
+    with open('./sherlock_launch.json') as f:
+        sherlock_json = json.load(f)
+
+    #checks if on sherlock, otherwise creates folder in the batchDirectory in home repo (usually when running on cpu)
+    if os.path.isdir('/scratch/'):
+        batchDirectory = sherlock_json['batch_directory_path'] + \
+            batchDirectoryFile + '/'
+    else:
+        batchDirectory = batchDirectoryFile + '/'
+
+
     CHECK_FOLDER = os.path.isdir(batchDirectory)
     if not CHECK_FOLDER:
         os.makedirs(batchDirectory)
-        print("Made Batch Directory folder")
+    
+    log = open(batchDirectory + "log.out", "a")
+    sys.stdout = log
+    sys.stderr = log
+    
+    print('############## Run Settings: ###############')
+
+    print(sherlock_json)
+
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
         os.makedirs(batchDirectory + "saved_figs")
-        print("Made Saved_Figs folder")
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_checkpoints")
     if not CHECK_FOLDER:
         os.makedirs(batchDirectory + "saved_checkpoints")
-        print("Made Saved_Checkpoints folder")
 
-    print('############## Run Settings: ###############')
+
     print('Loading Checkpoint: ', toLoadCheckpoint)
     print('Training: ', toTrain)
     print('Evaluating: ', toEvaluate)
@@ -99,22 +117,9 @@ if __name__ == '__main__':
     print('Saving Recurring Checkpoints (Only best checkpoints if None): ', saveRecurringCheckpoint)
     print('Mask Intensity: ', maskIntensity)
 
-
-
-    #json contains the paths required to launch on sherlock
-    with open('./sherlock_launch.json') as f:
-        sherlock_json = json.load(f)
-        print(sherlock_json)
-
     print('########################################### \n\n')
 
 
-    #checks if on sherlock, otherwise creates folder in the batchDirectory in home repo (usually when running on cpu)
-    if os.path.isdir('/scratch/'):
-        batchDirectory = sherlock_json['batch_directory_path'] + \
-            batchDirectoryFile + '/'
-    else:
-        batchDirectory = batchDirectoryFile + '/'
 
 
     suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(

@@ -40,7 +40,8 @@ if __name__ == '__main__':
     useNewUnsupervised=bool(distutils.util.strtobool(sys.argv[15])) #True
     numOutputClasses = int(sys.argv[17]) #20
     reflectPadding = bool(distutils.util.strtobool(sys.argv[18])) #True
-    numImagesPerClass = int(sys.argv[21])
+    numImagesPerClass = int(sys.argv[21]) #2
+    maskIntensity = int(sys.argv[22]) #8
     
     try:
         unsupDatasetSize=int(sys.argv[16]) #None
@@ -81,6 +82,7 @@ if __name__ == '__main__':
     print('Number of Figures to create: ', numFiguresToCreate)
     print('Evaluating Per How Many Batches (Per Epoch if None): ', perBatchEval)
     print('Saving Recurring Checkpoints (Only best checkpoints if None): ', saveRecurringCheckpoint)
+    print('Mask Intensity: ', maskIntensity)
 
 
 
@@ -106,6 +108,10 @@ if __name__ == '__main__':
         unsupDatasetSize=unsupDatasetSize)
 
 
+    CHECK_FOLDER = os.path.isdir(batchDirectory)
+    if not CHECK_FOLDER:
+        os.makedirs(batchDirectory)
+        print("Made Batch Directory folder")
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
@@ -182,7 +188,7 @@ if __name__ == '__main__':
     if numFiguresToCreate is not None:
         from model.loss import CAMLoss        
         CAMLossInstance = CAMLoss(
-            model, target_layer, use_cuda, resolutionMatch, similarityMetric)
+            model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity)
         dataiter = iter(validloader)
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
@@ -245,7 +251,7 @@ if __name__ == '__main__':
         print('Beginning Training')
         train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
               similarityMetric, alpha, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size, 
-              unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval, saveRecurringCheckpoint=saveRecurringCheckpoint)
+              unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval, saveRecurringCheckpoint=saveRecurringCheckpoint, maskIntensity=maskIntensity)
         print("Training Complete.")
 
     if toEvaluate:

@@ -20,7 +20,7 @@ import torch
 
 
 class CAMLoss(nn.Module):
-    def __init__(self, model, target_layer, use_cuda, resolutionMatch, similarityMetric):
+    def __init__(self, model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity):
         super(CAMLoss, self).__init__()
         self.use_cuda = use_cuda
         self.device = torch.device("cuda:0" if self.use_cuda else "cpu")
@@ -33,6 +33,7 @@ class CAMLoss(nn.Module):
 
         self.resolutionMatch = resolutionMatch
         self.similarityMetric = similarityMetric
+        self.maskIntensity = maskIntensity
 
     def forward(self, predict, target):
         print("hey")
@@ -117,7 +118,7 @@ class CAMLoss(nn.Module):
                     firstCompare = standardize(cam_result)
                     secondCompare = standardize(gb_correlate)
                 elif resolutionMatch == 2:
-                    ww = -8
+                    ww = -1 * maskIntensity
                     sigma = torch.mean(gb_correlate) + \
                         torch.std(gb_correlate) / 2
                     TAc = 1 / (1 + torch.exp(ww * (gb_correlate - sigma)))

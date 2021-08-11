@@ -52,6 +52,11 @@ if __name__ == '__main__':
     # suptrainloader, unsuptrainloader, testloader = loadPascalData(
     #     batch_size=batch_size)
     suptrainloader, unsuptrainloader, validloader, testloader = loadCifarData(batch_size=batch_size)
+    
+    print(len(suptrainloader.dataset))
+    print(len(unsuptrainloader.dataset))
+    print(len(validloader.dataset))
+    print(len(testloader.dataset))
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
@@ -63,12 +68,12 @@ if __name__ == '__main__':
         os.makedirs(batchDirectory + "saved_checkpoints")
         print("Made Saved_Checkpoints folder")
 
-    # model = models.resnet50(pretrained=True)
-    model = resnet50(pretrained=False)
+    model = models.resnet50(pretrained=False)
+    # model = resnet50(pretrained=True)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    # model.fc = nn.Linear(int(model.fc.in_features), 10)
+    model.fc = nn.Linear(int(model.fc.in_features), 10)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     # lr = [1e-5, 5e-3]

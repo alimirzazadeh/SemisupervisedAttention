@@ -228,7 +228,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         print('Epoch {}/{}'.format(epoch, numEpochs - 1))
         model.eval()
         optimizer.zero_grad()
-        LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=False, batchDirectory=batchDirectory) #training!='supervised')
+        LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
         LossEvaluator.plotLosses(batchDirectory=batchDirectory)
         print('Unsup Iter Reloaded: ', unsupiter_reloaded)
         print('Sup Iter Reloaded: ', supiter_reloaded)

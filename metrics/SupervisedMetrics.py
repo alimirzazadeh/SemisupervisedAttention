@@ -21,25 +21,16 @@ class Evaluator:
         self.f1_scoresum = []
         self.bestF1Sum = 0
         self.bestSupSum = 999999
-        self.counter = 0
-        self.sup_loss = []
-        self.val_acc = []
-        self.f1 = []
 
-    def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss=False, batchDirectory=''):
-        # model.eval()
+    def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss=True, batchDirectory=''):
         running_corrects = 0
         running_loss = 0.0
-
         tp = None
         fp = None
         fn = None
-
         datasetSize = len(testloader.dataset)
-
         with torch.set_grad_enabled(False):
             for i, data in enumerate(testloader, 0):
-                # print(i)
                 optimizer.zero_grad()
                 inputs, labels = data
                 inputs = inputs.to(device)
@@ -56,12 +47,6 @@ class Evaluator:
                     tp = torch.zeros(numClasses)
                     fp = torch.zeros(numClasses)
                     fn = torch.zeros(numClasses)
-                
-                # preds_logit = torch.zeros(preds.shape[0])
-                # labels_logit = torch.zeros(preds.shape[0])
-                # for i in range(preds_logit.shape[0]):
-                #     preds_logit[preds[i]] += 1
-                #     labels_logit[labels[i]] += 1
                 for i in range(outputs.shape[0]):
                     if preds[i] == labels[i]:
                         tp[preds[i].item()] += 1
@@ -69,55 +54,12 @@ class Evaluator:
                         fp[preds[i].item()] += 1
                         fn[labels[i].item()] += 1
 
-                # # running_corr1ects += torch.sum(preds == labels.data)
-                # for pred in range(outputs.shape[0]):
-                #     m = nn.Sigmoid()
-                #     pred_probability = m(outputs[pred])
-                #     pred_logits = (pred_probability > 0.5).int()
-
-                #     if tp == None:
-                #         tp = (pred_logits + labels[pred] > 1).int()
-                #         fp = (torch.subtract(
-                #             pred_logits, labels[pred]) > 0).int()
-                #         fn = (torch.subtract(
-                #             pred_logits, labels[pred]) < 0).int()
-                #     else:
-                #         tp += (pred_logits + labels[pred] > 1).int()
-                #         fp += (torch.subtract(pred_logits,
-                #                               labels[pred]) > 0).int()
-                #         fn += (torch.subtract(pred_logits,
-                #                               labels[pred]) < 0).int()
-
-                    # if labels[pred, int(preds[pred])] == 1:
-                    #     tp += 1
-                    # else:
-                    #     fp += 1
-                    # fn +=
-                    # print(labels[pred, int(preds[pred])])
-                # print(running_corrects.item())
-                # del l1, inputs, labels, outputs, preds
-            
-            results = pd.DataFrame()
-
             acc = float(running_corrects.item() / datasetSize)
             print('\n Test Model Accuracy: %.3f' % acc)
             supervised_loss = float(running_loss / datasetSize)
             print('\n Test Model Supervised Loss: %.3f' % supervised_loss)
             f1_score = self.calculateF1score(tp, fp, fn)
             f1_sum = np.nansum(f1_score.data.cpu().numpy()) / numClasses
-
-            self.val_acc.append(acc)
-            self.sup_loss.append(supervised_loss)
-            self.f1.append(f1_sum)
-
-            results['Epoch'] = self.counter
-            results['Accuracy'] = self.val_acc
-            results['Supervised Loss'] = self.sup_loss
-            results['F1 score'] = self.f1
-
-            self.counter += 1
-
-            results.to_csv(batchDirectory+'saved_figs/results.csv', header=True)
 
             if f1_sum > self.bestF1Sum:
                 self.bestF1Sum = f1_sum
@@ -128,13 +70,11 @@ class Evaluator:
                 self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory)
 
             if storeLoss:
-                self.supervised_losses.append(
-                    float(running_loss / datasetSize))
-                self.accuracies.append(
-                    float(running_corrects.item() / datasetSize))
+                self.supervised_losses.append(supervised_loss)
+                self.accuracies.append(acc)
                 self.f1_scoresum.append(f1_sum)
 
-    def evaluateModelUnsupervisedPerformance(self, model, testloader, CAMLossInstance, device, optimizer, target_category=None, storeLoss=False):
+    def evaluateModelUnsupervisedPerformance(self, model, testloader, CAMLossInstance, device, optimizer, target_category=None, storeLoss=True):
         # model.eval()
         running_loss = 0.0
         datasetSize = len(testloader.dataset)
@@ -145,21 +85,23 @@ class Evaluator:
                 inputs = inputs.to(device)
                 l1 = CAMLossInstance(inputs, target_category, visualize=False)
                 running_loss += l1.item()
-        print('\n Test Model Unsupervised Loss: %.3f' %
-              float(running_loss / datasetSize))
+        unsupervised_loss = float(running_loss / datasetSize)
+        print('\n Test Model Unsupervised Loss: %.3f' % unsupervised_loss)
         if storeLoss:
-            self.unsupervised_losses.append(float(running_loss / datasetSize))
+            self.unsupervised_losses.append(unsupervised_loss)
 
     def evaluateUpdateLosses(self, model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=''):
         if unsupervised:
-            #print('evaluating unsupervised performance')
             CAMLossInstance.cam_model.activations_and_grads.register_hooks()
-            self.evaluateModelUnsupervisedPerformance(
-                model, testloader, CAMLossInstance, device, optimizer, storeLoss=True)
-        #print('evaluating supervised performance')
+            self.evaluateModelUnsupervisedPerformance(model, testloader, CAMLossInstance, device, optimizer, storeLoss=True)
         CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
-        self.evaluateModelSupervisedPerformance(
-            model, testloader, criteron, device, optimizer, storeLoss=True, batchDirectory=batchDirectory)
+        self.evaluateModelSupervisedPerformance(model, testloader, criteron, device, optimizer, storeLoss=True, batchDirectory=batchDirectory)
+        results = pd.DataFrame()
+        results['Accuracy'] = self.accuracies
+        results['Supervised Loss'] = self.supervised_losses
+        results['Unsupervised Loss'] = self.unsupervised_losses
+        results['F1 score'] = self.f1_scoresum
+        results.to_csv(batchDirectory+'saved_figs/results.csv', header=True)
 
     def plotLosses(self, batchDirectory=''):
         plt.clf()

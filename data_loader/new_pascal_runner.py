@@ -59,12 +59,22 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
 
     transformations = transforms.Compose([
         transforms.Resize((256, 256)),
+        transforms.RandomRotation(10),
+        transforms.RandomHorizontalFlip(0.5),
+        transforms.RandomVerticalFlip(0.5),
+        #transforms.RandomResizedCrop(256),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
                              0.229, 0.224, 0.225])
     ])
 
-    transformations_valid = transformations
+    transformations_valid = transforms.Compose([
+        transforms.Resize((256, 256)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
+                             0.229, 0.224, 0.225])
+    ])
+
 
     dataset_train_orig = PascalVOC_Dataset(data_dir,
                                            year='2012',
@@ -72,10 +82,19 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
                                            download=download_data,
                                            transform=transformations,
                                            target_transform=encode_labels)
+ 
 
-    #dataset_train = torch.utils.data.Subset(dataset_train_orig, list(range(0,50))) 
-    dataset_train, unsup_train = balancedMiniDataset(dataset_train_orig, 1, len(dataset_train_orig))
-    # unsup_train = torch.utils.data.Subset(dataset_train_orig, list(range(500,1500))) #len(dataset_train_orig))))
+    fullyBalanced = True
+    useNewUnsupervised = True
+
+    dataset_train, large_unsup = balancedMiniDataset(dataset_train_orig, 2, len(dataset_train_orig), fullyBalanced=fullyBalanced)
+    
+    if not useNewUnsupervised:
+        unsup_train = dataset_train
+    else:
+        unsup_train = large_unsup
+
+
     
     dataset_valid = PascalVOC_Dataset(data_dir,
                                       year='2012',
@@ -99,15 +118,16 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
     return train_loader, unsup_loader, valid_loader, test_loader
 
 
-def balancedMiniDataset(trainset, size, limit):
+def balancedMiniDataset(trainset, size, limit, fullyBalanced=True):
     counter = np.zeros(len(trainset[0][1]))
     iterating = True
-    step = 1500
+    step = 0
     subsetToInclude = []
-    subsetToNotInclude = list(range(1500))
+    subsetToNotInclude = []
+    #subsetToNotInclude += list(range(step))
     while iterating and step < limit:
         label = trainset[step][1].numpy()
-        if np.all(counter + label <= size) and np.sum(label).item() == 1:
+        if np.all(counter + label <= size) and (not fullyBalanced or np.sum(label).item() == 1):
             counter += label
             print(counter, step)
             subsetToInclude.append(step)

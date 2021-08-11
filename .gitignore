@@ -137,3 +137,5 @@ dmypy.json
 /saved_iterations/*
 /saved_batches/*
 script.sh
+.DS_Store
+._DS_Store

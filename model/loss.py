@@ -9,7 +9,6 @@ from libs.pytorch_grad_cam.guided_backprop import GuidedBackpropReLUModel
 from libs.pytorch_grad_cam.smooth_grad import VanillaGrad, SmoothGrad
 from libs.pytorch_grad_cam.utils.image import deprocess_image, preprocess_image
 import libs.pytorch_ssim as pytorch_ssim
-from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import numpy as np

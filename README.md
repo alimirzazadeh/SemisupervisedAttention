@@ -19,7 +19,6 @@ BATCH SCRIPT TO RUN:
 ```
 #!/bin/bash
 #
-#BATCH --job-name=sz_pred_preproc
 #
 #SBATCH --time=48:00:00
 #SBATCH --ntasks=1

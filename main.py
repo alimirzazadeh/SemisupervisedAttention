@@ -34,7 +34,7 @@ if __name__ == '__main__':
     batch_size = int(sys.argv[9])  # 4
     resolutionMatch = int(sys.argv[10])  # 2
     similarityMetric = int(sys.argv[11])  # 2
-    alpha = int(sys.argv[12])  # 2
+    alpha = float(sys.argv[12])  # 2
     unsup_batch_size = int(sys.argv[13]) #12
     fullyBalanced = bool(distutils.util.strtobool(sys.argv[14])) #True
     useNewUnsupervised=bool(distutils.util.strtobool(sys.argv[15])) #True

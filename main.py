@@ -52,7 +52,15 @@ if __name__ == '__main__':
         perBatchEval=int(sys.argv[19]) #None to do per epoch eval
     except:
         perBatchEval=None
+    try:
+        saveRecurringCheckpoint=int(sys.argv[20])
+    except:
+        saveRecurringCheckpoint=None
 
+    print('############## Run Settings: ###############')
+    print('Loading Checkpoint: ', toLoadCheckpoint)
+    print('Training: ', toTrain)
+    print('Evaluating: ', toEvaluate)
     print('Training Mode: ', whichTraining)
     print('Learning Rate: ', learning_rate)
     print('Number of Epochs: ', numEpochs)
@@ -60,13 +68,24 @@ if __name__ == '__main__':
     print('Resolution Match Mode: ', resolutionMatch)
     print('Similarity Metric Mode: ', similarityMetric)
     print('Alpha: ', alpha)
+    print('Unsupervised Batch Size: ', unsup_batch_size)
+    print('Fully Balanced Supervised Dataset: ', fullyBalanced)
+    print('Using New Unsupervised Data', useNewUnsupervised)
+    print('Number of output classes: ', numOutputClasses)
+    print('Using Reflecting Padding: ', reflectPadding)
+    print('UnsupervisedDatasetSize (Everything if None): ', unsupDatasetSize)
+    print('Number of Figures to create: ', numFiguresToCreate)
+    print('Evaluating Per How Many Batches (Per Epoch if None): ', perBatchEval)
+    print('Saving Recurring Checkpoints (Only best checkpoints if None): ', saveRecurringCheckpoint)
 
 
 
     #json contains the paths required to launch on sherlock
-    with open('./zaman_launch.json') as f:
+    with open('./sherlock_launch.json') as f:
         sherlock_json = json.load(f)
+        print(sherlock_json)
 
+    print('########################################### \n\n')
 
 
     #checks if on sherlock, otherwise creates folder in the batchDirectory in home repo (usually when running on cpu)
@@ -221,7 +240,7 @@ if __name__ == '__main__':
         print('Beginning Training')
         train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
               similarityMetric, alpha, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size, 
-              unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval)
+              unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval, saveRecurringCheckpoint=saveRecurringCheckpoint)
         print("Training Complete.")
 
     if toEvaluate:

@@ -40,8 +40,8 @@ class CAMLoss(nn.Module):
     def forward(self, input_tensor,  target_category, logs=False, visualize=False):
         assert(len(input_tensor.shape) > 3)
 
-        # Upsample CAM, Downsample GB, GB mask, Hmp Mask
-        resolutionMatch = self.resolutionMatch
+        
+        resolutionMatch = self.resolutionMatch  # Upsample CAM, Downsample GB, GB mask, Hmp Mask
         similarityMetric = self.similarityMetric  # Pearson, cross corr, SSIM
         topHowMany = 1
 

@@ -62,7 +62,7 @@ def encode_labels(target):
 #                if set to False, because this is multilabel it will include multilabel images in the supervised dataset as well (can go up to 150 per class)
 # useNewUnsupervised: if set to True, will only include images not in supervised set, if False only uses images in supervised set
 # unsupDatasetSize: if not None, sets the size of the unsupervised dataset
-def loadPascalData(data_dir='../data/', download_data=False, batch_size=4, unsup_batch_size=12, fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None):
+def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, batch_size=4, unsup_batch_size=12, fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None):
 
     transformations = transforms.Compose([
         transforms.Resize((256, 256)),
@@ -91,7 +91,7 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=4, unsup
                                            target_transform=encode_labels)
  
 
-    dataset_train, large_unsup = balancedMiniDataset(dataset_train_orig, 2, len(dataset_train_orig), fullyBalanced=fullyBalanced)
+    dataset_train, large_unsup = balancedMiniDataset(dataset_train_orig, numImagesPerClass, len(dataset_train_orig), fullyBalanced=fullyBalanced)
     
 
     ### useNewUnsupervised determines if the unsupservised data is the same as supervised data or the unused parts of trainset

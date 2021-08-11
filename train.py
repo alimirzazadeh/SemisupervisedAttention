@@ -34,8 +34,8 @@ def customTrain(model):
 
 def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, 
     target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, 
-    trackLoss=False, training='alternating', batchDirectory='', scheduler=None, 
-    batch_size=4, unsup_batch_size=12, perBatchEval=None, saveRecurringCheckpoint=None):
+    training='alternating', batchDirectory='', scheduler=None, batch_size=4, 
+    unsup_batch_size=12, perBatchEval=None, saveRecurringCheckpoint=None):
     print('alpha: ', alpha)
 
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric)
@@ -63,13 +63,6 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     # criteron = torch.nn.CrossEntropyLoss()
     criteron = nn.BCEWithLogitsLoss()
 
-    if trackLoss:
-        imgPath = batchDirectory + 'saved_figs/track_lossImg.npy'
-        lossPath = batchDirectory + 'saved_figs/track_lossNum.npy'
-        np.save(imgPath, np.zeros((1,512,1024)))
-        np.save(lossPath, np.zeros((1,4)))
-        allLossNum = np.load(lossPath)
-        allLossImg = np.load(imgPath)
     
     print('pretraining evaluation...')
     model.eval()
@@ -120,9 +113,6 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         
         counter = 0
 
-        if trackLoss:
-            np.save(imgPath, allLossImg)
-            np.save(lossPath, allLossNum)
         
         if training == 'supervised':
             supervised = True

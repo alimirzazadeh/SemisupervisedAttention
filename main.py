@@ -28,6 +28,7 @@ if __name__ == '__main__':
     toTrain = bool(distutils.util.strtobool(sys.argv[3]))
     toEvaluate = bool(distutils.util.strtobool(sys.argv[4])) #True
     whichTraining = sys.argv[5] #alternating
+    batchDirectoryFile = sys.argv[6]
     learning_rate = float(sys.argv[7])  # 0.00001
     numEpochs = int(sys.argv[8])  # 400
     batch_size = int(sys.argv[9])  # 4
@@ -39,6 +40,7 @@ if __name__ == '__main__':
     useNewUnsupervised=bool(distutils.util.strtobool(sys.argv[15])) #True
     numOutputClasses = int(sys.argv[17]) #20
     reflectPadding = bool(distutils.util.strtobool(sys.argv[18])) #True
+    numImagesPerClass = int(sys.argv[21])
     
     try:
         unsupDatasetSize=int(sys.argv[16]) #None
@@ -62,6 +64,7 @@ if __name__ == '__main__':
     print('Training: ', toTrain)
     print('Evaluating: ', toEvaluate)
     print('Training Mode: ', whichTraining)
+    print('Batch Directory: ', batchDirectoryFile)
     print('Learning Rate: ', learning_rate)
     print('Number of Epochs: ', numEpochs)
     print('Batch Size: ', batch_size)
@@ -70,6 +73,7 @@ if __name__ == '__main__':
     print('Alpha: ', alpha)
     print('Unsupervised Batch Size: ', unsup_batch_size)
     print('Fully Balanced Supervised Dataset: ', fullyBalanced)
+    print('Number of Images per Class in Supervised Dataset: ', numImagesPerClass)
     print('Using New Unsupervised Data', useNewUnsupervised)
     print('Number of output classes: ', numOutputClasses)
     print('Using Reflecting Padding: ', reflectPadding)
@@ -91,14 +95,15 @@ if __name__ == '__main__':
     #checks if on sherlock, otherwise creates folder in the batchDirectory in home repo (usually when running on cpu)
     if os.path.isdir('/scratch/'):
         batchDirectory = sherlock_json['batch_directory_path'] + \
-            sys.argv[6] + '/'
+            batchDirectoryFile + '/'
     else:
-        batchDirectory = ''
+        batchDirectory = batchDirectoryFile + '/'
 
 
     suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(
-        batch_size=batch_size, unsup_batch_size=unsup_batch_size, fullyBalanced=fullyBalanced, 
-        useNewUnsupervised=useNewUnsupervised, unsupDatasetSize=unsupDatasetSize)
+        numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
+        fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
+        unsupDatasetSize=unsupDatasetSize)
 
 
 

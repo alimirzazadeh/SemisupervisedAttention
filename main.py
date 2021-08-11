@@ -24,6 +24,8 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 if __name__ == '__main__':
+    toTrain = bool(distutils.util.strtobool(sys.argv[3]))
+    toEvaluate = bool(distutils.util.strtobool(sys.argv[4])) #True
     whichTraining = sys.argv[5] #alternating
     learning_rate = float(sys.argv[7])  # 0.00001
     numEpochs = int(sys.argv[8])  # 400
@@ -35,10 +37,16 @@ if __name__ == '__main__':
     fullyBalanced = bool(distutils.util.strtobool(sys.argv[14])) #True
     useNewUnsupervised=bool(distutils.util.strtobool(sys.argv[15])) #True
     numOutputClasses = int(sys.argv[17]) #20
+    reflectPadding = bool(distutils.util.strtobool(sys.argv[18])) #True
+    
     try:
         unsupDatasetSize=int(sys.argv[16]) #None
     except:
         unsupDatasetSize=None
+    try:
+        numFiguresToCreate=int(sys.argv[2]) #None
+    except:
+        numFiguresToCreate=None
 
 
     print('Training Mode: ', whichTraining)
@@ -52,7 +60,7 @@ if __name__ == '__main__':
 
 
     #json contains the paths required to launch on sherlock
-    with open('zaman_launch.json') as f:
+    with open('./zaman_launch.json') as f:
         sherlock_json = json.load(f)
 
 
@@ -98,7 +106,6 @@ if __name__ == '__main__':
     all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0
 
-    print(model.fc.weight)
 
     def loadCheckpoint(path, model):
         checkpoint = torch.load(path, map_location=device)
@@ -120,30 +127,37 @@ if __name__ == '__main__':
                 PATH = sherlock_json['load_checkpoint_path'] + 'saved_checkpoints/' + sys.argv[1]
             else:
                 # + all_checkpoints[whichCheckpoint]
-                PATH = 'saved_checkpoints/hot_bench_150s_model_best.pt'
+                #PATH = 'saved_checkpoints/hot_bench_150s_model_best.pt'
+                'saved_checkpoints/' + sys.argv[1]
                 PATH2 = 'saved_checkpoints/7_31_21/model_best_sup.pt'
 
-                # loss = checkpoint['loss']
+        print(model.fc.weight)
+        loadCheckpoint(PATH, model)
+        ## Sanity check to make sure the loaded weights are different after loading chekcpoint
+        print(model.fc.weight)
 
+
+    ## WHICH LAYER FOR GRADCAM
     target_layer = model.layer4[-1]  # this is the layer before the pooling
 
-    print(model.fc.weight)
-    model.conv1.padding_mode = 'reflect'
-    for x in model.layer1:
-        x.conv2.padding_mode = 'reflect'
-    for x in model.layer2:
-        x.conv2.padding_mode = 'reflect'
-    for x in model.layer3:
-        x.conv2.padding_mode = 'reflect'
-    for x in model.layer4:
-        x.conv2.padding_mode = 'reflect'
+    
+    if reflectPadding:
+        model.conv1.padding_mode = 'reflect'
+        for x in model.layer1:
+            x.conv2.padding_mode = 'reflect'
+        for x in model.layer2:
+            x.conv2.padding_mode = 'reflect'
+        for x in model.layer3:
+            x.conv2.padding_mode = 'reflect'
+        for x in model.layer4:
+            x.conv2.padding_mode = 'reflect'
+
+
 
     use_cuda = torch.cuda.is_available()
     # load a few images from CIFAR and save
-    if sys.argv[2] == 'visualLoss':
-        from model.loss import CAMLoss
-        
-        
+    if numFiguresToCreate is not None:
+        from model.loss import CAMLoss        
         CAMLossInstance = CAMLoss(
             model, target_layer, use_cuda, resolutionMatch, similarityMetric)
         dataiter = iter(validloader)
@@ -153,7 +167,7 @@ if __name__ == '__main__':
                      'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse',
                      'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
 
-        for i in range(6):
+        for i in range(numFiguresToCreate):
             images, labels = dataiter.next()
             images = images.to(device)
             labels = labels.to(device)
@@ -171,9 +185,6 @@ if __name__ == '__main__':
                 val2, predicted2 = torch.max(outputs2.data, 1)
                 mean2 = torch.mean(outputs2.data, 1)
                 
-                # for pred in range(predicted.shape[0]):
-                #     running_corrects += labels[pred, int(predicted[pred])]
-                    
                 predicted = predicted.tolist()
                 predicted2 = predicted2.tolist()
                 print(predicted, predicted2)
@@ -189,37 +200,34 @@ if __name__ == '__main__':
                     print("\n\n Val: ", val, val2, "\n\n")
                     print("\n\n Mean: ", mean, mean2, "\n\n")
                     
-            
-            if predicted != predicted2:
-                loadCheckpoint(PATH, model)
-                imgTitle = "which_0_epoch_" + str(epoch) + "_batchNum_" + str(i)
-                visualizeLossPerformance(
-                    CAMLossInstance, images, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames)
-                loadCheckpoint(PATH2, model)
-                imgTitle = "which_1_epoch_" + str(epoch) + "_batchNum_" + str(i)
-                visualizeLossPerformance(
-                    CAMLossInstance, images, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2)
+            ### To only create figures with differing predictions, wrap the following lines with if predicted != predicted2:
+            loadCheckpoint(PATH, model)
+            imgTitle = "which_0_epoch_" + str(epoch) + "_batchNum_" + str(i)
+            visualizeLossPerformance(
+                CAMLossInstance, images, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames)
+            loadCheckpoint(PATH2, model)
+            imgTitle = "which_1_epoch_" + str(epoch) + "_batchNum_" + str(i)
+            visualizeLossPerformance(
+                CAMLossInstance, images, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2)
 
-    # visualizeImageBatch(images, labels)
 
     target_category = None
-
-    # need to set params?
-
-    # model.fc = nn.Linear(int(model.fc.in_features), 10)
 
     print("done")
 
     
     if whichTraining not in ['supervised', 'unsupervised', 'alternating']:
-        print('invalid Training. will alternate')
-        whichTraining = 'alternating'
-    if sys.argv[3] == 'train':
-        trackLoss = sys.argv[4] == 'trackLoss'
-        print(trackLoss)
+        print('invalid Training. Choose between supervised, unsupervised, alternating')
+        sys.exit()
+    if toTrain:
         train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
-              similarityMetric, alpha, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size)
-        print("Training Complete. Evaluating on Test Set...")
+              similarityMetric, alpha, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size)
+        
+        print("Training Complete.")
+
+    if toEvaluate:
+        print("Evaluating on Test Set...")
+        ##load the best checkpoint and evaulate it. 
         checkpoint = torch.load(batchDirectory + "saved_checkpoints/model_best.pt", map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         evaluate(model, testloader, device, batchDirectory=batchDirectory)

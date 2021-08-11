@@ -55,7 +55,7 @@ def encode_labels(target):
     return torch.from_numpy(k)
 
 
-def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
+def loadPascalData(data_dir='../data/', download_data=False, batch_size=4, unsup_batch_size=16):
 
     transformations = transforms.Compose([
         transforms.Resize((256, 256)),
@@ -90,7 +90,7 @@ def loadPascalData(data_dir='../data/', download_data=False, batch_size=32):
     train_loader = DataLoader(
         dataset_train, batch_size=batch_size, num_workers=4, shuffle=True)
     unsup_loader = DataLoader(
-        unsup_train, batch_size=batch_size, num_workers=4, shuffle=True)
+        unsup_train, batch_size=unsup_batch_size, num_workers=4, shuffle=True)
     valid_loader = DataLoader(
         dataset_valid, batch_size=batch_size, num_workers=4)
     test_loader = DataLoader(

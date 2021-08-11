@@ -26,7 +26,7 @@ from data_loader.video_model import VideoModel
 from data_loader.video_transforms import ToFloatTensorInZeroOne, GroupColorJitter, RandomCutOut, RandomCrop, RandomHorizontalFlip, Resize, Normalize, CenterCrop
 import json
 
-def loadVideoData(batch_size=1):
+def loadVideoData(batch_size=1, unsup_batch_size=12):
     with open('./zaman_launch.json') as f:
         data = json.load(f)
     data_path= data['data_path']
@@ -144,7 +144,7 @@ def loadVideoData(batch_size=1):
         frames_of_interest = foi,
         transform_frames_of_interest = False,
         options = {
-            'batch_size': batch_size,
+            'batch_size': unsup_batch_size,
             'norm_vals': VideoModel.default_dataloader_options[
                 'norm_vals'
             ]

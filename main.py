@@ -60,6 +60,21 @@ if __name__ == '__main__':
     except:
         saveRecurringCheckpoint=None
 
+    CHECK_FOLDER = os.path.isdir(batchDirectory)
+    if not CHECK_FOLDER:
+        os.makedirs(batchDirectory)
+        print("Made Batch Directory folder")
+
+    CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
+    if not CHECK_FOLDER:
+        os.makedirs(batchDirectory + "saved_figs")
+        print("Made Saved_Figs folder")
+
+    CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_checkpoints")
+    if not CHECK_FOLDER:
+        os.makedirs(batchDirectory + "saved_checkpoints")
+        print("Made Saved_Checkpoints folder")
+
     print('############## Run Settings: ###############')
     print('Loading Checkpoint: ', toLoadCheckpoint)
     print('Training: ', toTrain)
@@ -106,22 +121,6 @@ if __name__ == '__main__':
         numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
         fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
         unsupDatasetSize=unsupDatasetSize)
-
-
-    CHECK_FOLDER = os.path.isdir(batchDirectory)
-    if not CHECK_FOLDER:
-        os.makedirs(batchDirectory)
-        print("Made Batch Directory folder")
-
-    CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
-    if not CHECK_FOLDER:
-        os.makedirs(batchDirectory + "saved_figs")
-        print("Made Saved_Figs folder")
-
-    CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_checkpoints")
-    if not CHECK_FOLDER:
-        os.makedirs(batchDirectory + "saved_checkpoints")
-        print("Made Saved_Checkpoints folder")
 
     model = models.resnet50(pretrained=True)
 

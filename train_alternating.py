@@ -86,9 +86,11 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         totalDatasetSize = int(supdatasetSize / batch_size)
     elif training == 'unsupervised':
         totalDatasetSize = int(unsupdatasetSize / batch_size)
-    elif training == 'alternating':
+    elif training == 'combined':
         totalDatasetSize = int((alpha * supdatasetSize + unsupdatasetSize) / batch_size)
         trainingRatio = alpha * (supdatasetSize / (alpha * supdatasetSize + unsupdatasetSize))
+    elif training == 'alternating':
+
     
     print("Total Dataset: ", totalDatasetSize)
     

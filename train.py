@@ -32,11 +32,11 @@ def customTrain(model):
     model.apply(_freeze_norm_stats)
             
 
-def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, trackLoss=False, training='alternating', batchDirectory='', scheduler=None, batch_size=4):
+def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, 
+    target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, 
+    trackLoss=False, training='alternating', batchDirectory='', scheduler=None, 
+    batch_size=4, unsup_batch_size=12, perBatchEval=None):
     print('alpha: ', alpha)
-
-
-    perEpochEval = True
 
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric)
     LossEvaluator = Evaluator()
@@ -71,7 +71,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         allLossNum = np.load(lossPath)
         allLossImg = np.load(imgPath)
     
-    print('evaluating')
+    print('pretraining evaluation...')
     model.eval()
     LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #unsupervised=training!='supervised')
     LossEvaluator.plotLosses(batchDirectory=batchDirectory)
@@ -85,13 +85,19 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     if training == 'supervised':
         totalDatasetSize = int(supdatasetSize / batch_size)
     elif training == 'unsupervised':
-        totalDatasetSize = int(unsupdatasetSize / batch_size)
-    elif training == 'alternating':
-        totalDatasetSize = int((supdatasetSize + unsupdatasetSize) / batch_size)
+        totalDatasetSize = int(unsupdatasetSize / unsup_batch_size)
+    elif training == 'combining':
+        totalDatasetSize = int(supdatasetSize / batch_size)
         # trainingRatio = alpha * (supdatasetSize / (alpha * supdatasetSize + unsupdatasetSize))
+    elif training == 'alternating':
+        totalDatasetSize = int(alpha * supdatasetSize / batch_size + unsupdatasetSize / unsup_batch_size)
+        trainingRatio = alpha * (supdatasetSize / (alpha * supdatasetSize + unsupdatasetSize))
+
     
     print("Total Dataset: ", totalDatasetSize)
     
+
+    ##Custom model.train that freezes the batch norm layers and only keeps others in train mode
     customTrain(model)
     
     
@@ -126,45 +132,58 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
             alternating = False
         elif training == 'alternating':
             alternating = True
+            combining = False
+        elif training == 'combining':
+            alternating = False
+            combining = True
 
         # for i, data in enumerate(trainloader, 0):
         #print('starting iterations...')
         for i in range(totalDatasetSize):
-            #if i % 100 == 50:
-            #    print('Epoch: ', epoch, 'Batch: ', i)
-            #    model.eval()
-            #    optimizer.zero_grad()
-            #    LossEvaluator.evaluateUpdateLosses(model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True) #training!='supervised')
-            #    LossEvaluator.plotLosses(batchDirectory=batchDirectory)
-            
-            
-            
+
             if alternating:
-                # if i % 2 == 0:
-                try:
-                    data = supiter.next()
-                    # print(str(i),' s')
-                except StopIteration:
-                    supiter = iter(suptrainloader)
-                    supiter_reloaded += 1
-                    data = supiter.next()
-                    # print(str(i),' -s')                  
+                if random.random() <= trainingRatio:
+                    try:
+                        data = supiter.next()
+                        supervised = True
+                        # print(str(i),' s')
+                    except StopIteration:
+                        supiter = iter(suptrainloader)
+                        supiter_reloaded += 1
+                        data = supiter.next()
+                        supervised = True  
+                        # print(str(i),' -s')                  
+                else:
+                    try:
+                        data = unsupiter.next()
+                        supervised = False
+                        # print(str(i),' u')
+                    except StopIteration:
+                        unsupiter = iter(unsuptrainloader)
+                        unsupiter_reloaded += 1
+                        data = unsupiter.next()
+                        supervised = False
+                        # print(str(i),' -u')
+            elif combining:
+                data = supiter.next()
+                # try:
+                #     data = supiter.next()
+                # except StopIteration:
+                #     supiter = iter(suptrainloader)
+                #     supiter_reloaded += 1
+                #     data = supiter.next()                  
                 try:
                     data_u = unsupiter.next()
-                    # print(str(i),' u')
                 except StopIteration:
                     unsupiter = iter(unsuptrainloader)
                     unsupiter_reloaded += 1
                     data_u = unsupiter.next()
-                
                 inputs_u, labels_u = data_u
-                    # print(str(i),' -u')
             elif supervised:
                 data = supiter.next()
                 #print('s')
-            else:
+            elif not supervised:
                 data = unsupiter.next()
-                #print('u')
 
 
             # get the inputs; data is a list of [inputs, labels]
@@ -175,9 +194,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
             
             with torch.set_grad_enabled(True):
 
-                ####FOR SUPERVISED OR UNSUPERVISED
-                    
-                if alternating or supervised:
+                if combining or supervised:
                     model.train()
                     optimizer.zero_grad()
                     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
@@ -188,51 +205,41 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                     _, preds = torch.max(outputs, 1)
                     for pred in range(preds.shape[0]):
                         running_corrects += labels[pred, int(preds[pred])]
-                if alternating or not supervised:
+                if combining or not supervised:
                     customTrain(model)
                     optimizer.zero_grad()
                     # print('unsupervised')
                     CAMLossInstance.cam_model.activations_and_grads.register_hooks()
-                    if alternating:
+                    if combining:
                         l2 = CAMLossInstance(inputs_u, target_category)
                     else:
                         l1 = CAMLossInstance(inputs, target_category)
                     
                 optimizer.zero_grad()
-                if alternating:
+                if combining:
                     l1 = l1 + alpha * l2
                 l1.backward()
                 optimizer.step()
-                
-                # running_loss += l1.item()
-
-            #if i % 200 == 199:    # print every 200 mini-batches
-            #    print('[%d, %5d] loss: %.3f' %
-            #          (epoch + 1, i + 1, running_loss / 200))
-            #    running_loss = 0.0
-            #    print('[%d, %5d] accuracy: %.3f' %
-            #          (epoch + 1, i + 1, running_corrects / 200))
-            #    running_corrects = 0            
+                  
             counter += 1
             
-            # CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
-            if not perEpochEval and counter % 50 == 25:
+            if perBatchEval != None and counter % perBatchEval == perBatchEval - 1:
                 print('Epoch {} counter {}'.format(epoch, counter))
                 model.eval()
                 optimizer.zero_grad()
                 LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
                 LossEvaluator.plotLosses(batchDirectory=batchDirectory)
-        if perEpochEval:
+        if perBatchEval == None:
             print('Epoch {} of {}'.format(epoch, numEpochs))
             model.eval()
             optimizer.zero_grad()
             LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
             LossEvaluator.plotLosses(batchDirectory=batchDirectory)
 
-                #print('Unsup Iter Reloaded: ', unsupiter_reloaded)
-                #print('Sup Iter Reloaded: ', supiter_reloaded)
     print('\n \n BEST SUP LOSS OVERALL: ', LossEvaluator.bestSupSum, '\n\n')
     print('\n \n BEST F1 SCORE SUM OVERALL: ', LossEvaluator.bestF1Sum, '\n\n')
+
+    #save a final checkpoint
     saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
 
 def saveCheckpoint(EPOCH, net, optimizer, batchDirectory=''):

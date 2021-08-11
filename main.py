@@ -24,6 +24,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 if __name__ == '__main__':
+    toLoadCheckpoint = bool(distutils.util.strtobool(sys.argv[1]))
     toTrain = bool(distutils.util.strtobool(sys.argv[3]))
     toEvaluate = bool(distutils.util.strtobool(sys.argv[4])) #True
     whichTraining = sys.argv[5] #alternating
@@ -47,7 +48,10 @@ if __name__ == '__main__':
         numFiguresToCreate=int(sys.argv[2]) #None
     except:
         numFiguresToCreate=None
-
+    try:
+        perBatchEval=int(sys.argv[19]) #None to do per epoch eval
+    except:
+        perBatchEval=None
 
     print('Training Mode: ', whichTraining)
     print('Learning Rate: ', learning_rate)
@@ -116,20 +120,15 @@ if __name__ == '__main__':
         except:
             epoch = 0
         
-    if sys.argv[1] != 'noLoadCheckpoint':
-        whichCheckpoint = 6
+    if toLoadCheckpoint:
         if len(all_checkpoints) > 0:
             if os.path.isdir('/scratch/'):
-                # PATH = '/scratch/users/alimirz1/saved_batches/...'
-                # PATH = '/scratch/users/alimirz1/saved_batches/exp_11/saved_checkpoints/model_59.pt'
-                # PATH = '/scratch/users/alimirz1/saved_batches/pre_gradFix/savingAfter15Sup/saved_checkpoints/model_14.pt'
-                # PATH = '/scratch/users/alimirz1/saved_batches/hot_bench/saved_checkpoints/model_best.pt'
-                PATH = sherlock_json['load_checkpoint_path'] + 'saved_checkpoints/' + sys.argv[1]
+                PATH = sherlock_json['load_checkpoint_path']
+                ##wont load path2 unless numFiguresToCreate is not None
+                PATH2 = sherlock_json['load_figure_comparison_checkpoint_path']
             else:
-                # + all_checkpoints[whichCheckpoint]
-                #PATH = 'saved_checkpoints/hot_bench_150s_model_best.pt'
-                'saved_checkpoints/' + sys.argv[1]
-                PATH2 = 'saved_checkpoints/7_31_21/model_best_sup.pt'
+                PATH = 'saved_checkpoints/hot_bench_150s_model_best.pt'
+                PATH2 = 'saved_checkpoints/hot_bench_150s_model_best.pt'
 
         print(model.fc.weight)
         loadCheckpoint(PATH, model)
@@ -188,17 +187,18 @@ if __name__ == '__main__':
                 predicted = predicted.tolist()
                 predicted2 = predicted2.tolist()
                 print(predicted, predicted2)
-                if predicted != predicted2:
-                    predictedNames = [idx2label[p] for p in predicted]
-                    labels = labels.numpy()
-                    actualLabels = [labels[p, predicted[p]]
-                                    for p in range(len(predicted))]
-                    predictedNames2 = [idx2label[p] for p in predicted2]
-                    actualLabels2 = [labels[p, predicted2[p]]
-                                    for p in range(len(predicted2))]
-                    print("DIFFERING!", actualLabels, actualLabels2)
-                    print("\n\n Val: ", val, val2, "\n\n")
-                    print("\n\n Mean: ", mean, mean2, "\n\n")
+                # if predicted != predicted2:
+
+                predictedNames = [idx2label[p] for p in predicted]
+                labels = labels.numpy()
+                actualLabels = [labels[p, predicted[p]]
+                                for p in range(len(predicted))]
+                predictedNames2 = [idx2label[p] for p in predicted2]
+                actualLabels2 = [labels[p, predicted2[p]]
+                                for p in range(len(predicted2))]
+                # print("DIFFERING!", actualLabels, actualLabels2)
+                print("\n\n Val: ", val, val2, "\n\n")
+                print("\n\n Mean: ", mean, mean2, "\n\n")
                     
             ### To only create figures with differing predictions, wrap the following lines with if predicted != predicted2:
             loadCheckpoint(PATH, model)
@@ -213,16 +213,15 @@ if __name__ == '__main__':
 
     target_category = None
 
-    print("done")
-
     
-    if whichTraining not in ['supervised', 'unsupervised', 'alternating']:
+    if whichTraining not in ['supervised', 'unsupervised', 'alternating', 'combining']:
         print('invalid Training. Choose between supervised, unsupervised, alternating')
         sys.exit()
     if toTrain:
+        print('Beginning Training')
         train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
-              similarityMetric, alpha, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size)
-        
+              similarityMetric, alpha, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size, 
+              unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval)
         print("Training Complete.")
 
     if toEvaluate:
@@ -231,3 +230,4 @@ if __name__ == '__main__':
         checkpoint = torch.load(batchDirectory + "saved_checkpoints/model_best.pt", map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         evaluate(model, testloader, device, batchDirectory=batchDirectory)
+        print("Finished Evaluating")

@@ -62,8 +62,6 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     
     criteron = torch.nn.CrossEntropyLoss()
     # criteron = nn.BCEWithLogitsLoss()
-
-
     print('pretraining evaluation...')
     model.eval()
     LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #unsupervised=training!='supervised')

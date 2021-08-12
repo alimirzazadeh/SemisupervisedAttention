@@ -2,7 +2,6 @@ import torch.optim as optim
 from train import train
 from evaluate import evaluate
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
-from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 from data_loader.new_pascal_runner import loadPascalData
 import os
 import numpy as np

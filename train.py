@@ -98,8 +98,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         
         # if scheduler:
         #     scheduler.step()        
-        running_corrects = 0
-        running_loss = 0.0
+        # running_corrects = 0
+        # running_loss = 0.0
 
         supiter = iter(suptrainloader)
         unsupiter = iter(unsuptrainloader)
@@ -113,7 +113,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         
         counter = 0
 
-        
+
         if training == 'supervised':
             supervised = True
             alternating = False
@@ -155,13 +155,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                         supervised = False
                         # print(str(i),' -u')
             elif combining:
-                data = supiter.next()
-                # try:
-                #     data = supiter.next()
-                # except StopIteration:
-                #     supiter = iter(suptrainloader)
-                #     supiter_reloaded += 1
-                #     data = supiter.next()                  
+                data = supiter.next()              
                 try:
                     data_u = unsupiter.next()
                 except StopIteration:
@@ -183,7 +177,6 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
             # zero the parameter gradients
             
             with torch.set_grad_enabled(True):
-
                 if combining or supervised:
                     model.train()
                     optimizer.zero_grad()
@@ -193,8 +186,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                     outputs = model(inputs) 
                     l1 = criteron(outputs, labels)
                     _, preds = torch.max(outputs, 1)
-                    for pred in range(preds.shape[0]):
-                        running_corrects += labels[pred, int(preds[pred])]
+                    # for pred in range(preds.shape[0]):
+                    #     running_corrects += labels[pred, int(preds[pred])]
                 if combining or not supervised:
                     customTrain(model)
                     optimizer.zero_grad()
@@ -210,7 +203,6 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                     l1 = l1 + alpha * l2
                 l1.backward()
                 optimizer.step()
-                  
             counter += 1
             
             if perBatchEval != None and counter % perBatchEval == perBatchEval - 1:

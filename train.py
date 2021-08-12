@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri May 21 16:27:39 2021
+
 @author: alimi
 """
 
@@ -36,7 +37,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     training='alternating', batchDirectory='', scheduler=None, batch_size=4, 
     unsup_batch_size=12, perBatchEval=None, saveRecurringCheckpoint=None, maskIntensity=8):
     print('alpha: ', alpha)
-    
+
     CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity)
     LossEvaluator = Evaluator()
     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
@@ -61,7 +62,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     
     criteron = torch.nn.CrossEntropyLoss()
     # criteron = nn.BCEWithLogitsLoss()
-    
+
 
     print('pretraining evaluation...')
     model.eval()
@@ -154,7 +155,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                         supervised = False
                         # print(str(i),' -u')
             elif combining:
-                data = supiter.next()               
+                data = supiter.next()
                 try:
                     data_u = unsupiter.next()
                 except StopIteration:
@@ -167,7 +168,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                 #print('s')
             elif not supervised:
                 data = unsupiter.next()
-                #print('u')
+
 
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
@@ -176,7 +177,6 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
             # zero the parameter gradients
             
             with torch.set_grad_enabled(True):
- 
                 if combining or supervised:
                     model.train()
                     optimizer.zero_grad()
@@ -186,8 +186,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                     outputs = model(inputs) 
                     l1 = criteron(outputs, labels)
                     _, preds = torch.max(outputs, 1)
-                    for pred in range(preds.shape[0]):
-                        running_corrects += labels[pred, int(preds[pred])]
+                    # for pred in range(preds.shape[0]):
+                    #     running_corrects += labels[pred, int(preds[pred])]
                 if combining or not supervised:
                     customTrain(model)
                     optimizer.zero_grad()
@@ -203,7 +203,6 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                     l1 = l1 + alpha * l2
                 l1.backward()
                 optimizer.step()
-                          
             counter += 1
             
             if perBatchEval != None and counter % perBatchEval == perBatchEval - 1:
@@ -221,6 +220,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
 
     print('\n \n BEST SUP LOSS OVERALL: ', LossEvaluator.bestSupSum, '\n\n')
     print('\n \n BEST F1 SCORE SUM OVERALL: ', LossEvaluator.bestF1Sum, '\n\n')
+
+    #save a final checkpoint
     saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
 
 def saveCheckpoint(EPOCH, net, optimizer, batchDirectory=''):

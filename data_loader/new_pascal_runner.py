@@ -125,7 +125,7 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
     valid_loader = DataLoader(
         dataset_valid, batch_size=batch_size, num_workers=4)
     test_loader = DataLoader(
-        dataset_test, batch_size=batch_size, num_workers=4)
+        dataset_test, batch_size=1, num_workers=4)
 
     return train_loader, unsup_loader, valid_loader, test_loader
 

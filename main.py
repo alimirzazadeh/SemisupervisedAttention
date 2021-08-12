@@ -17,6 +17,7 @@ import json
 import distutils.util
 sys.path.append("./")
 
+
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
@@ -123,8 +124,6 @@ if __name__ == '__main__':
 
 
 
-    # model = models.resnet50(pretrained=True)
-    #model =  torchvision.models.video.r3d_18(pretrained=True)
     model = r3d_18(pretrained=True)
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -153,7 +152,6 @@ if __name__ == '__main__':
     if toLoadCheckpoint:
 
         if os.path.isdir('/home/alimirz1'):
-            #PATH = '/home/alimirz1/SemisupervisedAttention/saved_batches/exp_22/saved_checkpoints/model_best.pt'
             PATH = zaman_json['load_checkpoint_path']
             PATH2 = zaman_json['load_figure_comparison_checkpoint_path']
         else:
@@ -167,14 +165,13 @@ if __name__ == '__main__':
 
     target_layer = model.layer4[-1]  # this is the layer before the pooling
 
-    print(model.fc.weight)
 
 
     use_cuda = torch.cuda.is_available()
     # load a few images from CIFAR and save
     if numFiguresToCreate is not None:
         from model.loss import CAMLoss
-        
+
         
         CAMLossInstance = CAMLoss(
             model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity)
@@ -236,7 +233,7 @@ if __name__ == '__main__':
     if toTrain:
         print('Beginning Training')
         train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
-              similarityMetric, alpha, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size,
+              similarityMetric, alpha, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size, 
               unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval, saveRecurringCheckpoint=saveRecurringCheckpoint, maskIntensity=maskIntensity)
         print("Training Complete.")
 

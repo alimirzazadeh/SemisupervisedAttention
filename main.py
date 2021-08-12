@@ -111,8 +111,8 @@ if __name__ == '__main__':
             with open('zaman_launch.json') as f:
                 data = json.load(f)
 
-            PATH = data['loading_checkpoint_path']
-            PATH2 = data['visual_loss_comparison_checkpoint_path']
+            PATH = data['load_checkpoint_path']
+            PATH2 = data['load_figure_comparison_checkpoint_path']
         else:
             # + all_checkpoints[whichCheckpoint]
             PATH = 'saved_checkpoints/7_31_21/model_best_alt.pt'

@@ -1,7 +1,8 @@
 {
-"loading_checkpoint_path": "/home/alimirz1/SemisupervisedAttention/saved_batches/exp_32_sup_322/saved_checkpoints/model_best.pt",
-"otherloading_checkpoint_path": "/home/alimirz1/babul/fdubost/experiments/328/model_no_simclr_format.pth", 
-"visual_loss_comparison_checkpoint_path": "/home/alimirz1/SemisupervisedAttention/saved_batches/299_unsup_v2/saved_checkpoints/model_49.pt",
+"batch_directory_path": "/scratch/users/alimirz1/saved_batches/",
+"load_checkpoint_path": "/home/alimirz1/SemisupervisedAttention/saved_batches/exp_32_sup_322/saved_checkpoints/model_best.pt",
+"dont_use_just_placeholder_alternate_checkpoint": "/home/alimirz1/babul/fdubost/experiments/328/model_no_simclr_format.pth", 
+"load_figure_comparison_checkpoint_path": "/home/alimirz1/SemisupervisedAttention/saved_batches/299_unsup_v2/saved_checkpoints/model_49.pt",
 "data_path": "/home/alimirz1/babul/fdubost/experiments/318/",
 "output_folder": "/home/alimirz1/",
 "frame_path": "/home/alimirz1/babul/fdubost/experiments/320/frames/",

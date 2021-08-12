@@ -117,7 +117,7 @@ class CAMLoss(nn.Module):
                     firstCompare = standardize(cam_result)
                     secondCompare = standardize(gb_correlate)
                 elif resolutionMatch == 2:
-                    ww = -1 * maskIntensity
+                    ww = -1 * self.maskIntensity
                     sigma = torch.mean(gb_correlate) + \
                         torch.std(gb_correlate) / 2
                     TAc = 1 / (1 + torch.exp(ww * (gb_correlate - sigma)))

@@ -141,7 +141,6 @@ if __name__ == '__main__':
 
     scheduler = None
 
-    all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0
 
 
@@ -155,14 +154,13 @@ if __name__ == '__main__':
             epoch = 0
         
     if toLoadCheckpoint:
-        if len(all_checkpoints) > 0:
-            if os.path.isdir('/scratch/'):
-                PATH = sherlock_json['load_checkpoint_path']
-                ##wont load path2 unless numFiguresToCreate is not None
-                PATH2 = sherlock_json['load_figure_comparison_checkpoint_path']
-            else:
-                PATH = 'saved_checkpoints/hot_bench_150s_model_best.pt'
-                PATH2 = 'saved_checkpoints/hot_bench_150s_model_best.pt'
+        if os.path.isdir('/scratch/'):
+            PATH = sherlock_json['load_checkpoint_path']
+            ##wont load path2 unless numFiguresToCreate is not None
+            PATH2 = sherlock_json['load_figure_comparison_checkpoint_path']
+        else:
+            PATH = 'saved_checkpoints/hot_bench_150s_model_best.pt'
+            PATH2 = 'saved_checkpoints/hot_bench_150s_model_best.pt'
 
         print(model.fc.weight)
         loadCheckpoint(PATH, model)

@@ -21,6 +21,7 @@ class Evaluator:
         self.f1_scoresum = []
         self.bestF1Sum = 0
         self.bestSupSum = 999999
+        self.counter = 0
 
     def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss=True, batchDirectory=''):
         running_corrects = 0
@@ -59,6 +60,11 @@ class Evaluator:
             supervised_loss = float(running_loss / datasetSize)
             print('\n Test Model Supervised Loss: %.3f' % supervised_loss)
             f1_score = self.calculateF1score(tp, fp, fn)
+            try:
+                pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())),index=[self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', mode='a', header=False)
+            except:
+                pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())),index=[self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', header=False)
+            self.counter += 1
             f1_sum = np.nansum(f1_score.data.cpu().numpy()) / numClasses
 
             if f1_sum > self.bestF1Sum:

@@ -1,4 +1,3 @@
-#TESTING
 # -*- coding: utf-8 -*-
 """
 Created on Fri May 21 11:32:41 2021
@@ -10,7 +9,6 @@ from libs.pytorch_grad_cam.guided_backprop import GuidedBackpropReLUModel
 from libs.pytorch_grad_cam.smooth_grad import VanillaGrad, SmoothGrad
 from libs.pytorch_grad_cam.utils.image import deprocess_image, preprocess_image
 import libs.pytorch_ssim as pytorch_ssim
-from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import numpy as np
@@ -21,7 +19,7 @@ import torch
 
 
 class CAMLoss(nn.Module):
-    def __init__(self, model, target_layer, use_cuda, resolutionMatch, similarityMetric):
+    def __init__(self, model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity):
         super(CAMLoss, self).__init__()
         self.use_cuda = use_cuda
         self.device = torch.device("cuda:0" if self.use_cuda else "cpu")
@@ -34,6 +32,7 @@ class CAMLoss(nn.Module):
 
         self.resolutionMatch = resolutionMatch
         self.similarityMetric = similarityMetric
+        self.maskIntensity = maskIntensity
 
     def forward(self, predict, target):
         print("hey")
@@ -41,8 +40,8 @@ class CAMLoss(nn.Module):
     def forward(self, input_tensor,  target_category, logs=False, visualize=False):
         assert(len(input_tensor.shape) > 3)
 
-        # Upsample CAM, Downsample GB, GB mask, Hmp Mask
-        resolutionMatch = self.resolutionMatch
+        
+        resolutionMatch = self.resolutionMatch  # Upsample CAM, Downsample GB, GB mask, Hmp Mask
         similarityMetric = self.similarityMetric  # Pearson, cross corr, SSIM
         topHowMany = 1
 
@@ -54,6 +53,8 @@ class CAMLoss(nn.Module):
             fig, axs = plt.subplots(3, input_tensor.shape[0])
             gbimgs = []
             imgs = []
+            maskimgs = []
+            gbitself = []
             hmps = []
             correlations = []
 
@@ -104,7 +105,6 @@ class CAMLoss(nn.Module):
 
                 def reshaper(arr):
                     return arr.unsqueeze(0).unsqueeze(0).float()
-
                 gb_correlate = processGB(gb_correlate)
                 cam_result = cam_result
 
@@ -117,7 +117,7 @@ class CAMLoss(nn.Module):
                     firstCompare = standardize(cam_result)
                     secondCompare = standardize(gb_correlate)
                 elif resolutionMatch == 2:
-                    ww = -8
+                    ww = -1 * self.maskIntensity
                     sigma = torch.mean(gb_correlate) + \
                         torch.std(gb_correlate) / 2
                     TAc = 1 / (1 + torch.exp(ww * (gb_correlate - sigma)))
@@ -146,34 +146,45 @@ class CAMLoss(nn.Module):
                     new_gb = processGB(new_gb)
                     firstCompare = standardize(gb_correlate)
                     secondCompare = standardize(new_gb)
-                elif resolutionMatch == 4:
-                     ##Uncomment this to visualize single image while testing unsup loss convergence
-                    # if True:
-                    #     plt.imshow(firstCompare.detach().numpy())
-                    #     plt.show()
-                    #     plt.imshow(secondCompare.detach().numpy())
-                    #     plt.show()
-                    #     toShow = thisImgTensor.moveaxis(0,-1).numpy()
-                    #     toShow -= np.min(toShow)
-                    #     toShow /= np.max(toShow)
-                    #     plt.imshow(toShow)
-                    #     plt.show()
-                    #    #print(self.model(thisImgPreprocessed))
-                    ###################################3
+                elif resolutionMatch == 4:   
+                ##Uncomment this to visualize single image while testing unsup loss convergence
+                # if True:
+                #     plt.imshow(firstCompare.detach().numpy())
+                #     plt.show()
+                #     plt.imshow(secondCompare.detach().numpy())
+                #     plt.show()
+                #     toShow = thisImgTensor.moveaxis(0,-1).numpy()
+                #     toShow -= np.min(toShow)
+                #     toShow /= np.max(toShow)
+                #     plt.imshow(toShow)
+                #     plt.show()
+                #    #print(self.model(thisImgPreprocessed))
+                ###################################3
 
-                    # print(gb_correlate.shape)
-                    # print(gb_correlate.requires_grad)
 
+#                     print(gb_correlate.shape)
+#                     print(gb_correlate.requires_grad)
                     firstCompare = standardize(cam_result)
                     secondCompare = standardize(gb_correlate)
-                    
                     # smooth_cam, _ = smooth_grad(image)
 
                 if visualize:
                     # print(firstCompare.shape, secondCompare.shape)
                     # print(firstCompare.dtype, secondCompare.dtype)
-                    hmps.append(firstCompare.detach().cpu().numpy())
-                    gbimgs.append(secondCompare.detach().cpu().numpy())
+                    def reshapeNormalize(arr):
+                        arr -= np.min(arr)
+                        arr /= np.max(arr)
+                        arr = np.repeat(np.expand_dims(arr,axis=0),3,axis=0)
+                        return np.moveaxis(arr,0,-1)
+                    def normalize(arr):
+                        arr -= np.min(arr)
+                        arr /= np.max(arr)
+                        return np.moveaxis(arr,0,-1)
+                    hmps.append(reshapeNormalize(cv2.resize(firstCompare.detach().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
+                    gbimgs.append(reshapeNormalize(cv2.resize(secondCompare.detach().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
+                    imgs.append(normalize(thisImgTensor.detach().numpy()))
+                    maskimgs.append(normalize(newImgTensor.detach().numpy()))
+                    gbitself.append(4 * reshapeNormalize(gb_correlate.detach().numpy()))
 
                 if similarityMetric == 0:
                     firstCompare = sigmoidIt(firstCompare)
@@ -202,7 +213,7 @@ class CAMLoss(nn.Module):
                 #    targetWeight = 0
                 #    print('target less than 0!')
                 correlation_pearson2 = correlation_pearson.clone()
-                correlation_pearson = correlation_pearson2.to(torch.device("cuda:0" if self.use_cuda else "cpu")) + cost.to(torch.device("cuda:0" if self.use_cuda else "cpu"))  # * targetWeight
+                correlation_pearson = correlation_pearson2 + cost  # * targetWeight
 
             if logs:
                 print("The Pearson output loss is: ", correlation_pearson[i])
@@ -221,6 +232,15 @@ class CAMLoss(nn.Module):
             # final_frame = cv2.hconcat(imgs)
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM.jpg', final_frame)
             final_hmp_frame = cv2.hconcat(hmps)
+            final_img_frame = cv2.hconcat(imgs)
+            final_newimg_frame = cv2.hconcat(maskimgs)
+            final_gbitself_frame = cv2.hconcat(gbitself)
+            print(final_gb_frame.shape)
+            print(final_hmp_frame.shape)
+            print(final_img_frame.shape)
+            print(final_newimg_frame.shape)
+            print(final_gbitself_frame.shape)
+            
 
             def normalize(arr):
                 # arr = arr / np.linalg.norm(arr)
@@ -248,9 +268,10 @@ class CAMLoss(nn.Module):
             # print(np.min(final_gb_frame), np.max(final_gb_frame), np.median(final_gb_frame))
             # print(final_gb_frame.dtype, final_hmp_frame.dtype)
 
-            data = np.array(cv2.vconcat([final_hmp_frame.astype(
-                'float64'), final_gb_frame.astype('float64')]))
+            data = np.array(cv2.vconcat([final_img_frame.astype(
+                'float64'), final_hmp_frame.astype('float64'), final_gbitself_frame.astype('float64')
+                , final_newimg_frame.astype('float64'), final_gb_frame.astype('float64')]))
             return correlations, data
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
 
-        return correlation_pearson  # / input_tensor.shape[0]
+        return correlation_pearson  / input_tensor.shape[0]

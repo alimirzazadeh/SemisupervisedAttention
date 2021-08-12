@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat May 29 12:04:39 2021
-
 @author: alimi
 """
 
@@ -25,10 +24,14 @@ def visualizeLossPerformance(CAMLossInstance, inputs, labels=['sentinel'], imgLa
         l1 = [str(round(x,3)) for x in l1]
         plt.title(arrToStr(l1))
         # print('losses, ',l1)
-        plt.savefig('./'+batchDirectory+'saved_figs/unsupervised_viz_'+imgTitle+'.png')
-        plt.clf()
-        visualizeImageBatch(inputs, labels, resnetLabels=arrToStr(imgLabels))
-        plt.savefig('./'+batchDirectory+'saved_figs/unsupervised_viz_'+imgTitle+'_orig.png')
+        print('saving to: ' + './'+batchDirectory+'saved_figs/checkpointvis_'+imgTitle+'.png')
+        classes = str(labels)
+        titleString = ' '.join('%5s' % classes)
+        plt.title(titleString + '\n' + arrToStr(imgLabels))
+        plt.savefig('./'+batchDirectory+'saved_figs/checkpointvis_'+imgTitle+'.png')
+        # plt.clf()
+        # visualizeImageBatch(inputs, labels, resnetLabels=arrToStr(imgLabels))
+        # plt.savefig('./'+batchDirectory+'saved_figs/checkpointvis_'+imgTitle+'_orig.png')
 
         return l1
     else:

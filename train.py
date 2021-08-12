@@ -34,10 +34,10 @@ def customTrain(model):
 def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, 
     target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, 
     training='alternating', batchDirectory='', scheduler=None, batch_size=4, 
-    unsup_batch_size=12, perBatchEval=None, saveRecurringCheckpoint=None):
+    unsup_batch_size=12, perBatchEval=None, saveRecurringCheckpoint=None, maskIntensity=8):
     print('alpha: ', alpha)
     
-    CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric)
+    CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity)
     LossEvaluator = Evaluator()
     CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
     device = torch.device("cuda:0" if use_cuda else "cpu")

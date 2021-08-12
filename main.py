@@ -18,45 +18,111 @@ import cv2
 import sys
 sys.path.append("./")
 import json
+import distutils.util
 
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
-# from data_loader.pascal_runner import loadPascalData
-# from model.loss import calculateLoss
 
 if __name__ == '__main__':
+    toLoadCheckpoint = bool(distutils.util.strtobool(sys.argv[1]))
+    toTrain = bool(distutils.util.strtobool(sys.argv[3]))
+    toEvaluate = bool(distutils.util.strtobool(sys.argv[4])) #True
+    whichTraining = sys.argv[5] #alternating
+    batchDirectoryFile = sys.argv[6]
     learning_rate = float(sys.argv[7])  # 0.00001
     numEpochs = int(sys.argv[8])  # 400
     batch_size = int(sys.argv[9])  # 4
     resolutionMatch = int(sys.argv[10])  # 2
     similarityMetric = int(sys.argv[11])  # 2
-    alpha = int(sys.argv[12])  # 2
+    alpha = float(sys.argv[12])  # 2
+    unsup_batch_size = int(sys.argv[13]) #12
+    fullyBalanced = bool(distutils.util.strtobool(sys.argv[14])) #True
+    useNewUnsupervised=bool(distutils.util.strtobool(sys.argv[15])) #True
+    numOutputClasses = int(sys.argv[17]) #20
+    reflectPadding = bool(distutils.util.strtobool(sys.argv[18])) #True
+    numImagesPerClass = int(sys.argv[21]) #2
+    maskIntensity = int(sys.argv[22]) #8
+
+    try:
+        unsupDatasetSize=int(sys.argv[16]) #None
+    except:
+        unsupDatasetSize=None
+    try:
+        numFiguresToCreate=int(sys.argv[2]) #None
+    except:
+        numFiguresToCreate=None
+    try:
+        perBatchEval=int(sys.argv[19]) #None to do per epoch eval
+    except:
+        perBatchEval=None
+    try:
+        saveRecurringCheckpoint=int(sys.argv[20])
+    except:
+        saveRecurringCheckpoint=None
+
+    #json contains the paths required to launch on sherlock
+    with open('./zaman_launch.json') as f:
+        zaman_json = json.load(f)
+
+    #checks if on zaman, otherwise creates folder in the batchDirectory in home repo (usually when running on cpu)
+    if os.path.isdir('/home/alimirz1'):
+        batchDirectory = zaman_json['batch_directory_path'] + \
+            batchDirectoryFile + '/'
+    else:
+        batchDirectory = batchDirectoryFile + '/'
 
 
-    unsup_batch_size = 12
+    CHECK_FOLDER = os.path.isdir(batchDirectory)
+    if not CHECK_FOLDER:
+        os.makedirs(batchDirectory)
+    
+    log = open(batchDirectory + "log.out", "a")
+    sys.stdout = log
+    sys.stderr = log
+    
+    print('############## Run Settings: ###############')
 
-    print('Training Mode: ', sys.argv[5])
+    print(sherlock_json)
+
+    CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
+    if not CHECK_FOLDER:
+        os.makedirs(batchDirectory + "saved_figs")
+
+    CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_checkpoints")
+    if not CHECK_FOLDER:
+        os.makedirs(batchDirectory + "saved_checkpoints")
+
+
+    print('Loading Checkpoint: ', toLoadCheckpoint)
+    print('Training: ', toTrain)
+    print('Evaluating: ', toEvaluate)
+    print('Training Mode: ', whichTraining)
+    print('Batch Directory: ', batchDirectoryFile)
     print('Learning Rate: ', learning_rate)
     print('Number of Epochs: ', numEpochs)
     print('Batch Size: ', batch_size)
     print('Resolution Match Mode: ', resolutionMatch)
     print('Similarity Metric Mode: ', similarityMetric)
     print('Alpha: ', alpha)
+    print('Unsupervised Batch Size: ', unsup_batch_size)
+    print('Fully Balanced Supervised Dataset: ', fullyBalanced)
+    print('Number of Images per Class in Supervised Dataset: ', numImagesPerClass)
+    print('Using New Unsupervised Data', useNewUnsupervised)
+    print('Number of output classes: ', numOutputClasses)
+    print('Using Reflecting Padding: ', reflectPadding)
+    print('UnsupervisedDatasetSize (Everything if None): ', unsupDatasetSize)
+    print('Number of Figures to create: ', numFiguresToCreate)
+    print('Evaluating Per How Many Batches (Per Epoch if None): ', perBatchEval)
+    print('Saving Recurring Checkpoints (Only best checkpoints if None): ', saveRecurringCheckpoint)
+    print('Mask Intensity: ', maskIntensity)
 
-    if os.path.isdir('/scratch/'):
-        batchDirectory = '/scratch/users/alimirz1/saved_batches/' + \
-            sys.argv[6] + '/'
-    elif os.path.isdir('/home/alimirz1/'):
-        batchDirectory = 'saved_batches/' + sys.argv[6] + '/'
-    else:
-        batchDirectory = ''
-    # Load the CIFAR Dataset
-    # suptrainloader,unsuptrainloader, testloader = loadPascalData(batch_size=batch_size)
+    print('########################################### \n\n')
+
     
     suptrainloader, unsuptrainloader, validloader, testloader = loadVideoData(
-        batch_size=batch_size, unsup_batch_size=unsup_batch_size)
+        batch_size=batch_size, unsup_batch_size=unsup_batch_size, useNewUnsupervised=useNewUnsupervised)
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
@@ -108,11 +174,9 @@ if __name__ == '__main__':
         elif os.path.isdir('/home/alimirz1'):
             print('in here')
             #PATH = '/home/alimirz1/SemisupervisedAttention/saved_batches/exp_22/saved_checkpoints/model_best.pt'
-            with open('zaman_launch.json') as f:
-                data = json.load(f)
 
-            PATH = data['load_checkpoint_path']
-            PATH2 = data['load_figure_comparison_checkpoint_path']
+            PATH = zaman_json['load_checkpoint_path']
+            PATH2 = zaman_json['load_figure_comparison_checkpoint_path']
         else:
             # + all_checkpoints[whichCheckpoint]
             PATH = 'saved_checkpoints/7_31_21/model_best_alt.pt'

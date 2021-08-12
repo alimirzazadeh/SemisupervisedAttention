@@ -2,9 +2,6 @@ import torch.optim as optim
 from train import train
 from evaluate import evaluate
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
-from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
-# from data_loader.new_pascal_runner import loadPascalData
-# from data_loader.cifar_data_loader import loadCifarData
 from data_loader.train_videossl import loadVideoData
 from ipdb import set_trace as bp
 import os
@@ -16,10 +13,9 @@ import torchvision
 import torch
 import cv2
 import sys
-sys.path.append("./")
 import json
 import distutils.util
-
+sys.path.append("./")
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -40,8 +36,8 @@ if __name__ == '__main__':
     unsup_batch_size = int(sys.argv[13]) #12
     fullyBalanced = bool(distutils.util.strtobool(sys.argv[14])) #True
     useNewUnsupervised=bool(distutils.util.strtobool(sys.argv[15])) #True
-    numOutputClasses = int(sys.argv[17]) #20
-    reflectPadding = bool(distutils.util.strtobool(sys.argv[18])) #True
+    numOutputClasses = int(sys.argv[17]) #5
+    reflectPadding = True #TRUE, FUNCTION NOT WORKING IN VIDEO, CHANGE MANUALLY IF NECESSARY
     numImagesPerClass = int(sys.argv[21]) #2
     maskIntensity = int(sys.argv[22]) #8
 
@@ -67,7 +63,7 @@ if __name__ == '__main__':
         zaman_json = json.load(f)
 
     #checks if on zaman, otherwise creates folder in the batchDirectory in home repo (usually when running on cpu)
-    if os.path.isdir('/home/alimirz1'):
+    if os.path.isdir('/home/alimirz1'): ## this is just a check to see if on Zaman, do not change
         batchDirectory = zaman_json['batch_directory_path'] + \
             batchDirectoryFile + '/'
     else:
@@ -85,6 +81,7 @@ if __name__ == '__main__':
     print('############## Run Settings: ###############')
 
     print(sherlock_json)
+
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
@@ -124,15 +121,7 @@ if __name__ == '__main__':
     suptrainloader, unsuptrainloader, validloader, testloader = loadVideoData(
         batch_size=batch_size, unsup_batch_size=unsup_batch_size, useNewUnsupervised=useNewUnsupervised)
 
-    CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
-    if not CHECK_FOLDER:
-        os.makedirs(batchDirectory + "saved_figs")
-        print("Made Saved_Figs folder")
 
-    CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_checkpoints")
-    if not CHECK_FOLDER:
-        os.makedirs(batchDirectory + "saved_checkpoints")
-        print("Made Saved_Checkpoints folder")
 
     # model = models.resnet50(pretrained=True)
     #model =  torchvision.models.video.r3d_18(pretrained=True)
@@ -140,15 +129,14 @@ if __name__ == '__main__':
     
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    model.fc = nn.Linear(int(model.fc.in_features), 5)
+    model.fc = nn.Linear(int(model.fc.in_features), numOutputClasses)
+
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     scheduler = None
 
-    all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0
 
-    print(model.fc.weight)
 
     def loadCheckpoint(path, model):
         checkpoint = torch.load(path, map_location=device)
@@ -162,55 +150,34 @@ if __name__ == '__main__':
         except:
             epoch = 0
         
-    if sys.argv[1] != 'noLoadCheckpoint':
-        whichCheckpoint = 6
+    if toLoadCheckpoint:
 
-        if os.path.isdir('/scratch/'):
-            # PATH = '/scratch/users/alimirz1/saved_batches/...'
-            # PATH = '/scratch/users/alimirz1/saved_batches/exp_11/saved_checkpoints/model_59.pt'
-            # PATH = '/scratch/users/alimirz1/saved_batches/pre_gradFix/savingAfter15Sup/saved_checkpoints/model_14.pt'
-            # PATH = '/scratch/users/alimirz1/saved_batches/hot_bench/saved_checkpoints/model_best.pt'
-            PATH = '/scratch/users/alimirz1/saved_batches/hot_bench_2s_saved/saved_checkpoints/' + sys.argv[1]
-        elif os.path.isdir('/home/alimirz1'):
-            print('in here')
+        if os.path.isdir('/home/alimirz1'):
             #PATH = '/home/alimirz1/SemisupervisedAttention/saved_batches/exp_22/saved_checkpoints/model_best.pt'
-
             PATH = zaman_json['load_checkpoint_path']
             PATH2 = zaman_json['load_figure_comparison_checkpoint_path']
         else:
-            # + all_checkpoints[whichCheckpoint]
+            # only on CPU, change customly
             PATH = 'saved_checkpoints/7_31_21/model_best_alt.pt'
             PATH2 = 'saved_checkpoints/7_31_21/model_best_sup.pt'
         
+        print(model.fc.weight)
         loadCheckpoint(PATH, model)
-                # loss = checkpoint['loss']
+        print(model.fc.weight)
 
     target_layer = model.layer4[-1]  # this is the layer before the pooling
 
     print(model.fc.weight)
-    # model.conv1.padding_mode = 'reflect'
-    # model.stem[0].padding_mode = 'reflect'
-    # for x in model.layer1:
-    #     x.conv1[0].padding_mode = 'reflect'
-    #     x.conv2[0].padding_mode = 'reflect'
-    # for x in model.layer2:
-    #     x.conv1[0].padding_mode = 'reflect'
-    #     x.conv2[0].padding_mode = 'reflect'
-    # for x in model.layer3:
-    #     x.conv1[0].padding_mode = 'reflect'
-    #     x.conv2[0].padding_mode = 'reflect'
-    # for x in model.layer4:
-    #     x.conv1[0].padding_mode = 'reflect'
-    #     x.conv2[0].padding_mode = 'reflect'
+
 
     use_cuda = torch.cuda.is_available()
     # load a few images from CIFAR and save
-    if sys.argv[2] == 'visualLoss':
+    if numFiguresToCreate is not None:
         from model.loss import CAMLoss
         
         
         CAMLossInstance = CAMLoss(
-            model, target_layer, use_cuda, resolutionMatch, similarityMetric)
+            model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity)
         dataiter = iter(validloader)
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
@@ -218,7 +185,7 @@ if __name__ == '__main__':
                      'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse',
                      'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
 
-        for i in range(15):
+        for i in range(numFiguresToCreate):
             images, labels = dataiter.next()
             images = images.to(device)
             labels = labels.to(device)
@@ -235,10 +202,7 @@ if __name__ == '__main__':
                 mean = torch.mean(outputs.data, 1)
                 val2, predicted2 = torch.max(outputs2.data, 1)
                 mean2 = torch.mean(outputs2.data, 1)
-                
-                # for pred in range(predicted.shape[0]):
-                #     running_corrects += labels[pred, int(predicted[pred])]
-                    
+
                 predicted = predicted.tolist()
                 predicted2 = predicted2.tolist()
                 print(predicted, predicted2)
@@ -252,36 +216,34 @@ if __name__ == '__main__':
                 print("\n\n Mean: ", mean, mean2, "\n\n")
                     
             
-            if predicted == predicted2:
-                loadCheckpoint(PATH, model)
-                imgTitle = "which_0_epoch_" + str(epoch) + "_batchNum_" + str(i)
-                visualizeLossPerformance(
-                    CAMLossInstance, images, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames)
-                loadCheckpoint(PATH2, model)
-                imgTitle = "which_1_epoch_" + str(epoch) + "_batchNum_" + str(i)
-                visualizeLossPerformance(
-                    CAMLossInstance, images, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2)
+            loadCheckpoint(PATH, model)
+            imgTitle = "which_0_epoch_" + str(epoch) + "_batchNum_" + str(i)
+            visualizeLossPerformance(
+                CAMLossInstance, images, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames)
+            loadCheckpoint(PATH2, model)
+            imgTitle = "which_1_epoch_" + str(epoch) + "_batchNum_" + str(i)
+            visualizeLossPerformance(
+                CAMLossInstance, images, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2)
 
-    # visualizeImageBatch(images, labels)
 
     target_category = None
 
-    # need to set params?
 
-    # model.fc = nn.Linear(int(model.fc.in_features), 10)
 
-    print("done")
-
-    whichTraining = sys.argv[5]
-    if whichTraining not in ['supervised', 'unsupervised', 'alternating']:
-        print('invalid Training. will alternate')
-        whichTraining = 'alternating'
-    if sys.argv[3] == 'train':
-        trackLoss = sys.argv[4] == 'trackLoss'
-        print(trackLoss)
+    if whichTraining not in ['supervised', 'unsupervised', 'alternating', 'combining']:
+        print('invalid Training. Choose between supervised, unsupervised, alternating')
+        sys.exit()
+    if toTrain:
+        print('Beginning Training')
         train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
-              similarityMetric, alpha, trackLoss=trackLoss, training=whichTraining, batchDirectory=batchDirectory, scheduler=scheduler, batch_size=batch_size)
-        print("Training Complete. Evaluating on Test Set...")
+              similarityMetric, alpha, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size,
+              unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval, saveRecurringCheckpoint=saveRecurringCheckpoint, maskIntensity=maskIntensity)
+        print("Training Complete.")
+
+    if toEvaluate:
+        print("Evaluating on Test Set...")
+        ##load the best checkpoint and evaulate it. 
         checkpoint = torch.load(batchDirectory + "saved_checkpoints/model_best.pt", map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         evaluate(model, testloader, device, batchDirectory=batchDirectory)
+        print("Finished Evaluating")

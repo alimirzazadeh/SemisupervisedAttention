@@ -129,6 +129,7 @@ class Evaluator:
         axs[1, 1].plot(self.accuracies, label="Accuracy")
         axs[1, 1].set_title('Accuracy')
         plt.savefig(batchDirectory+'saved_figs/AllPlots.png')
+        plt.close()
         # plt.legend()
         plt.close()
 
@@ -136,7 +137,7 @@ class Evaluator:
         recall = tp / (tp + fn)
         precision = tp / (tp + fp)
         return 2 * (recall * precision) / (recall + precision)
-
+        
     def saveCheckpoint(self, net, optimizer, batchDirectory='', f1orsup=1):
         if f1orsup == 1:
             PATH = batchDirectory+"saved_checkpoints/model_best.pt"

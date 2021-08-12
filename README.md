@@ -6,31 +6,59 @@
 # Description of Running Ali's code #
 
 ## Batch Script ##
+<<<<<<< HEAD
+=======
+
+How to Observe Testing Loss throughout Training:
+python3 visualizer/loss_visualizer.py
+
+How to save a training iteration:
+python3 project_saver.py
+
+
+BATCH SCRIPT TO RUN:
+>>>>>>> 012731ab57a1ce0bb236ddf0cd5bfd410cf594e5
 
 ```
 #!/bin/bash
 #
-#BATCH --job-name=sz_pred_preproc
 #
 #SBATCH --time=48:00:00
 #SBATCH --ntasks=1
 #SBATCH -p gpu
 #SBATCH --gres=gpu:1
-#SBATCH -e /scratch/users/alimirz1/saved_batches/exp14.err
-#SBATCH -o /scratch/users/alimirz1/saved_batches/exp14.out
-export BATCH_DIRECTORY=exp14
+export BATCH_DIRECTORY=exp_88
+export TO_LOAD_CHECKPOINT=False
+export NUM_FIGURES_TO_CREATE=None
+export TO_TRAIN=True
+export TO_EVALUATE=True
+export WHICH_TRAINING=alternating
 export LEARNING_RATE=0.000005
 export NUM_EPOCHS=50
 export BATCH_SIZE=4
 export RESOLUTION_MATCH=2
 export SIMILARITY_METRIC=0
 export ALPHA=8
-mkdir /scratch/users/alimirz1/saved_batches/$BATCH_DIRECTORY
+export UNSUP_BATCH_SIZE=4
+export FULLY_BALANCED=True
+export USE_NEW_UNSUPERVISED=True
+export UNSUP_DATASET_SIZE=None
+export NUM_OUTPUT_CLASSES=20
+export REFLECT_PADDING=True
+export PER_BATCH_EVAL=None
+export SAVE_RECURRING_CHECKPOINT=None
+export NUM_IMAGES_PER_CLASS=2
+export MASK_INTENSITY=8
 ml python/3.9.0
 ml opencv/4.5.2
+python3 main.py $TO_LOAD_CHECKPOINT $NUM_FIGURES_TO_CREATE $TO_TRAIN $TO_EVALUATE $WHICH_TRAINING $BATCH_DIRECTORY $LEARNING_RATE $NUM_EPOCHS $BATCH_SIZE $RESOLUTION_MATCH $SIMILARITY_METRIC $ALPHA $UNSUP_BATCH_SIZE $FULLY_BALANCED $USE_NEW_UNSUPERVISED $UNSUP_DATASET_SIZE $NUM_OUTPUT_CLASSES $REFLECT_PADDING $PER_BATCH_EVAL $SAVE_RECURRING_CHECKPOINT $NUM_IMAGES_PER_CLASS $MASK_INTENSITY
+```
+
+```
 python3 main.py noloadCheckpoint noVisualLoss train notrackLoss supervised $BATCH_DIRECTORY $LEARNING_RATE $NUM_EPOCHS $BATCH_SIZE $RESOLUTION_MATCH $SIMILARITY_METRIC $ALPHA
 ```
 
+>>>>>>> 012731ab57a1ce0bb236ddf0cd5bfd410cf594e5
 ## Running Command in batch script ##
 
 python3 main.py ```[loadCheckpoint/noLoadCheckpoint]``` ```[visualLoss/noVisualLoss]``` ```[train/noTrain]``` ```[trackLoss/noTrackLoss]``` ```[supervised/unsupervised/alternating]```
@@ -54,4 +82,7 @@ Type of training
 - Only need to specify the ```alpha``` value for ```alternating```
 
 Use ```trackLoss``` to track the loss throughout the training
+<<<<<<< HEAD
 
+=======
+>>>>>>> 012731ab57a1ce0bb236ddf0cd5bfd410cf594e5

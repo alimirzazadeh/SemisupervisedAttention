@@ -2,7 +2,6 @@ import torch.optim as optim
 from train import train
 from evaluate import evaluate
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
-from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 from data_loader.cifar_data_loader import loadCifarData
 import os
 import numpy as np
@@ -37,7 +36,7 @@ if __name__ == '__main__':
     unsup_batch_size = int(sys.argv[13]) #12
     fullyBalanced = bool(distutils.util.strtobool(sys.argv[14])) #True
     useNewUnsupervised=bool(distutils.util.strtobool(sys.argv[15])) #True
-    numOutputClasses = int(sys.argv[17]) #5
+    numOutputClasses = int(sys.argv[17]) #10
     reflectPadding = bool(distutils.util.strtobool(sys.argv[18])) #True
     numImagesPerClass = int(sys.argv[21]) #2
     maskIntensity = int(sys.argv[22]) #8
@@ -92,6 +91,7 @@ if __name__ == '__main__':
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_checkpoints")
     if not CHECK_FOLDER:
         os.makedirs(batchDirectory + "saved_checkpoints")
+
 
 
     print('Loading Checkpoint: ', toLoadCheckpoint)
@@ -193,6 +193,7 @@ if __name__ == '__main__':
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
         idx2label = ['plane', 'car', 'bird', 'cat','deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+
 
         for i in range(numFiguresToCreate):
             images, labels = dataiter.next()

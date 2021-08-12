@@ -192,7 +192,7 @@ def loadVideoData(batch_size=1, unsup_batch_size=12):
         extra_frames = 0,
         crop_list = crop_list_dev,
         options = {
-            'batch_size': batch_size,
+            'batch_size': 1,
         }
     )
 

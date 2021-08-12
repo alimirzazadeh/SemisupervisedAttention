@@ -67,4 +67,4 @@ def getLabelWord(arr):
     classes = ('plane', 'car', 'bird', 'cat','deer', 'dog', 'frog', 'horse', 'ship', 'truck')
     arrList = arr.cpu().numpy().astype(int)
     arrList = list(arrList)
-    return [classes[a] for a in arrList] 
+    return [classes[a] for a in arrList]  

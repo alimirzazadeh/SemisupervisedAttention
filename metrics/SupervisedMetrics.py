@@ -95,13 +95,15 @@ class Evaluator:
             if f1_sum > self.bestF1Sum:
                 self.bestF1Sum = f1_sum
                 print("\n Best F1 Score so far: ", self.bestF1Sum)
+                self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory, f1orsup=0)
                 # self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory)
             # print('\n F1 Score: ', f1_score.data.cpu().numpy())
             # print('\n F1 Score Sum: ', f1_sum)
             
             if supervised_loss < self.bestSupSum:
                 self.bestSupSum = supervised_loss
-                self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory)
+                print("\n Best Sup Loss so far: ", self.bestSupSum)
+                self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory, f1orsup=1)
         
         
             
@@ -151,14 +153,18 @@ class Evaluator:
         axs[1, 1].plot(self.accuracies, label="Accuracy")
         axs[1, 1].set_title('Accuracy')
         plt.savefig(batchDirectory+'saved_figs/AllPlots.png')
+        plt.close()
         # plt.legend()
     def calculateF1score(self, tp, fp, fn):
         recall = tp / (tp + fn)
         precision = tp / (tp + fp)
         return 2 * (recall * precision) / (recall + precision)
         
-    def saveCheckpoint(self, net, optimizer, batchDirectory=''):
-        PATH = batchDirectory+"saved_checkpoints/model_best.pt"
+    def saveCheckpoint(self, net, optimizer, batchDirectory='', f1orsup=1):
+        if f1orsup == 1:
+            PATH = batchDirectory+"saved_checkpoints/model_best.pt"
+        else:
+            PATH = batchDirectory+"saved_checkpoints/model_best_f1.pt"
         torch.save({
                     'model_state_dict': net.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),

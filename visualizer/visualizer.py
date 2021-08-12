@@ -7,7 +7,6 @@ Created on Fri May 21 11:12:28 2021
 import matplotlib.pyplot as plt
 import numpy as np
 import torchvision
-from data_loader.cifar_data_loader import getLabelWord
 import cv2
 
 def visualizeImageBatch(images, labels, resnetLabels=""):

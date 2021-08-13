@@ -115,9 +115,11 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         if training == 'supervised':
             supervised = True
             alternating = False
+            combining = False
         elif training == 'unsupervised':
             supervised = False
             alternating = False
+            combining = False
         elif training == 'alternating':
             alternating = True
             combining = False

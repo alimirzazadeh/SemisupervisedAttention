@@ -6,38 +6,52 @@ Created on Fri May 21 10:29:04 2021
 """
 import torch
 import torchvision
-from torchvision.transforms import Compose, Normalize, ToTensor, Resize
+from torchvision import transforms
 import numpy as np
 import random
+import os
 
 from pdb import set_trace as bp
 
 
-def loadCifarData(batch_size=4, num_workers=2,shuffle=True):
+def loadCifarData(numImagesPerClass, data_dir="./data", download_data=False, batch_size=4, unsup_batch_size=12, fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None):
     VALSET_SIZE = 500
-    # transform = transforms.ToTensor()
-    transform = Compose([
-        Resize(256),
-        ToTensor(),
-        Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    
+    #Data augmentation
+    transformations = transforms.Compose([
+        transforms.Resize((256, 256)),
+        transforms.RandomRotation(10),
+        transforms.RandomHorizontalFlip(0.5),
+        transforms.RandomVerticalFlip(0.5),
+        #transforms.RandomResizedCrop(256),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
-    batch_size = 4
-    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                            download=False, transform=transform)
+
+    transformations_valid = transforms.Compose([
+        transforms.Resize((256, 256)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+
+    # Create train
+    trainset = torchvision.datasets.CIFAR10(root=data_dir, train=True, download=download_data, transform=transformations)
+    sup_train, unsupervisedTrainSet = balancedMiniDataset(trainset, numImagesPerClass, len(trainset), fullyBalanced=fullyBalanced)
+    unsup_train = unsupervisedTrainSet if useNewUnsupervised else dataset_train
+
+    #Create validation and test
     random.seed(10)
-    randomlist = random.sample(range(0, len(trainset)), VALSET_SIZE)
-    validset = torch.utils.data.Subset(trainset, randomlist)
-
-    print("Finished balanced mini dataset")
-    supervisedTrainSet, unsupervisedTrainSet = balancedMiniDataset(trainset, 2, int(len(trainset)))
-    suptrainloader = torch.utils.data.DataLoader(supervisedTrainSet, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
-    unsuptrainloader = torch.utils.data.DataLoader(unsupervisedTrainSet, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
-
-    testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=False, transform=transform)
-    validloader = torch.utils.data.DataLoader(validset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    dataset_test = torchvision.datasets.CIFAR10(root='./data', train=False, download=False, transform=transformations_valid)
+    randomlist = random.sample(range(0, len(dataset_test)), VALSET_SIZE)
+    dataset_valid = torch.utils.data.Subset(dataset_test, randomlist)
+    
+    #Data Loaders
+    train_loader = torch.utils.data.DataLoader(sup_train, batch_size=batch_size, shuffle=True, num_workers=4)
+    unsup_loader = torch.utils.data.DataLoader(unsup_train, batch_size=batch_size, shuffle=True, num_workers=4)
+    valid_loader = torch.utils.data.DataLoader(dataset_valid, batch_size=batch_size, shuffle=False, num_workers=4)
+    test_loader = torch.utils.data.DataLoader(dataset_test, batch_size=batch_size, shuffle=False, num_workers=4)
   
-    return suptrainloader, unsuptrainloader, validloader, testloader
+    return train_loader, unsup_loader, valid_loader, test_loader
 
 def balancedMiniDataset(trainset, size, limit, fullyBalanced=True):
     NUM_CLASSES = 10

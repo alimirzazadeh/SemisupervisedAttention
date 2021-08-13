@@ -60,10 +60,6 @@ class Evaluator:
             supervised_loss = float(running_loss / datasetSize)
             print('\n Test Model Supervised Loss: %.3f' % supervised_loss)
             f1_score = self.calculateF1score(tp, fp, fn)
-            try:
-                pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())),index=[self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', mode='a', header=False)
-            except:
-                pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())),index=[self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', header=False)
             self.counter += 1
             f1_sum = np.nansum(f1_score.data.cpu().numpy()) / numClasses
 
@@ -78,9 +74,9 @@ class Evaluator:
                 self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory, f1orsup=1)
 
             if storeLoss:
-                self.supervised_losses.append(supervised_loss)
-                self.accuracies.append(acc)
-                self.f1_scoresum.append(f1_sum)
+                self.supervised_losses.append(round(supervised_loss, 5))
+                self.accuracies.append(round(acc, 5))
+                self.f1_scoresum.append(round(f1_sum, 5))
 
     def evaluateModelUnsupervisedPerformance(self, model, testloader, CAMLossInstance, device, optimizer, target_category=None, storeLoss=True):
         # model.eval()
@@ -96,7 +92,7 @@ class Evaluator:
         unsupervised_loss = float(running_loss / datasetSize)
         print('\n Test Model Unsupervised Loss: %.3f' % unsupervised_loss)
         if storeLoss:
-            self.unsupervised_losses.append(unsupervised_loss)
+            self.unsupervised_losses.append(round(unsupervised_loss, 5))
 
     def evaluateUpdateLosses(self, model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=''):
         if unsupervised:

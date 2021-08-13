@@ -125,7 +125,7 @@ if __name__ == '__main__':
         numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
         useNewUnsupervised=useNewUnsupervised, unsupDatasetSize=unsupDatasetSize)
 
-    model = models.resnet50(pretrained=False)
+    model = models.resnet50(pretrained=True)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

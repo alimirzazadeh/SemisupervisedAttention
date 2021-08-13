@@ -44,24 +44,8 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     device = torch.device("cuda:0" if use_cuda else "cpu")
     model.to(device)
     
-    
-    # def criteron(pred_label, target_label):
-    #     m = nn.Softmax(dim=1)
-    #     pred_label = m(pred_label)
-    #     return (-pred_label.log() * target_label).sum(dim=1).mean()
-    # def criteron(pred_label, target_label):
-    #     m = nn.BCEWithLogitsLoss()
-    #     return m(pred_label, target_label)
-    # weight = torch.tensor([0.87713311, 1.05761317, 0.73638968, 1.11496746, 0.78593272, 1.33506494,
-    #                        0.4732965, 0.514, 0.47548566, 1.9469697, 0.97348485, 0.43670348,
-    #                        1.15765766, 1.06639004, 0.13186249, 1.05544148, 1.71906355, 1.04684318,
-    #                        1.028, 0.93624772])
-    # weight = weight.to(device)
-    # criteron = nn.MultiLabelSoftMarginLoss(weight=weight)
-        
-    
-    # criteron = torch.nn.CrossEntropyLoss()
-    criteron = nn.BCEWithLogitsLoss()
+    criteron = torch.nn.CrossEntropyLoss()
+    # criteron = nn.BCEWithLogitsLoss()
     print('pretraining evaluation...')
     model.eval()
     LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #unsupervised=training!='supervised')
@@ -91,19 +75,12 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     ##Custom model.train that freezes the batch norm layers and only keeps others in train mode
     customTrain(model)
     
-    
     for epoch in range(numEpochs):
         
-        # if scheduler:
-        #     scheduler.step()        
-        # running_corrects = 0
-        # running_loss = 0.0
-
         supiter = iter(suptrainloader)
         unsupiter = iter(unsuptrainloader)
         supiter_reloaded = 0
         unsupiter_reloaded = 0
-        
 
         if saveRecurringCheckpoint is not None and epoch % saveRecurringCheckpoint == saveRecurringCheckpoint - 1:
            saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
@@ -111,12 +88,13 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         
         counter = 0
 
-
         if training == 'supervised':
             supervised = True
+            combining = False
             alternating = False
         elif training == 'unsupervised':
             supervised = False
+            combining = False
             alternating = False
         elif training == 'alternating':
             alternating = True
@@ -125,8 +103,6 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
             alternating = False
             combining = True
 
-        # for i, data in enumerate(trainloader, 0):
-        #print('starting iterations...')
         for i in range(totalDatasetSize):
 
             if alternating:

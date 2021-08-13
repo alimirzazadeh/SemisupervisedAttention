@@ -5,13 +5,16 @@
 #SBATCH --ntasks=1
 #SBATCH -p gpu
 #SBATCH --gres=gpu:1
+#SBATCH --partition=owners	
+#SBATCH --output=/dev/null 
+#SBATCH --error=/dev/null
 
-export BATCH_DIRECTORY=20img_class
-export TO_LOAD_CHECKPOINT=False
+export BATCH_DIRECTORY=comb1_4img_class
+export TO_LOAD_CHECKPOINT=True
 export NUM_FIGURES_TO_CREATE=None
 export TO_TRAIN=True
 export TO_EVALUATE=True
-export WHICH_TRAINING=supervised
+export WHICH_TRAINING=combining
 export LEARNING_RATE=0.000005
 export NUM_EPOCHS=400
 export BATCH_SIZE=4
@@ -26,7 +29,7 @@ export NUM_OUTPUT_CLASSES=10
 export REFLECT_PADDING=True
 export PER_BATCH_EVAL=None
 export SAVE_RECURRING_CHECKPOINT=None
-export NUM_IMAGES_PER_CLASS=20
+export NUM_IMAGES_PER_CLASS=4
 export MASK_INTENSITY=8
 
 ml python/3.9.0

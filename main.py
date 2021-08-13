@@ -157,8 +157,8 @@ if __name__ == '__main__':
             ##wont load path2 unless numFiguresToCreate is not None
             PATH2 = sherlock_json['load_figure_comparison_checkpoint_path']
         else:
-            PATH = 'saved_checkpoints/hot_bench_150s_model_best.pt'
-            PATH2 = 'saved_checkpoints/hot_bench_150s_model_best.pt'
+            PATH = "/scratch/groups/rubin/krish05m/AttentionMap/cifar_exp/2img_class/saved_checkpoints/model_best.pt"
+            PATH2 = "/scratch/groups/rubin/krish05m/AttentionMap/cifar_exp/2img_class/saved_checkpoints/model_best_f1.pt"
 
         print(model.fc.weight)
         loadCheckpoint(PATH, model)

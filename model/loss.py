@@ -180,11 +180,11 @@ class CAMLoss(nn.Module):
                         arr -= np.min(arr)
                         arr /= np.max(arr)
                         return np.moveaxis(arr,0,-1)
-                    hmps.append(reshapeNormalize(cv2.resize(firstCompare.detach().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
-                    gbimgs.append(reshapeNormalize(cv2.resize(secondCompare.detach().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
-                    imgs.append(normalize(thisImgTensor.detach().numpy()))
-                    maskimgs.append(normalize(newImgTensor.detach().numpy()))
-                    gbitself.append(4 * reshapeNormalize(gb_correlate.detach().numpy()))
+                    hmps.append(reshapeNormalize(cv2.resize(firstCompare.detach().cpu().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
+                    gbimgs.append(reshapeNormalize(cv2.resize(secondCompare.detach().cpu().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
+                    imgs.append(normalize(thisImgTensor.detach().cpu().numpy()))
+                    maskimgs.append(normalize(newImgTensor.detach().cpu().numpy()))
+                    gbitself.append(4 * reshapeNormalize(gb_correlate.detach().cpu().numpy()))
 
                 if similarityMetric == 0:
                     firstCompare = sigmoidIt(firstCompare)

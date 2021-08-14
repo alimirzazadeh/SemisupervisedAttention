@@ -115,7 +115,7 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
                                       target_transform=encode_labels)
 
     valid_dataset_split = 500
-    dataset_valid = torch.utils.data.Subset(dataset_valid, list(range(0, valid_dataset_split)))
+    dataset_valid_new = torch.utils.data.Subset(dataset_valid, list(range(0, valid_dataset_split)))
     dataset_test = torch.utils.data.Subset(dataset_valid, list(range(valid_dataset_split,len(dataset_valid))))
 
     train_loader = DataLoader(
@@ -123,7 +123,7 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
     unsup_loader = DataLoader(
         unsup_train, batch_size=unsup_batch_size, num_workers=4, shuffle=True)
     valid_loader = DataLoader(
-        dataset_valid, batch_size=batch_size, num_workers=4)
+        dataset_valid_new, batch_size=batch_size, num_workers=4)
     test_loader = DataLoader(
         dataset_test, batch_size=1, num_workers=4)
 

@@ -37,7 +37,10 @@ def loadCifarData(numImagesPerClass, data_dir="./data", download_data=False, bat
     # Create train
     trainset = torchvision.datasets.CIFAR10(root=data_dir, train=True, download=download_data, transform=transformations)
     sup_train, unsupervisedTrainSet = balancedMiniDataset(trainset, numImagesPerClass, len(trainset), fullyBalanced=fullyBalanced)
-    unsup_train = unsupervisedTrainSet if useNewUnsupervised else dataset_train
+    unsup_train = unsupervisedTrainSet if useNewUnsupervised else sup_train
+
+    if unsupDatasetSize is not None:
+        unsup_train = torch.utils.data.Subset(unsup_train, list(range(unsupDatasetSize)))
 
     #Create validation and test
     random.seed(10)

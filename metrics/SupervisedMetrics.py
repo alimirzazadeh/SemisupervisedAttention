@@ -123,6 +123,12 @@ class Evaluator:
         #print('evaluating supervised performance')
         CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
         self.evaluateModelSupervisedPerformance(model, testloader, criteron, device, optimizer, storeLoss = True, batchDirectory= batchDirectory)
+        results = pd.DataFrame()        
+        results['Accuracy'] = self.accuracies       
+        results['Supervised Loss'] = self.supervised_losses     
+        results['Unsupervised Loss'] = self.unsupervised_losses     
+        results['F1 score'] = self.f1_scoresum      
+        results.to_csv(batchDirectory+'saved_figs/results.csv', header=True)
     def plotLosses(self, batchDirectory=''):
         plt.clf()
         fig, axs = plt.subplots(2, 2)

@@ -204,7 +204,7 @@ if __name__ == '__main__':
                 predicted2 = predicted2.tolist()
                 print(predicted, predicted2)
                 predictedNames = [idx2label[p] for p in predicted]
-                labels = labels.tolist()
+                labels = labels.cpu().tolist()
                 actualLabels = labels == predicted
                 predictedNames2 = [idx2label[p] for p in predicted]
                 actualLabels2 = labels == predicted
@@ -216,11 +216,11 @@ if __name__ == '__main__':
             loadCheckpoint(PATH, model)
             imgTitle = "which_0_epoch_" + str(epoch) + "_batchNum_" + str(i)
             visualizeLossPerformance(
-                CAMLossInstance, images, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames)
+                CAMLossInstance, images, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames, batchDirectory=batchDirectory)
             loadCheckpoint(PATH2, model)
             imgTitle = "which_1_epoch_" + str(epoch) + "_batchNum_" + str(i)
             visualizeLossPerformance(
-                CAMLossInstance, images, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2)
+                CAMLossInstance, images, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2, batchDirectory=batchDirectory)
 
 
     target_category = None

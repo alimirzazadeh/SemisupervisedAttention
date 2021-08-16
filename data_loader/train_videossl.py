@@ -26,7 +26,7 @@ from data_loader.video_model import VideoModel
 from data_loader.video_transforms import ToFloatTensorInZeroOne, GroupColorJitter, RandomCutOut, RandomCrop, RandomHorizontalFlip, Resize, Normalize, CenterCrop
 import json
 
-def loadVideoData(batch_size=1, unsup_batch_size=12):
+def loadVideoData(batch_size=1, unsup_batch_size=12, useNewUnsupervised=True):
     with open('./zaman_launch.json') as f:
         data = json.load(f)
     data_path= data['data_path']
@@ -198,4 +198,6 @@ def loadVideoData(batch_size=1, unsup_batch_size=12):
 
     # bp()
     print('done!')
+    if not useNewUnsupervised:
+        dl_unsup = dl_sup
     return dl_sup, dl_unsup, dev_dl, test_dl

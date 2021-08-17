@@ -9,11 +9,11 @@
 #SBATCH --output=/dev/null 
 #SBATCH --error=/dev/null
 
-export BATCH_DIRECTORY=comb1_4img_class
+export BATCH_DIRECTORY=test
 export TO_LOAD_CHECKPOINT=True
-export NUM_FIGURES_TO_CREATE=None
-export TO_TRAIN=True
-export TO_EVALUATE=True
+export NUM_FIGURES_TO_CREATE=3
+export TO_TRAIN=False
+export TO_EVALUATE=False
 export WHICH_TRAINING=combining
 export LEARNING_RATE=0.000005
 export NUM_EPOCHS=400

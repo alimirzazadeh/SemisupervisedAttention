@@ -14,6 +14,7 @@ import cv2
 import sys
 import json
 import distutils.util
+from pdb import set_trace as bp
 sys.path.append("./")
 
 
@@ -219,11 +220,17 @@ if __name__ == '__main__':
                 # if predicted != predicted2:
 
                 predictedNames = [idx2label[p] for p in predicted]
+                print('predicted names')
+                print(predictedNames)
                 labels = labels.cpu().numpy()
-                actualLabels = [labels[p, predicted[p]]
+                print('labels')
+                print(labels)
+                print('predicted')
+                print(predicted)
+                actualLabels = [labels[p]
                                 for p in range(len(predicted))]
                 predictedNames2 = [idx2label[p] for p in predicted2]
-                actualLabels2 = [labels[p, predicted2[p]]
+                actualLabels2 = [labels[p]
                                 for p in range(len(predicted2))]
                 # print("DIFFERING!", actualLabels, actualLabels2)
                 print("\n\n Val: ", val, val2, "\n\n")

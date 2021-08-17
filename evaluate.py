@@ -8,6 +8,7 @@ import torch
 import pandas as pd
 from torch import nn
 import numpy as np
+from metrics.ConfidenceIntervals import boostrapping_CI
 
 def evaluate(model, testloader, device, batchDirectory = ''):
     datasetSize = len(testloader.dataset)
@@ -20,7 +21,8 @@ def evaluate(model, testloader, device, batchDirectory = ''):
             labels = labels.to(device)
             outputs = model(inputs) 
             m = nn.Sigmoid()
-            pred_logits = (m(outputs) > 0.5).int()
-            df = df.append(pd.DataFrame(torch.cat((labels, pred_logits),axis=1)).astype("int"))
+            pred_logits = m(outputs)
+            df = df.append(pd.DataFrame(torch.cat((labels, pred_logits),axis=1)).astype("float"))
         df.to_csv(batchDirectory + 'saved_figs/testLabelLogits.csv', index=False)
+        boostrapping_CI(df)
     print("Finished Evaluation")

@@ -37,6 +37,7 @@ class Evaluator:
 
 
         with torch.set_grad_enabled(False):
+            m = nn.Sigmoid()
             for i, data in enumerate(testloader, 0):
                 # print(i)
                 optimizer.zero_grad()
@@ -52,7 +53,7 @@ class Evaluator:
                 
                 if firstTime:
                     allTrueLabels = labels.cpu().detach().numpy()
-                    allPredLabels = outputs.cpu().detach().numpy()
+                    allPredLabels = m(outputs).cpu().detach().numpy()
                     firstTime = False
                 else:
                     allTrueLabels = np.append(allTrueLabels, labels.cpu().detach().numpy(), axis=0)

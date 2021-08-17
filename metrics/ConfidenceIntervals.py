@@ -126,8 +126,8 @@ if __name__ == '__main__':
     #2.change to code to load your data
     #3.check that your estimates (CI bounds and p-value) are stable over several runs of the bootstrapping method. If it is not, increase nbr_runs. 
     if os.path.isdir('/scratch/'):
-        PATH1 = '/scratch/users/alimirz1/saved_batches/medium_alt_gb_pears_2/saved_checkpoints/model_best.pt'
-        PATH2 = '/scratch/users/alimirz1/saved_batches/medium_alt_gb_pears_2/saved_checkpoints/model_best.pt'
+        PATH1 = '/scratch/groups/rubin/alimirz1/saved_batches/pascal_sup/saved_checkpoints/model_best.pt'
+        PATH2 = '/scratch/groups/rubin/alimirz1/saved_batches/pascal_sup/saved_checkpoints/model_best_f1.pt'
     else:
         PATH1 = '../saved_figs/8_3_21_comparison/testLabelLogits_sup.csv'
         PATH2 = '../saved_figs/8_3_21_comparison/testLabelLogits_c4.csv'

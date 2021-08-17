@@ -1,24 +1,24 @@
 #!/bin/bash
 #
 #
-#SBATCH --time=24:00:00
+#SBATCH --time=36:00:00
 #SBATCH --ntasks=1
 #SBATCH -p gpu
 #SBATCH --gres=gpu:1
 #SBATCH --output=/dev/null 
 #SBATCH --error=/dev/null
-export BATCH_DIRECTORY=pascal_sup_noresize
-export TO_LOAD_CHECKPOINT=False
+export BATCH_DIRECTORY=2s_alt_cbest
+export TO_LOAD_CHECKPOINT=True
 export NUM_FIGURES_TO_CREATE=None
 export TO_TRAIN=True
 export TO_EVALUATE=True
-export WHICH_TRAINING=supervised
-export LEARNING_RATE=0.000005
-export NUM_EPOCHS=600
+export WHICH_TRAINING=alternating
+export LEARNING_RATE=0.000002
+export NUM_EPOCHS=400
 export BATCH_SIZE=4
 export RESOLUTION_MATCH=2
 export SIMILARITY_METRIC=0
-export ALPHA=2
+export ALPHA=8
 export UNSUP_BATCH_SIZE=4
 export FULLY_BALANCED=True
 export USE_NEW_UNSUPERVISED=True

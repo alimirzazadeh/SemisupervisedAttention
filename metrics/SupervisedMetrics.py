@@ -9,26 +9,32 @@ import matplotlib.pyplot as plt
 import torch.nn as nn
 import numpy as np
 import pandas as pd
+from sklearn.metrics import average_precision_score
 
 class Evaluator:
     def __init__(self):
         self.supervised_losses = []
-        self.accuracies = []
+        # self.accuracies = []
         self.unsupervised_losses = []
-        self.f1_scoresum = []
-        self.bestF1Sum = 0
+        self.mAPs = []
+        self.bestmAP = 0
         self.bestSupSum = 999999
         self.counter = 0
     def evaluateModelSupervisedPerformance(self, model, testloader, criteron, device, optimizer, storeLoss = False, batchDirectory=''):
         #model.eval()
-        running_corrects = 0
+        # running_corrects = 0
         running_loss = 0.0
         
-        tp = None
-        fp = None
-        fn = None
+        # tp = None
+        # fp = None
+        # fn = None
+        firstTime = True
+        allTrueLabels = None
+        allPredLabels = None
         
         datasetSize = len(testloader.dataset)
+        
+
 
         with torch.set_grad_enabled(False):
             for i, data in enumerate(testloader, 0):
@@ -40,24 +46,37 @@ class Evaluator:
                 outputs = model(inputs) 
                 l1 = criteron(outputs, labels)
                 
-                _, preds = torch.max(outputs, 1)
+                # _, preds = torch.max(outputs, 1)
                 
                 running_loss += l1.item()
-                # running_corrects += torch.sum(preds == labels.data)
-                for pred in range(preds.shape[0]):
-                    running_corrects += labels[pred, int(preds[pred])]
-                    m = nn.Sigmoid()
-                    pred_probability = m(outputs[pred])
-                    pred_logits = (pred_probability > 0.5).int()
+                
+                if firstTime:
+                    allTrueLabels = labels.cpu().detach().numpy()
+                    allPredLabels = outputs.cpu().detach().numpy()
+                    firstTime = False
+                else:
+                    allTrueLabels = np.append(allTrueLabels, labels.cpu().detach().numpy(), axis=0)
+                    allPredLabels = np.append(allPredLabels, outputs.cpu().detach().numpy(), axis=0)
+
                     
-                    if tp == None:
-                        tp = (pred_logits + labels[pred] > 1).int()
-                        fp = (torch.subtract(pred_logits, labels[pred]) > 0).int()
-                        fn = (torch.subtract(pred_logits, labels[pred]) < 0).int()
-                    else:
-                        tp += (pred_logits + labels[pred] > 1).int()
-                        fp += (torch.subtract(pred_logits, labels[pred]) > 0).int()
-                        fn += (torch.subtract(pred_logits, labels[pred]) < 0).int()
+                    
+                # running_corrects += torch.sum(preds == labels.data)
+
+                
+                # for pred in range(preds.shape[0]):
+                #     running_corrects += labels[pred, int(preds[pred])]
+                #     m = nn.Sigmoid()
+                #     pred_probability = m(outputs[pred])
+                #     pred_logits = (pred_probability > 0.5).int()
+                    
+                #     if tp == None:
+                #         tp = (pred_logits + labels[pred] > 1).int()
+                #         fp = (torch.subtract(pred_logits, labels[pred]) > 0).int()
+                #         fn = (torch.subtract(pred_logits, labels[pred]) < 0).int()
+                #     else:
+                #         tp += (pred_logits + labels[pred] > 1).int()
+                #         fp += (torch.subtract(pred_logits, labels[pred]) > 0).int()
+                #         fn += (torch.subtract(pred_logits, labels[pred]) < 0).int()
                     
                     # if labels[pred, int(preds[pred])] == 1:
                     #     tp += 1
@@ -67,24 +86,27 @@ class Evaluator:
                     # print(labels[pred, int(preds[pred])])
                 # print(running_corrects.item())
                 # del l1, inputs, labels, outputs, preds
-            print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))
+            # print('\n Test Model Accuracy: %.3f' % float(running_corrects.item() / datasetSize))
             supervised_loss = float(running_loss / datasetSize)
             print('\n Test Model Supervised Loss: %.3f' % supervised_loss)
-            f1_score = self.calculateF1score(tp, fp, fn)
+            mAP = average_precision_score(allTrueLabels,allPredLabels,average='weighted')
+            print('\n Test Model mAP: %.3f' % mAP)
+            # f1_score = self.calculateF1score(tp, fp, fn)
             
-            try:
-                pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())),index=[self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', mode='a', header=False)
-            except:
-                pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())),index=[self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', header=False)
+            # try:
+            #     pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())),index=[self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', mode='a', header=False)
+            # except:
+            #     pd.DataFrame(dict(enumerate(f1_score.data.cpu().numpy())),index=[self.counter]).to_csv(batchDirectory+'saved_figs/f1_scores.csv', header=False)
             self.counter += 1
             
-            f1_sum = np.nansum(f1_score.data.cpu().numpy())
+            # f1_sum = np.nansum(f1_score.data.cpu().numpy())
             
-            if f1_sum > self.bestF1Sum:
-                self.bestF1Sum = f1_sum
-                print("\n Best F1 Score so far: ", self.bestF1Sum)
+            if mAP > self.bestmAP:
+                self.bestmAP = mAP
+                print("\n Best mAP so far: ", self.bestmAP)
                 self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory, f1orsup=0)
                 # self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory)
+            
             # print('\n F1 Score: ', f1_score.data.cpu().numpy())
             # print('\n F1 Score Sum: ', f1_sum)
             
@@ -97,8 +119,8 @@ class Evaluator:
             
             if storeLoss:
                 self.supervised_losses.append(supervised_loss)
-                self.accuracies.append(float(running_corrects.item() / datasetSize))
-                self.f1_scoresum.append(f1_sum)
+                # self.accuracies.append(float(running_corrects.item() / datasetSize))
+                self.mAPs.append(mAP)
         #print('..')
     def evaluateModelUnsupervisedPerformance(self, model, testloader, CAMLossInstance, device, optimizer, target_category=None, storeLoss = False):
         # model.eval()
@@ -124,10 +146,10 @@ class Evaluator:
         CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
         self.evaluateModelSupervisedPerformance(model, testloader, criteron, device, optimizer, storeLoss = True, batchDirectory= batchDirectory)
         results = pd.DataFrame()        
-        results['Accuracy'] = self.accuracies       
+        # results['Accuracy'] = self.accuracies       
         results['Supervised Loss'] = self.supervised_losses     
         results['Unsupervised Loss'] = self.unsupervised_losses     
-        results['F1 score'] = self.f1_scoresum      
+        results['mAPs'] = self.mAPs      
         results.to_csv(batchDirectory+'saved_figs/results.csv', header=True)
     def plotLosses(self, batchDirectory=''):
         plt.clf()
@@ -140,12 +162,12 @@ class Evaluator:
         axs[0, 1].set_title('Unsupervised Loss')
         #plt.savefig(batchDirectory+'saved_figs/UnsupervisedLossPlot.png')
         #plt.clf()
-        axs[1, 0].plot(self.f1_scoresum, label="F1 Score Sum")
-        axs[1, 0].set_title('F1 Score Sum')
+        axs[1, 0].plot(self.mAPs, label="mAPs")
+        axs[1, 0].set_title('mAPs')
         #plt.savefig(batchDirectory+'saved_figs/TotalLossPlot.png')
         #plt.clf()
-        axs[1, 1].plot(self.accuracies, label="Accuracy")
-        axs[1, 1].set_title('Accuracy')
+        # axs[1, 1].plot(self.accuracies, label="Accuracy")
+        # axs[1, 1].set_title('Accuracy')
         plt.savefig(batchDirectory+'saved_figs/AllPlots.png')
         plt.close()
         # plt.legend()
@@ -158,7 +180,7 @@ class Evaluator:
         if f1orsup == 1:
             PATH = batchDirectory+"saved_checkpoints/model_best.pt"
         else:
-            PATH = batchDirectory+"saved_checkpoints/model_best_f1.pt"
+            PATH = batchDirectory+"saved_checkpoints/model_best_mAP.pt"
         torch.save({
                     'model_state_dict': net.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),

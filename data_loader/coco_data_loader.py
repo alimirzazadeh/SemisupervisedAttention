@@ -6,7 +6,6 @@ import pickle
 import numpy as np
 import nltk
 from PIL import Image
-from build_vocab import Vocabulary
 from pycocotools.coco import COCO
 
 
@@ -82,7 +81,7 @@ def collate_fn(data):
         targets[i, :end] = cap[:end]        
     return images, targets, lengths
 
-def get_loader(root, json, vocab, transform, batch_size, shuffle, num_workers):
+def loadCocoData(root, json, vocab, transform, batch_size, shuffle, num_workers):
     """Returns torch.utils.data.DataLoader for custom coco dataset."""
     # COCO caption dataset
     coco = CocoDataset(root=root,
@@ -99,5 +98,6 @@ def get_loader(root, json, vocab, transform, batch_size, shuffle, num_workers):
                                               batch_size=batch_size,
                                               shuffle=shuffle,
                                               num_workers=num_workers,
-                                              collate_fn=collate_fn)
+                                              collate_fn=collate_fn,
+                                              download=True)
     return data_loader

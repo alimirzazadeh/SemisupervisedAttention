@@ -2,7 +2,7 @@ import torch.optim as optim
 from train import train
 from evaluate import evaluate
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
-from data_loader.cifar_data_loader import loadCifarData
+from data_loader.coco_data_loader import loadCocoData
 import os
 import numpy as np
 from torch import nn
@@ -121,7 +121,7 @@ if __name__ == '__main__':
 
 
 
-    suptrainloader, unsuptrainloader, validloader, testloader = loadCifarData(
+    suptrainloader, unsuptrainloader, validloader, testloader = loadCocoData(
         numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
         useNewUnsupervised=useNewUnsupervised, unsupDatasetSize=unsupDatasetSize)
 

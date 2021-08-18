@@ -234,31 +234,31 @@ class CAMLoss(nn.Module):
                 print('.')
 
         if visualize:
-            def createGIF(arr,name):
+            def createGIF(arr):
                 arr = arr[0]
                 imgs = []
                 for i in range(arr.shape[0]):
                     imgs.append(Image.fromarray((255*arr[i]).astype(np.uint8)))
-                imgs[0].save(name + "_array.gif", save_all=True, append_images=imgs[1:], duration=200, loop=1)
+                return imgs
                 
-            def reshapeVideoIntoImages(arr, name):
-                createGIF(arr, name)
+            def reshapeVideoIntoImages(arr):
+                gif = createGIF(arr)
                 hconcat_imgs = []
                 for i in range(arr[0].shape[0]):
                     hconcat_imgs.append(arr[0][i,:,:,:])
                 final_frame = cv2.hconcat(hconcat_imgs)   
-                return final_frame
+                return final_frame, gif
             # fig.canvas.draw()
 
             # cv2.imwrite('./saved_figs/sampleImage_GuidedBackprop.jpg', final_gb_frame)
             # final_frame = cv2.hconcat(imgs)
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM.jpg', final_frame)
             # bp()
-            final_gb_frame = reshapeVideoIntoImages(gbimgs,"gbimgs")
-            final_hmp_frame = reshapeVideoIntoImages(hmps,"hmps")
-            final_img_frame = reshapeVideoIntoImages(imgs,"imgs")
-            final_newimg_frame = reshapeVideoIntoImages(maskimgs,"maskimgs")
-            final_gbitself_frame = reshapeVideoIntoImages(gbitself,"gbitself")
+            final_gb_frame, final_gb_frame_gif = reshapeVideoIntoImages(gbimgs)
+            final_hmp_frame, final_hmp_frame_gif = reshapeVideoIntoImages(hmps)
+            final_img_frame, final_img_frame_gif = reshapeVideoIntoImages(imgs)
+            final_newimg_frame, final_newimg_frame_gif = reshapeVideoIntoImages(maskimgs)
+            final_gbitself_frame, final_gbitself_frame_gif = reshapeVideoIntoImages(gbitself)
             print(final_gb_frame.shape)
             print(final_hmp_frame.shape)
             print(final_img_frame.shape)
@@ -295,7 +295,7 @@ class CAMLoss(nn.Module):
             data = np.array(cv2.vconcat([final_img_frame.astype(
                 'float64'), final_hmp_frame.astype('float64'), final_gbitself_frame.astype('float64')
                 , final_newimg_frame.astype('float64'), final_gb_frame.astype('float64')]))
-            return correlations, data
+            return correlations, data, [final_gb_frame_gif, final_hmp_frame_gif, final_img_frame_gif, final_newimg_frame_gif, final_gb_frame_gif]
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
 
         return correlation_pearson / input_tensor.shape[0]

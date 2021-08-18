@@ -14,7 +14,7 @@ from visualizer.visualizer import visualizeImageBatch
 
 def visualizeLossPerformance(CAMLossInstance, inputs, labels=['sentinel'], imgLabels=[], imgTitle="epoch_0_batchNum_0", use_cuda=False, target_category=None, saveFig=True, batchDirectory=''):
     # CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
-    l1, fig = CAMLossInstance(inputs, target_category, visualize=True)
+    l1, fig, allgifs = CAMLossInstance(inputs, target_category, visualize=True)
     def arrToStr(s):
             str1 = " " 
             # return string  
@@ -31,6 +31,10 @@ def visualizeLossPerformance(CAMLossInstance, inputs, labels=['sentinel'], imgLa
         plt.title(titleString + '\n' + arrToStr(imgLabels))
         plt.savefig(batchDirectory+'saved_figs/checkpointvis_'+imgTitle+'.png',dpi=300)
         plt.clf()
+        counter = 0
+        for imgs in allgifs:
+            imgs[0].save(batchDirectory+"saved_figs/gif_"+str(counter)+".gif", save_all=True, append_images=imgs[1:], duration=200, loop=0)
+            counter += 1
         # visualizeImageBatch(inputs, labels, resnetLabels=arrToStr(imgLabels))
         # plt.savefig('./'+batchDirectory+'saved_figs/checkpointvis_'+imgTitle+'_orig.png')
 

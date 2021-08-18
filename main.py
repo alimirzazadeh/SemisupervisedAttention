@@ -14,6 +14,7 @@ import cv2
 import sys
 import json
 import distutils.util
+from shutil import copyfile
 sys.path.append("./")
 
 
@@ -118,7 +119,7 @@ if __name__ == '__main__':
 
     print('########################################### \n\n')
 
-
+    copyfile("script3.sh", batchDirectory + "script3.sh")
 
 
     suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(

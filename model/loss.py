@@ -235,7 +235,10 @@ class CAMLoss(nn.Module):
 
         if visualize:
             def createGIF(arr,name):
-                imgs = [Image.fromarray(img) for img in arr[0]]
+                arr = arr[0]
+                imgs = []
+                for i in range(arr.shape[0]):
+                    imgs.append(Image.fromarry((255*arr[i]).astype(np.uint8)))
                 imgs[0].save(name + "_array.gif", save_all=True, append_images=imgs[1:], duration=200, loop=1)
                 
             def reshapeVideoIntoImages(arr, name):

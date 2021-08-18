@@ -18,7 +18,7 @@ from ipdb import set_trace as bp
 from matplotlib import cm 
 import torch
 from scipy import ndimage
-
+from PIL import Image
 
 class CAMLoss(nn.Module):
     def __init__(self, model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity):
@@ -234,7 +234,12 @@ class CAMLoss(nn.Module):
                 print('.')
 
         if visualize:
-            def reshapeVideoIntoImages(arr):
+            def createGIF(arr,name):
+                imgs = [Image.fromarray(img) for img in arr[0]]
+                imgs[0].save(name + "_array.gif", save_all=True, append_images=imgs[1:], duration=200, loop=1)
+                
+            def reshapeVideoIntoImages(arr, name):
+                createGIF(arr, name)
                 hconcat_imgs = []
                 for i in range(arr[0].shape[0]):
                     hconcat_imgs.append(arr[0][i,:,:,:])
@@ -246,11 +251,11 @@ class CAMLoss(nn.Module):
             # final_frame = cv2.hconcat(imgs)
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM.jpg', final_frame)
             # bp()
-            final_gb_frame = reshapeVideoIntoImages(gbimgs)
-            final_hmp_frame = reshapeVideoIntoImages(hmps)
-            final_img_frame = reshapeVideoIntoImages(imgs)
-            final_newimg_frame = reshapeVideoIntoImages(maskimgs)
-            final_gbitself_frame = reshapeVideoIntoImages(gbitself)
+            final_gb_frame = reshapeVideoIntoImages(gbimgs,"gbimgs")
+            final_hmp_frame = reshapeVideoIntoImages(hmps,"hmps")
+            final_img_frame = reshapeVideoIntoImages(imgs,"imgs")
+            final_newimg_frame = reshapeVideoIntoImages(maskimgs,"maskimgs")
+            final_gbitself_frame = reshapeVideoIntoImages(gbitself,"gbitself")
             print(final_gb_frame.shape)
             print(final_hmp_frame.shape)
             print(final_img_frame.shape)

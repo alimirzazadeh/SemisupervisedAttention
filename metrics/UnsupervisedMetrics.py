@@ -33,7 +33,7 @@ def visualizeLossPerformance(CAMLossInstance, inputs, labels=['sentinel'], imgLa
         plt.clf()
         counter = 0
         for imgs in allgifs:
-            imgs[0].save(batchDirectory+"saved_figs/gif_"+str(counter)+".gif", save_all=True, append_images=imgs[1:], duration=200, loop=0)
+            imgs[0].save(batchDirectory+"saved_figs/giftype_"+str(counter)+"_batch_"+imgTitle+".gif", save_all=True, append_images=imgs[1:], duration=200, loop=0)
             counter += 1
         # visualizeImageBatch(inputs, labels, resnetLabels=arrToStr(imgLabels))
         # plt.savefig('./'+batchDirectory+'saved_figs/checkpointvis_'+imgTitle+'_orig.png')

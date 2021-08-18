@@ -9,14 +9,14 @@
 #SBATCH --output=/dev/null 
 #SBATCH --error=/dev/null
 
-export BATCH_DIRECTORY=test
+export BATCH_DIRECTORY=test1
 export TO_LOAD_CHECKPOINT=True
-export NUM_FIGURES_TO_CREATE=3
+export NUM_FIGURES_TO_CREATE=None
 export TO_TRAIN=False
-export TO_EVALUATE=False
+export TO_EVALUATE=True
 export WHICH_TRAINING=combining
 export LEARNING_RATE=0.000005
-export NUM_EPOCHS=400
+export NUM_EPOCHS=1
 export BATCH_SIZE=4
 export RESOLUTION_MATCH=2
 export SIMILARITY_METRIC=0
@@ -24,7 +24,7 @@ export ALPHA=8
 export UNSUP_BATCH_SIZE=4
 export FULLY_BALANCED=True
 export USE_NEW_UNSUPERVISED=True
-export UNSUP_DATASET_SIZE=None
+export UNSUP_DATASET_SIZE=40
 export NUM_OUTPUT_CLASSES=10
 export REFLECT_PADDING=True
 export PER_BATCH_EVAL=None

@@ -129,7 +129,8 @@ if __name__ == '__main__':
     model = models.resnet50(pretrained=True)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+    
+    
     model.fc = nn.Linear(int(model.fc.in_features), numOutputClasses)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -260,10 +261,10 @@ if __name__ == '__main__':
               unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval, saveRecurringCheckpoint=saveRecurringCheckpoint, maskIntensity=maskIntensity)
         print("Training Complete.")
 
-    if toEvaluate:
-        print("Evaluating on Test Set...")
-        ##load the best checkpoint and evaulate it. 
+    if toEvaluate and toTrain:
         checkpoint = torch.load(batchDirectory + "saved_checkpoints/model_best.pt", map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
+    if toEvaluate:
+        model.to(device)
         evaluate(model, testloader, device, batchDirectory=batchDirectory)
-        print("Finished Evaluating")
+        

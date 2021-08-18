@@ -1,5 +1,5 @@
 {
     "batch_directory_path": "/scratch/groups/rubin/krish05m/AttentionMap/cifar_exp/",
-    "load_checkpoint_path": "/scratch/groups/rubin/krish05m/AttentionMap/cifar_exp/sup1_2img_class/saved_checkpoints/model_best.pt",
+    "load_checkpoint_path": "/scratch/groups/rubin/krish05m/AttentionMap/cifar_exp/sup1_4img_class/saved_checkpoints/model_best.pt",
     "load_figure_comparison_checkpoint_path": "/scratch/groups/rubin/krish05m/AttentionMap/cifar_exp/sup1_2img_class/saved_checkpoints/model_best_f1.pt"
 }

@@ -81,7 +81,7 @@ if __name__ == '__main__':
     
     print('############## Run Settings: ###############')
 
-    print(sherlock_json)
+    print(zaman_json)
 
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
@@ -178,9 +178,7 @@ if __name__ == '__main__':
         dataiter = iter(validloader)
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
-        idx2label = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus',
-                     'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse',
-                     'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
+        idx2label = ['suctioning', 'chewing', 'rocking', 'cares', 'patting']
 
         for i in range(numFiguresToCreate):
             images, labels = dataiter.next()
@@ -206,21 +204,21 @@ if __name__ == '__main__':
                 predictedNames = [idx2label[p] for p in predicted]
                 labels = labels.cpu().tolist()
                 actualLabels = labels == predicted
-                predictedNames2 = [idx2label[p] for p in predicted]
-                actualLabels2 = labels == predicted
-                print("DIFFERING!", actualLabels, actualLabels2)
+                predictedNames2 = [idx2label[p] for p in predicted2]
+                actualLabels2 = labels == predicted2
+                print("Correct: ", labels,"Actual: ", actualLabels, actualLabels2)
                 print("\n\n Val: ", val, val2, "\n\n")
                 print("\n\n Mean: ", mean, mean2, "\n\n")
                     
-            
-            loadCheckpoint(PATH, model)
-            imgTitle = "which_0_epoch_" + str(epoch) + "_batchNum_" + str(i)
-            visualizeLossPerformance(
-                CAMLossInstance, images, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames, batchDirectory=batchDirectory)
-            loadCheckpoint(PATH2, model)
-            imgTitle = "which_1_epoch_" + str(epoch) + "_batchNum_" + str(i)
-            visualizeLossPerformance(
-                CAMLossInstance, images, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2, batchDirectory=batchDirectory)
+            if True: #actualLabels and labels[0] == 4:
+                loadCheckpoint(PATH, model)
+                imgTitle = "which_0_epoch_" + str(epoch) + "_batchNum_" + str(i)
+                visualizeLossPerformance(
+                    CAMLossInstance, images, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames, batchDirectory=batchDirectory)
+                loadCheckpoint(PATH2, model)
+                imgTitle = "which_1_epoch_" + str(epoch) + "_batchNum_" + str(i)
+                visualizeLossPerformance(
+                    CAMLossInstance, images, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2, batchDirectory=batchDirectory)
 
 
     target_category = None

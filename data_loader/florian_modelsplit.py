@@ -13,7 +13,7 @@ from shutil import copy2
 
 experiment_id = "003"
 MAX_TRAINING_SAMPLE_PER_CLASS = 3 # None 3
-PATH_EXPERIMENTS = '/home/alimirz1/babul/' #'/mnt/data/eegml/fdubost/experiments'
+PATH_EXPERIMENTS = '/home/alimirz1/SemisupervisedAttention/saved_batches/' #'/mnt/data/eegml/fdubost/experiments'
 
 
 # parameters

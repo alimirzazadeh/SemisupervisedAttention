@@ -23,7 +23,7 @@ STRIDE = 4
 EXP_VIDEO_TALBE = '331' # 256 309 331
 BALANCED = True
 BALANCE_ONLY_TRAIN = False
-
+FLORIAN_EXPERIMENTS = '/home/alimirz1/babul/fdubost/experiments/'
 OVERLAP = False
 
 def shuffle_segments(segments, labels):
@@ -57,7 +57,7 @@ root_savepath = os.path.join(PATH_EXPERIMENTS, experiment_id)
 createExpFolderandCodeList(root_savepath)
 
 # read video table
-with open(os.path.join(PATH_EXPERIMENTS,EXP_VIDEO_TALBE,'video_table.json')) as json_file:
+with open(os.path.join(FLORIAN_EXPERIMENTS,EXP_VIDEO_TALBE,'video_table.json')) as json_file:
     video_table = json.load(json_file)
 
 # initialize dict

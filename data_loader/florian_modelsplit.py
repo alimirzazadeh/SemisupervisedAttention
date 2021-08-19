@@ -3,12 +3,12 @@ import os
 import sys
 import pandas as pd
 import json
-from basic_functions import createExpFolderandCodeList
 from ipdb import set_trace as bp
 import math
 import random
 import collections
 import numpy as np
+from shutil import copy2
 
 
 experiment_id = "003"
@@ -39,6 +39,17 @@ def shuffle_segments(segments, labels):
 # save experiment and code
 
 
+def createExpFolderandCodeList(save_path,files=[]):
+    #result folder
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    code_folder_path = os.path.join(save_path, 'code')
+    if not os.path.exists(code_folder_path):
+        os.makedirs(code_folder_path)
+    #save code files
+    for file_name in os.listdir() + files:
+        if not os.path.isdir(file_name):
+            copy2('./%s' % file_name, os.path.join(save_path, 'code', file_name))
 
 
 root_savepath = os.path.join(PATH_EXPERIMENTS, experiment_id)

@@ -9,7 +9,7 @@
 #SBATCH --output=/dev/null 
 #SBATCH --error=/dev/null
 
-export BATCH_DIRECTORY=test1
+export BATCH_DIRECTORY=ci_comb4img
 export TO_LOAD_CHECKPOINT=True
 export NUM_FIGURES_TO_CREATE=None
 export TO_TRAIN=False

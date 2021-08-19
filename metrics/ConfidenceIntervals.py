@@ -25,8 +25,12 @@ def custom_metric_CCEloss(data_methodx):
         
         labels = torch.tensor([preds[0]])
         pred_logits = torch.tensor(preds[1:]).unsqueeze(0)
-        print(labels, pred_logits)
+        # print(labels, pred_logits)
         
+        # labels = labels.float()
+        labels = labels.cpu()
+        pred_logits = pred_logits.float()
+        pred_logits = pred_logits.cpu()
         thisLoss = criteron(pred_logits, labels)
         runningLoss += thisLoss
     return runningLoss / size

@@ -169,6 +169,7 @@ class Evaluator:
         #plt.clf()
         # axs[1, 1].plot(self.accuracies, label="Accuracy")
         # axs[1, 1].set_title('Accuracy')
+        plt.tight_layout()
         plt.savefig(batchDirectory+'saved_figs/AllPlots.png')
         plt.close()
         # plt.legend()

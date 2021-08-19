@@ -219,7 +219,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
             LossEvaluator.plotLosses(batchDirectory=batchDirectory)
 
     print('\n \n BEST SUP LOSS OVERALL: ', LossEvaluator.bestSupSum, '\n\n')
-    print('\n \n BEST F1 SCORE SUM OVERALL: ', LossEvaluator.bestF1Sum, '\n\n')
+    print('\n \n BEST MAP OVERALL: ', LossEvaluator.bestmAP, '\n\n')
 
     #save a final checkpoint
     saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)

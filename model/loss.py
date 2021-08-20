@@ -213,7 +213,7 @@ class CAMLoss(nn.Module):
                 #    targetWeight = 0
                 #    print('target less than 0!')
                 correlation_pearson2 = correlation_pearson.clone()
-                correlation_pearson = correlation_pearson2 + cost  # * targetWeight
+                correlation_pearson = correlation_pearson2.cuda() + cost.cuda()  # * targetWeight
 
             if logs:
                 print("The Pearson output loss is: ", correlation_pearson[i])

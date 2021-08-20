@@ -4,19 +4,18 @@
 #SBATCH --time=48:00:00
 #SBATCH --ntasks=1
 #SBATCH -p gpu
-#SBATCH --gres=gpu:1
-#SBATCH --partition=owners	
+#SBATCH --gres=gpu:1	
 #SBATCH --output=/dev/null 
 #SBATCH --error=/dev/null
 
-export BATCH_DIRECTORY=ci_comb4img
+export BATCH_DIRECTORY=unsup4_4img_class
 export TO_LOAD_CHECKPOINT=True
 export NUM_FIGURES_TO_CREATE=None
-export TO_TRAIN=False
+export TO_TRAIN=True
 export TO_EVALUATE=True
-export WHICH_TRAINING=combining
-export LEARNING_RATE=0.000005
-export NUM_EPOCHS=1
+export WHICH_TRAINING=unsupervised
+export LEARNING_RATE=0.000002
+export NUM_EPOCHS=40
 export BATCH_SIZE=4
 export RESOLUTION_MATCH=2
 export SIMILARITY_METRIC=0
@@ -30,7 +29,7 @@ export REFLECT_PADDING=True
 export PER_BATCH_EVAL=None
 export SAVE_RECURRING_CHECKPOINT=None
 export NUM_IMAGES_PER_CLASS=4
-export MASK_INTENSITY=8
+export MASK_INTENSITY=80
 
 ml python/3.9.0
 ml opencv/4.5.2

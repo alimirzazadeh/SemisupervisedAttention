@@ -12,8 +12,12 @@ from visualizer.visualizer import visualizeImageBatch
 
 
 def visualizeLossPerformance(CAMLossInstance, inputs, labels=['sentinel'], imgLabels=[], imgTitle="epoch_0_batchNum_0", use_cuda=False, target_category=None, saveFig=True, batchDirectory=''):
-    # CAMLossInstance = CAMLoss(model, target_layer, use_cuda)
+    print(inputs.type())
+    print(target_category.type())
+    inputs = inputs.cuda()
+    target_category = target_category.cuda()
     l1, fig = CAMLossInstance(inputs, target_category, visualize=True)
+
     def arrToStr(s):
             str1 = " " 
             # return string  

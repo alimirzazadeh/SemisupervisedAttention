@@ -89,6 +89,13 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
                                            download=download_data,
                                            transform=transformations,
                                            target_transform=encode_labels)
+    
+    dataset_val_orig = PascalVOC_Dataset(data_dir,
+                                           year='2012',
+                                           image_set='train',
+                                           download=download_data,
+                                           transform=transformations_valid,
+                                           target_transform=encode_labels)
  
 
     dataset_train, large_unsup = balancedMiniDataset(dataset_train_orig, numImagesPerClass, len(dataset_train_orig), fullyBalanced=fullyBalanced)
@@ -107,7 +114,7 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
 
 
 
-    dataset_valid = PascalVOC_Dataset(data_dir,
+    dataset_test = PascalVOC_Dataset(data_dir,
                                       year='2012',
                                       image_set='val',
                                       download=download_data,
@@ -115,9 +122,8 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
                                       target_transform=encode_labels)
 
     # valid_dataset_split = 500
-    dataset_valid_new = torch.utils.data.Subset(dataset_train_orig, list(range(0, 500)))
+    dataset_valid_new = torch.utils.data.Subset(dataset_val_orig, list(range(0, 500)))
     # dataset_test = torch.utils.data.Subset(dataset_valid, list(range(valid_dataset_split,len(dataset_valid))))
-    dataset_test = dataset_valid
 
     train_loader = DataLoader(
         dataset_train, batch_size=batch_size, num_workers=4, shuffle=True)

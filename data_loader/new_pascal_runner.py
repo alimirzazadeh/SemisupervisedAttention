@@ -114,9 +114,10 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
                                       transform=transformations_valid,
                                       target_transform=encode_labels)
 
-    valid_dataset_split = 500
-    dataset_valid_new = torch.utils.data.Subset(dataset_valid, list(range(0, valid_dataset_split)))
-    dataset_test = torch.utils.data.Subset(dataset_valid, list(range(valid_dataset_split,len(dataset_valid))))
+    # valid_dataset_split = 500
+    dataset_valid_new = torch.utils.data.Subset(dataset_train_orig, list(range(0, 500)))
+    # dataset_test = torch.utils.data.Subset(dataset_valid, list(range(valid_dataset_split,len(dataset_valid))))
+    dataset_test = dataset_valid
 
     train_loader = DataLoader(
         dataset_train, batch_size=batch_size, num_workers=4, shuffle=True)
@@ -133,7 +134,7 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
 def balancedMiniDataset(trainset, size, limit, fullyBalanced=True):
     counter = np.zeros(len(trainset[0][1]))
     iterating = True
-    step = 0
+    step = 500
     subsetToInclude = []
     subsetToNotInclude = []
     #subsetToNotInclude += list(range(step))

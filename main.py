@@ -127,11 +127,21 @@ if __name__ == '__main__':
         fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
         unsupDatasetSize=unsupDatasetSize)
 
-    model = models.resnet50(pretrained=True)
+    resNetorDenseNetorInception = 1
+    if resNetorDenseNetorInception == 0:
+        model = models.resnet50(pretrained=True)
+    elif resNetorDenseNetorInception == 1:
+        model = models.densenet161(pretrained=False)
+    elif resNetorDenseNetorInception == 2:
+        model = models.inception_v3(pretrained=False)
+
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    model.fc = nn.Linear(int(model.fc.in_features), numOutputClasses)
+    try:
+        model.fc = nn.Linear(int(model.fc.in_features), numOutputClasses)
+    except:
+        model.classifier = nn.Linear(int(model.classifier.in_features), numOutputClasses)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -162,26 +172,46 @@ if __name__ == '__main__':
             PATH = 'saved_checkpoints/hot_bench_150s_model_best.pt'
             PATH2 = 'saved_checkpoints/hot_bench_150s_model_best.pt'
 
-        print(model.fc.weight)
+        # print(model.fc.weight)
         loadCheckpoint(PATH, model)
         ## Sanity check to make sure the loaded weights are different after loading chekcpoint
         print(model.fc.weight)
 
 
     ## WHICH LAYER FOR GRADCAM
-    target_layer = model.layer4[-1]  # this is the layer before the pooling
+    if resNetorDenseNetorInception == 0:
+        target_layer = model.layer4[-1]  # this is the layer before the pooling
+    elif resNetorDenseNetorInception == 1:
+        target_layer = model.features.denseblock4[-1]
+    elif resNetorDenseNetorInception == 2:
+        target_layer = model.Mixed_7c.branch3x3dbl_3b
+        
+    
 
     
     if reflectPadding:
-        model.conv1.padding_mode = 'reflect'
-        for x in model.layer1:
-            x.conv2.padding_mode = 'reflect'
-        for x in model.layer2:
-            x.conv2.padding_mode = 'reflect'
-        for x in model.layer3:
-            x.conv2.padding_mode = 'reflect'
-        for x in model.layer4:
-            x.conv2.padding_mode = 'reflect'
+        def _freeze_norm_stats(net):
+            try:
+                for m in net.modules():
+                    if isinstance(m, nn.Conv2d):
+                        m.padding_mode = 'reflect'
+                        # print('ha')
+        
+            except ValueError:  
+                print("errrrrrrrrrrrrrroooooooorrrrrrrrrrrr with instancenorm")
+                return
+        model.apply(_freeze_norm_stats)
+        
+        
+        # model.conv1.padding_mode = 'reflect'
+        # for x in model.layer1:
+        #     x.conv2.padding_mode = 'reflect'
+        # for x in model.layer2:
+        #     x.conv2.padding_mode = 'reflect'
+        # for x in model.layer3:
+        #     x.conv2.padding_mode = 'reflect'
+        # for x in model.layer4:
+        #     x.conv2.padding_mode = 'reflect'
 
 
 
@@ -206,9 +236,11 @@ if __name__ == '__main__':
             # model.to(device)
             with torch.no_grad():
                 # calculate outputs by running images through the network
-                loadCheckpoint(PATH, model)
+                if toLoadCheckpoint:
+                    loadCheckpoint(PATH, model)
                 outputs = model(images)
-                loadCheckpoint(PATH2, model)
+                if toLoadCheckpoint:
+                    loadCheckpoint(PATH2, model)
                 outputs2 = model(images)
                 # the class with the highest energy is what we choose as prediction
                 val, predicted = torch.max(outputs.data, 1)
@@ -233,11 +265,13 @@ if __name__ == '__main__':
                 print("\n\n Mean: ", mean, mean2, "\n\n")
                     
             ### To only create figures with differing predictions, wrap the following lines with if predicted != predicted2:
-            loadCheckpoint(PATH, model)
+            if toLoadCheckpoint:
+                loadCheckpoint(PATH, model)
             imgTitle = "which_0_epoch_" + str(epoch) + "_batchNum_" + str(i)
             visualizeLossPerformance(
                 CAMLossInstance, images, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames, batchDirectory=batchDirectory)
-            loadCheckpoint(PATH2, model)
+            if toLoadCheckpoint:
+                loadCheckpoint(PATH2, model)
             imgTitle = "which_1_epoch_" + str(epoch) + "_batchNum_" + str(i)
             visualizeLossPerformance(
                 CAMLossInstance, images, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2, batchDirectory=batchDirectory)

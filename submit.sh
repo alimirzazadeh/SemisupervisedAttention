@@ -5,31 +5,31 @@
 #SBATCH --ntasks=1
 #SBATCH -p gpu
 #SBATCH --gres=gpu:1
-#SBATCH --partition=owners	
+#SBATCH --partition=gpu	
 #SBATCH --output=/dev/null 
 #SBATCH --error=/dev/null
 
-export BATCH_DIRECTORY=comb5_1img_class
-export TO_LOAD_CHECKPOINT=True
+export BATCH_DIRECTORY=sup1_2img_class
+export TO_LOAD_CHECKPOINT=False
 export NUM_FIGURES_TO_CREATE=None
 export TO_TRAIN=True
-export TO_EVALUATE=True
-export WHICH_TRAINING=combining
+export TO_EVALUATE=False
+export WHICH_TRAINING=supervised
 export LEARNING_RATE=0.000005
 export NUM_EPOCHS=400
 export BATCH_SIZE=4
 export RESOLUTION_MATCH=2
 export SIMILARITY_METRIC=0
-export ALPHA=0.2
-export UNSUP_BATCH_SIZE=12
+export ALPHA=8
+export UNSUP_BATCH_SIZE=4
 export FULLY_BALANCED=True
 export USE_NEW_UNSUPERVISED=True
 export UNSUP_DATASET_SIZE=500
 export NUM_OUTPUT_CLASSES=10
 export REFLECT_PADDING=True
 export PER_BATCH_EVAL=None
-export SAVE_RECURRING_CHECKPOINT=None
-export NUM_IMAGES_PER_CLASS=1
+export SAVE_RECURRING_CHECKPOINT=40
+export NUM_IMAGES_PER_CLASS=2
 export MASK_INTENSITY=8
 
 ml python/3.9.0

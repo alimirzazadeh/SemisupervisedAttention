@@ -8,19 +8,276 @@ import torch
 import pandas as pd
 from torch import nn
 import numpy as np
+from PIL import Image
+import os
+from model.loss import CAMLoss
+import matplotlib.pyplot as plt
+import matplotlib
+import matplotlib.patches as patches
+import random
+from ipdb import set_trace as bp
 
-def evaluate(model, testloader, device, batchDirectory = ''):
-    datasetSize = len(testloader.dataset)
-    df = pd.DataFrame()
-    
+OBJECT_CATEGORIES = ['aeroplane', 'bicycle', 'bird', 'boat',
+                     'bottle', 'bus', 'car', 'cat', 'chair',
+                     'cow', 'diningtable', 'dog', 'horse',
+                     'motorbike', 'person', 'pottedplant',
+                     'sheep', 'sofa', 'train', 'tvmonitor']
+
+TARGET_IMAGE_DIMENSIONS = [256,256]
+THRESHOLD = 0.5
+
+def create_bbox_from_map(map):
+    bbox = {}
+    # initialize
+    bbox['xmin'] = TARGET_IMAGE_DIMENSIONS[0]
+    bbox['ymin'] = TARGET_IMAGE_DIMENSIONS[1]
+    bbox['xmax'] = 0
+    bbox['ymax'] = 0
+    # update bbox
+    for i in range(TARGET_IMAGE_DIMENSIONS[0]):
+        for j in range(TARGET_IMAGE_DIMENSIONS[1]):
+            if map[i,j,0] == 1:
+                if i < bbox['ymin']:
+                    bbox['ymin'] = i
+                elif i > bbox['ymax']:
+                    bbox['ymax'] = i
+                if j < bbox['xmin']:
+                    bbox['xmin'] = j
+                elif j > bbox['xmax']:
+                    bbox['xmax'] = j
+    return bbox
+
+def binarize_map(map, threshold):
+    map_bin = map.copy()
+    map_bin[map_bin > threshold] = 1
+    map_bin[map_bin <= threshold] = 0
+    return map_bin
+
+def cast_bbox_to_int(bbox):
+    for key in bbox:
+        bbox[key] = int(bbox[key])
+    return bbox
+
+def rescale_bbox(target_image_dimensions, actual_image_dimension, bbox):
+    # bbox coef in this order: xmin, ymin, xmax, ymax
+    rescaling_factors = [target*1./actual for target, actual in zip(target_image_dimensions,actual_image_dimension)]
+    rescaled_bbox = {}
+    for key in bbox:
+        if key in ['xmin', 'xmax']:
+            rescaled_bbox[key] = bbox[key] * rescaling_factors[0]
+        elif key in ['ymin', 'ymax']:
+            rescaled_bbox[key] = bbox[key] * rescaling_factors[1]
+    return rescaled_bbox
+
+def create_map_from_bbox_list(bbox_list):
+    map = np.zeros(TARGET_IMAGE_DIMENSIONS)
+    for bbox in bbox_list:
+        for i in range(TARGET_IMAGE_DIMENSIONS[0]):
+            for j in range(TARGET_IMAGE_DIMENSIONS[1]):
+                if bbox['xmin'] < j < bbox['xmax'] and bbox['ymin'] < i < bbox['ymax']:
+                    map[i, j] = 1
+    map = np.repeat(np.expand_dims(map, axis=-1), 3, axis=-1)
+    return map
+
+def compute_overlap(attention_map, bbox_map):
+    # compute intersection and union
+    intersection = 0
+    union = 0
+    for i in range(TARGET_IMAGE_DIMENSIONS[0]):
+        for j in range(TARGET_IMAGE_DIMENSIONS[1]):
+            if attention_map[i, j, 0] == 1 and bbox_map[i, j, 0] == 1:
+                intersection += 1
+            if attention_map[i, j, 0] == 1 or bbox_map[i, j, 0] == 1:
+                union += 1
+    # compute overlap
+    overlap = intersection*1. / union
+    return overlap
+
+def create_rect(bbox, color):
+    rect = patches.Rectangle((bbox['xmin'], bbox['ymin']), bbox['xmax'] - bbox['xmin'],
+                             bbox['ymax'] - bbox['ymin'], linewidth=1, edgecolor=color,
+                             facecolor='none')
+    return rect
+
+
+def evaluate(model, testloader, evaluationLoader, device, CAMLossInstance, batchDirectory = '', print_images=False,
+             print_attention_maps=False):
+
+    # set model to eval mode
+    model.eval()
+
+    # set seed to select random bbox when there is no TP
+    random.seed(20)
+
+    # create path to save images
+    if print_images or print_attention_maps:
+        path_save_images = os.path.join(batchDirectory,'images')
+        if not os.path.exists(path_save_images):
+            os.makedirs(path_save_images)
+
+    # create dataframe to store all predictions and all ground truths
+    df_gt = pd.DataFrame()
+    df_pred = pd.DataFrame()
+
+    # loop over entire test set and save stats
+    stats = pd.DataFrame()
+    # loop over dataset
     with torch.set_grad_enabled(False):
-        for i, data in enumerate(testloader, 0):
-            inputs, labels = data
+        for image_id, data in enumerate(evaluationLoader, 0):
+            print(image_id)
+            # print every 10
+            if image_id % 10 == 0:
+                print(image_id)
+
+            # open figure
+            plt.figure()
+
+            # pass to the network
+            inputs, labels, annotations = data
             inputs = inputs.to(device)
-            labels = labels.to(device)
-            outputs = model(inputs) 
+            labels = labels[0].to(device)
+            # get logit
+            logits = model(inputs)
             m = nn.Sigmoid()
-            pred_logits = (m(outputs) > 0.5).int()
-            df = df.append(pd.DataFrame(torch.cat((labels, pred_logits),axis=1)).astype("int"))
-        df.to_csv(batchDirectory + 'saved_figs/testLabelLogits.csv', index=False)
+            preds = (m(logits) > 0.5).int()
+            # save gt and preds in df
+            df_pred = df_pred.append(pd.DataFrame(m(logits).cpu().numpy()))
+            df_gt = df_gt.append(pd.DataFrame(labels.cpu().numpy()).T)
+
+            # get ground truth classes
+            gt_class_ids = np.nonzero(np.array(labels.cpu()))[0]
+            gt_class_names = [OBJECT_CATEGORIES[id] for id in gt_class_ids]
+
+            # get predicted class
+            pred_class_id = int(np.argmax(preds.cpu()))
+            pred_class_name = OBJECT_CATEGORIES[pred_class_id]
+
+            # compute whether it is a TP
+            TP = pred_class_name in gt_class_names
+
+            # compute stats
+            # compute unsup loss and attention maps
+            target_category = None
+
+            with torch.set_grad_enabled(True):
+                consistency_loss, gradcam1, guidedbackprop, mask, gradcam2 = CAMLossInstance(inputs,
+                                                                                             target_category,
+                                                                                             visualize=True)
+                BCE = nn.BCEWithLogitsLoss()(logits[0], labels)
+
+            # postproc guidedbackprop
+            guidedbackprop[guidedbackprop > 1] = 1
+            # postprpc mask
+            mask = np.moveaxis(mask, 0, -1)
+            # binarize attention maps
+            gradcam1_bin = binarize_map(gradcam1, THRESHOLD)
+            guidedbackprop_bin = binarize_map(guidedbackprop, THRESHOLD)
+            mask_bin = binarize_map(mask, THRESHOLD)
+
+            # select correct gt bboxes
+            bbox_list = []
+            all_bboxes = data[2][0]['object']
+            # select bbox of the correctly identified class if current samples is TP, otherwise select random bboxes
+            if TP:
+                target_class = pred_class_name
+            else:
+                target_class = all_bboxes[random.randint(0,len(all_bboxes)-1)]['name']
+            # iterate to bboxes
+            for bbox in all_bboxes:
+                if bbox['name'] == target_class:
+                    # cast to int
+                    bbox = cast_bbox_to_int(bbox['bndbox'])
+                    # append to store bboxes
+                    bbox_list.append(bbox)
+
+            # rescale bbox
+            image_size = data[2][0]['size']
+            actual_image_dimension = [int(image_size['width']), int(image_size['height'])]
+            bbox_list_rescaled = []
+            for bbox in bbox_list:
+                bbox_list_rescaled.append(rescale_bbox(TARGET_IMAGE_DIMENSIONS, actual_image_dimension, bbox))
+
+            # transform attention map into bbox
+            bbox_gb = create_bbox_from_map(guidedbackprop_bin)
+
+            # transform list of bbox to binary map
+            bbox_map = create_map_from_bbox_list(bbox_list_rescaled)
+            bbox_gb_map = create_map_from_bbox_list([bbox_gb])
+
+
+            # print image with corresponding ID
+            if print_images:
+                # preproc image
+                image = np.moveaxis(np.array(data[0][0].cpu()), 0, -1)
+                image = (image - np.min(image)) / (np.max(image) - np.min(image))
+
+                # save image
+                plt.clf()
+                fig, ax = plt.subplots()
+                ax.imshow(image)
+                # plot all gt bboxes on image
+                for bbox in bbox_list_rescaled:
+                    rect = create_rect(bbox, 'r')
+                    ax.add_patch(rect)
+                # plot gb bbox
+                rect = create_rect(bbox_gb, 'b')
+                ax.add_patch(rect)
+                # save to disk
+                plt.axis('off')
+                plt.savefig(os.path.join(path_save_images, str(image_id) + "_image.jpeg"), bbox_inches='tight',
+                            pad_inches=0)
+                plt.close()
+
+            # print attention maps
+            if print_attention_maps:
+                # save Grad-CAM
+                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_GradCAM.jpeg"), gradcam1)
+                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_GradCAM_bin.jpeg"), gradcam1_bin)
+                # save guided backprop
+                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_GuidedBackprop.jpeg"), guidedbackprop)
+                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_GuidedBackprop_bin.jpeg"), guidedbackprop_bin)
+                # save mask
+                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_mask.jpeg"), mask)
+                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_mask_bin.jpeg"), mask_bin)
+                # save bbox maps
+                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_bbox_map.jpeg"), bbox_map)
+                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_bbox_gb_map.jpeg"), bbox_gb_map)
+
+            # compute overlap attention maps with annotations
+            # Grad-CAM
+            overlap_gradcam_bbox = compute_overlap(gradcam1_bin, bbox_map)
+            # guided-backprop
+            overlap_guidedbackprop_bbox = compute_overlap(guidedbackprop_bin, bbox_map)
+            overlap_bbox_gb_bbox = compute_overlap(bbox_gb_map, bbox_map)
+            # mask
+            overlap_mask_bbox = compute_overlap(mask_bin, bbox_map)
+
+            # compute surface of the bounding box
+            surface_bbox = np.count_nonzero(bbox_map)
+
+            # store in dataframe
+            stats = stats.append({'image_id':image_id,
+                                  'gt_class_ids':gt_class_ids,
+                                  'gt_class_names':gt_class_names,
+                                  'pred_class_id':pred_class_id,
+                                  'pred_class_name':pred_class_name,
+                                  'TP':TP,
+                                  'consistency':-consistency_loss[0],
+                                  'BCE':float(BCE),
+                                  'surface_bbox':surface_bbox,
+                                  'overlap_gradcam_bbox':overlap_gradcam_bbox,
+                                  'overlap_guidedbackprop_bbox':overlap_guidedbackprop_bbox,
+                                  'overlap_bbox_gb_bbox': overlap_bbox_gb_bbox,
+                                  'overlap_mask_bbox':overlap_mask_bbox,
+                                  'overlap_gradcam_bbox/surface_bbox':overlap_gradcam_bbox/surface_bbox},
+                                  ignore_index=True)
+
+            # clear figures
+            plt.close('all')
+
+    # save dataframes
+    stats.to_csv(os.path.join(batchDirectory, 'stats.csv'), index=False)
+    df_gt.to_csv(os.path.join(batchDirectory, 'gt.csv'), index=False)
+    df_pred.to_csv(os.path.join(batchDirectory, 'predictions.csv'), index=False)
+
     print("Finished Evaluation")

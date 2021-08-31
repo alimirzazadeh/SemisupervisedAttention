@@ -15,6 +15,8 @@ import cv2
 import sys
 import json
 import distutils.util
+from ipdb import set_trace as bp
+from model.loss import CAMLoss
 sys.path.append("./")
 
 
@@ -41,6 +43,7 @@ if __name__ == '__main__':
     reflectPadding = bool(distutils.util.strtobool(sys.argv[18])) #True
     numImagesPerClass = int(sys.argv[21]) #2
     maskIntensity = int(sys.argv[22]) #8
+    INTERACTIVE = bool(sys.argv[23])
     
     try:
         unsupDatasetSize=int(sys.argv[16]) #None
@@ -76,9 +79,10 @@ if __name__ == '__main__':
     if not CHECK_FOLDER:
         os.makedirs(batchDirectory)
     
-    log = open(batchDirectory + "log.out", "a")
-    sys.stdout = log
-    sys.stderr = log
+    if not INTERACTIVE:
+        log = open(batchDirectory + "log.out", "a")
+        sys.stdout = log
+        sys.stderr = log
     
     print('############## Run Settings: ###############')
 
@@ -122,7 +126,7 @@ if __name__ == '__main__':
 
 
 
-    suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(
+    suptrainloader, unsuptrainloader, validloader, testloader, evaluationLoader = loadPascalData(
         numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
         fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
         unsupDatasetSize=unsupDatasetSize)
@@ -141,9 +145,7 @@ if __name__ == '__main__':
 
     scheduler = None
 
-    all_checkpoints = os.listdir('saved_checkpoints')
     epoch = 0
-
 
     def loadCheckpoint(path, model):
         checkpoint = torch.load(path, map_location=device)
@@ -155,14 +157,9 @@ if __name__ == '__main__':
             epoch = 0
         
     if toLoadCheckpoint:
-        if len(all_checkpoints) > 0:
-            if os.path.isdir('/scratch/'):
-                PATH = sherlock_json['load_checkpoint_path']
-                ##wont load path2 unless numFiguresToCreate is not None
-                PATH2 = sherlock_json['load_figure_comparison_checkpoint_path']
-            else:
-                PATH = 'saved_checkpoints/hot_bench_150s_model_best.pt'
-                PATH2 = 'saved_checkpoints/hot_bench_150s_model_best.pt'
+        PATH = sherlock_json['load_checkpoint_path']
+        ##wont load path2 unless numFiguresToCreate is not None
+        PATH2 = sherlock_json['load_figure_comparison_checkpoint_path']
 
         print(model.fc.weight)
         loadCheckpoint(PATH, model)
@@ -186,13 +183,13 @@ if __name__ == '__main__':
             x.conv2.padding_mode = 'reflect'
 
 
-
     use_cuda = torch.cuda.is_available()
-    # load a few images from CIFAR and save
-    if numFiguresToCreate is not None:
-        from model.loss import CAMLoss        
+    if numFiguresToCreate is not None or toEvaluate:
         CAMLossInstance = CAMLoss(
             model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity)
+
+    # load a few images from CIFAR and save
+    if numFiguresToCreate is not None:
         dataiter = iter(validloader)
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
@@ -261,7 +258,8 @@ if __name__ == '__main__':
     if toEvaluate:
         print("Evaluating on Test Set...")
         ##load the best checkpoint and evaulate it. 
-        checkpoint = torch.load(batchDirectory + "saved_checkpoints/model_best.pt", map_location=device)
+        checkpoint = torch.load(PATH, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
-        evaluate(model, testloader, device, batchDirectory=batchDirectory)
+        evaluate(model, testloader, evaluationLoader, device, CAMLossInstance, batchDirectory=batchDirectory,
+                 print_images=False, print_attention_maps=False)
         print("Finished Evaluating")

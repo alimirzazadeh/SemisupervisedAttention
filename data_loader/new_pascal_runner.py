@@ -11,25 +11,8 @@ import numpy as np
 from torchvision import transforms
 from torch.utils.data import DataLoader
 import os
-
-
-class PascalVOC_Dataset(voc.VOCDetection):
-    def __init__(self, root, year='2012', image_set='train', download=False, transform=None, target_transform=None):
-
-        super().__init__(
-            root,
-            year=year,
-            image_set=image_set,
-            download=download,
-            transform=transform,
-            target_transform=target_transform)
-
-    def __getitem__(self, index):
-        return super().__getitem__(index)
-
-    def __len__(self):
-        return len(self.images)
-
+import xml.etree.ElementTree as ET
+from ipdb import set_trace as bp
 
 def encode_labels(target):
     object_categories = ['aeroplane', 'bicycle', 'bird', 'boat',
@@ -54,6 +37,77 @@ def encode_labels(target):
 
     return torch.from_numpy(k)
 
+
+def my_collate(batch):
+    # function to have a variable number of bbox in the dataloader
+
+    images = list()
+    labels = list()
+    annotation_dicts = list()
+
+    for b in batch:
+        images.append(b[0])
+        labels.append(b[1])
+        annotation_dicts.append(b[2])
+
+    images = torch.stack(images, dim=0)
+
+    return images, labels, annotation_dicts
+
+
+class PascalVOC_Dataset(voc.VOCDetection):
+    def __init__(self, root, year='2012', image_set='train', download=False, transform=None, target_transform=None):
+
+        super().__init__(
+            root,
+            year=year,
+            image_set=image_set,
+            download=download,
+            transform=transform,
+            target_transform=target_transform)
+
+    def __getitem__(self, index):
+
+        image, annotations = super().__getitem__(index)
+        label = encode_labels(annotations)
+
+        return image, label
+
+
+class PascalVOC_Dataset_Bbox(voc.VOCDetection):
+    def __init__(self, root, year='2012', image_set='train', download=False, transform=None, target_transform=None):
+
+        super().__init__(
+            root,
+            year=year,
+            image_set=image_set,
+            download=download,
+            transform=transform,
+            target_transform=target_transform)
+
+    def __getitem__(self, index):
+
+        # get image and labels
+        image, annotations = super().__getitem__(index)
+        label = encode_labels(annotations)
+        annotation_dict = annotations['annotation']
+
+        return image, label, annotation_dict
+
+
+class PascalVOC_Dataset_Segmentation(voc.VOCSegmentation):
+    def __init__(self, root, year='2012', image_set='train', download=False, transform=None, target_transform=None):
+
+        super().__init__(
+            root,
+            year=year,
+            image_set=image_set,
+            download=download,
+            transform=transform,
+            target_transform=target_transform)
+
+
+
 #Parameters:
 # download_data: set to True only the first time running on new system to download the Pascal VOC dataset, otherwise set to False
 # batch_size: the batch size for supervised, validation, and test dataset
@@ -69,7 +123,6 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
         transforms.RandomRotation(10),
         transforms.RandomHorizontalFlip(0.5),
         transforms.RandomVerticalFlip(0.5),
-        #transforms.RandomResizedCrop(256),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
                              0.229, 0.224, 0.225])
@@ -88,8 +141,8 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
                                            image_set='train',
                                            download=download_data,
                                            transform=transformations,
-                                           target_transform=encode_labels)
- 
+                                           target_transform=None)
+
 
     dataset_train, large_unsup = balancedMiniDataset(dataset_train_orig, numImagesPerClass, len(dataset_train_orig), fullyBalanced=fullyBalanced)
     
@@ -107,16 +160,16 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
 
 
 
-    dataset_valid = PascalVOC_Dataset(data_dir,
+    dataset_valid_total = PascalVOC_Dataset(data_dir,
                                       year='2012',
                                       image_set='val',
                                       download=download_data,
                                       transform=transformations_valid,
-                                      target_transform=encode_labels)
+                                      target_transform=None)
 
     valid_dataset_split = 500
-    dataset_valid = torch.utils.data.Subset(dataset_valid, list(range(0, valid_dataset_split)))
-    dataset_test = torch.utils.data.Subset(dataset_valid, list(range(valid_dataset_split,len(dataset_valid))))
+    dataset_valid = torch.utils.data.Subset(dataset_valid_total, list(range(0, valid_dataset_split)))
+    dataset_test = torch.utils.data.Subset(dataset_valid_total, list(range(valid_dataset_split,len(dataset_valid_total))))
 
     train_loader = DataLoader(
         dataset_train, batch_size=batch_size, num_workers=4, shuffle=True)
@@ -125,9 +178,20 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
     valid_loader = DataLoader(
         dataset_valid, batch_size=batch_size, num_workers=4)
     test_loader = DataLoader(
-        dataset_valid, batch_size=batch_size, num_workers=4)
+        dataset_test, batch_size=4, num_workers=4)
 
-    return train_loader, unsup_loader, valid_loader, test_loader
+
+    # create bbox evaluation dataloader
+    evaluation_dataset = PascalVOC_Dataset_Bbox(data_dir,
+                                 year='2012',
+                                 image_set='val',
+                                 download=download_data,
+                                 transform=transformations_valid,
+                                 target_transform=None)
+    #evaluation_dataset = torch.utils.data.Subset(evaluation_dataset, list(range(0, 30)))
+    evaluation_loader = DataLoader(evaluation_dataset, batch_size=1, num_workers=1, collate_fn=my_collate)
+
+    return train_loader, unsup_loader, valid_loader, test_loader, evaluation_loader
 
 
 def balancedMiniDataset(trainset, size, limit, fullyBalanced=True):

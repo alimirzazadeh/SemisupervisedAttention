@@ -17,6 +17,8 @@ import torch.nn.functional as F
 
 import torch
 
+from ipdb import set_trace as bp
+
 
 class CAMLoss(nn.Module):
     def __init__(self, model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity):
@@ -117,7 +119,7 @@ class CAMLoss(nn.Module):
                     firstCompare = standardize(cam_result)
                     secondCompare = standardize(gb_correlate)
                 elif resolutionMatch == 2:
-                    ww = -1 * maskIntensity
+                    ww = -1 * self.maskIntensity
                     sigma = torch.mean(gb_correlate) + \
                         torch.std(gb_correlate) / 2
                     TAc = 1 / (1 + torch.exp(ww * (gb_correlate - sigma)))
@@ -180,11 +182,11 @@ class CAMLoss(nn.Module):
                         arr -= np.min(arr)
                         arr /= np.max(arr)
                         return np.moveaxis(arr,0,-1)
-                    hmps.append(reshapeNormalize(cv2.resize(firstCompare.detach().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
-                    gbimgs.append(reshapeNormalize(cv2.resize(secondCompare.detach().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
-                    imgs.append(normalize(thisImgTensor.detach().numpy()))
-                    maskimgs.append(normalize(newImgTensor.detach().numpy()))
-                    gbitself.append(4 * reshapeNormalize(gb_correlate.detach().numpy()))
+                    hmps.append(reshapeNormalize(cv2.resize(firstCompare.detach().cpu().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
+                    gbimgs.append(reshapeNormalize(cv2.resize(secondCompare.detach().cpu().numpy(),(256,256),interpolation=cv2.INTER_NEAREST)))
+                    imgs.append(normalize(thisImgTensor.detach().cpu().numpy()))
+                    maskimgs.append(normalize(newImgTensor.detach().cpu().numpy()))
+                    gbitself.append(4 * reshapeNormalize(gb_correlate.detach().cpu().numpy()))
 
                 if similarityMetric == 0:
                     firstCompare = sigmoidIt(firstCompare)
@@ -235,11 +237,7 @@ class CAMLoss(nn.Module):
             final_img_frame = cv2.hconcat(imgs)
             final_newimg_frame = cv2.hconcat(maskimgs)
             final_gbitself_frame = cv2.hconcat(gbitself)
-            print(final_gb_frame.shape)
-            print(final_hmp_frame.shape)
-            print(final_img_frame.shape)
-            print(final_newimg_frame.shape)
-            print(final_gbitself_frame.shape)
+
             
 
             def normalize(arr):
@@ -264,14 +262,11 @@ class CAMLoss(nn.Module):
             final_gb_frame = gb_normalize(final_gb_frame)
             final_hmp_frame = normalize(final_hmp_frame)
 
-            # print(np.min(final_hmp_frame), np.max(final_hmp_frame), np.median(final_hmp_frame))
-            # print(np.min(final_gb_frame), np.max(final_gb_frame), np.median(final_gb_frame))
-            # print(final_gb_frame.dtype, final_hmp_frame.dtype)
+            # final_hmp_frame: 1st gradcam
+            # final_gbitself_frame: guided backprop
+            # TAc: mask
+            # final_gb_frame: 2nd gradcam
 
-            data = np.array(cv2.vconcat([final_img_frame.astype(
-                'float64'), final_hmp_frame.astype('float64'), final_gbitself_frame.astype('float64')
-                , final_newimg_frame.astype('float64'), final_gb_frame.astype('float64')]))
-            return correlations, data
-            # cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
+            return correlations, final_hmp_frame, final_gbitself_frame, TAc.detach().cpu().numpy(), final_gb_frame
 
         return correlation_pearson  / input_tensor.shape[0]

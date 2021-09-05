@@ -295,7 +295,7 @@ class CAMLoss(nn.Module):
             data = np.array(cv2.vconcat([final_img_frame.astype(
                 'float64'), final_hmp_frame.astype('float64'), final_gbitself_frame.astype('float64')
                 , final_newimg_frame.astype('float64'), final_gb_frame.astype('float64')]))
-            return correlations, data, [final_gb_frame_gif, final_hmp_frame_gif, final_img_frame_gif, final_newimg_frame_gif, final_gb_frame_gif]
+            return correlations, data, [final_gb_frame_gif, final_hmp_frame_gif, final_img_frame_gif, final_newimg_frame_gif, final_gbitself_frame_gif]
             # cv2.imwrite('./saved_figs/sampleImage_GradCAM_hmp.jpg', final_hmp_frame)
 
         return correlation_pearson / input_tensor.shape[0]

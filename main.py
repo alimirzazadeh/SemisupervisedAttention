@@ -210,7 +210,7 @@ if __name__ == '__main__':
                 print("\n\n Val: ", val, val2, "\n\n")
                 print("\n\n Mean: ", mean, mean2, "\n\n")
                     
-            if True: #actualLabels and labels[0] == 4:
+            if predicted != predicted2:
                 loadCheckpoint(PATH, model)
                 imgTitle = "which_0_epoch_" + str(epoch) + "_batchNum_" + str(i)
                 visualizeLossPerformance(

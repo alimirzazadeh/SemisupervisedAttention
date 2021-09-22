@@ -14,6 +14,7 @@ from model.loss import CAMLoss
 import pandas as pd
 import random
 from torch import nn
+from ipdb import set_trace as bp
 
 from metrics.SupervisedMetrics import Evaluator
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
@@ -184,8 +185,13 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                     inputs = inputs.to(device)
                     labels = labels.to(device)
                     outputs = model(inputs) 
-                    l1 = criteron(outputs, labels)
-                    _, preds = torch.max(outputs, 1)
+                    try: 
+                        l1 = criteron(outputs, labels)
+                        _, preds = torch.max(outputs, 1)
+                    except:
+                        l1 = criteron(outputs.logits, labels)
+                        _, preds = torch.max(outputs.logits, 1)
+                    
                     # for pred in range(preds.shape[0]):
                     #     running_corrects += labels[pred, int(preds[pred])]
                 if combining or not supervised:
@@ -201,6 +207,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                 optimizer.zero_grad()
                 if combining:
                     l1 = l1 + alpha * l2
+                #print(l1)
                 l1.backward()
                 optimizer.step()
             counter += 1

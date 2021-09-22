@@ -5,7 +5,7 @@ import ttach as tta
 from libs.pytorch_grad_cam.activations_and_gradients import ActivationsAndGradients
 from libs.pytorch_grad_cam.utils.svd_on_activations import get_2d_projection
 import json
-
+from ipdb import set_trace as bp
 
 class BaseCAM:
     def __init__(self, 
@@ -38,7 +38,10 @@ class BaseCAM:
     def get_loss(self, output, target_category):
         loss = 0
         for i in range(len(target_category)):
-            loss = loss + output[i, target_category[i]]
+            try:
+                loss = loss + output[i, target_category[i]]
+            except:
+                loss = loss + output.logits[i, target_category[i]]
         return loss
 
     def get_cam_image(self,
@@ -71,7 +74,10 @@ class BaseCAM:
 
         if target_category is None:
             # print("Category shapes: ", output.cpu().data.numpy().shape)
-            out_output = output.data.cpu().numpy()
+            try:
+                out_output = output.data.cpu().numpy()
+            except:
+                out_output = output.logits.cpu().detach().numpy()
             target_category = np.argmax(out_output, axis=-1)
             # print("Target Category: ", target_category)
             # print(target_category)

@@ -15,6 +15,7 @@ import sys
 import json
 import distutils.util
 from shutil import copyfile
+from ipdb import set_trace as bp
 sys.path.append("./")
 
 
@@ -23,7 +24,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
 if __name__ == '__main__':
-    toLoadCheckpoint = bool(distutils.util.strtobool(sys.argv[1]))
+    toLoadCheckpoint = bool(sys.argv[1] != 'False')
     toTrain = bool(distutils.util.strtobool(sys.argv[3]))
     toEvaluate = bool(distutils.util.strtobool(sys.argv[4])) #True
     whichTraining = sys.argv[5] #alternating
@@ -127,13 +128,13 @@ if __name__ == '__main__':
         fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
         unsupDatasetSize=unsupDatasetSize)
 
-    resNetorDenseNetorInception = 1
+    resNetorDenseNetorInception = 0
     if resNetorDenseNetorInception == 0:
         model = models.resnet50(pretrained=True)
     elif resNetorDenseNetorInception == 1:
-        model = models.densenet161(pretrained=False)
+        model = models.densenet161(pretrained=True)
     elif resNetorDenseNetorInception == 2:
-        model = models.inception_v3(pretrained=False)
+        model = models.inception_v3(pretrained=True)
 
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -165,7 +166,8 @@ if __name__ == '__main__':
         
     if toLoadCheckpoint:
         if os.path.isdir('/scratch/'):
-            PATH = sherlock_json['load_checkpoint_path']
+            #PATH = sherlock_json['load_checkpoint_path']
+            PATH = sys.argv[1]
             ##wont load path2 unless numFiguresToCreate is not None
             PATH2 = sherlock_json['load_figure_comparison_checkpoint_path']
         else:
@@ -175,14 +177,15 @@ if __name__ == '__main__':
         # print(model.fc.weight)
         loadCheckpoint(PATH, model)
         ## Sanity check to make sure the loaded weights are different after loading chekcpoint
-        print(model.fc.weight)
+        #print(model.fc.weight)
 
 
     ## WHICH LAYER FOR GRADCAM
+    print(resNetorDenseNetorInception)
     if resNetorDenseNetorInception == 0:
         target_layer = model.layer4[-1]  # this is the layer before the pooling
     elif resNetorDenseNetorInception == 1:
-        target_layer = model.features.denseblock4[-1]
+        target_layer = model.features.denseblock4.denselayer24
     elif resNetorDenseNetorInception == 2:
         target_layer = model.Mixed_7c.branch3x3dbl_3b
         
@@ -223,7 +226,25 @@ if __name__ == '__main__':
             model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity)
         dataiter = iter(validloader)
         device = torch.device("cuda:0" if use_cuda else "cpu")
-        model.eval()
+        #model.eval()
+
+
+        def customTrain(model):
+            def _freeze_norm_stats(net):
+                try:
+                    for m in net.modules():
+                        if isinstance(m, nn.BatchNorm2d):
+                            m.eval()
+    
+                except ValueError:  
+                    print("errrrrrrrrrrrrrroooooooorrrrrrrrrrrr with instancenorm")
+                    return
+            model.train()
+            model.apply(_freeze_norm_stats)
+
+        
+
+
         idx2label = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus',
                      'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse',
                      'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
@@ -238,6 +259,7 @@ if __name__ == '__main__':
                 # calculate outputs by running images through the network
                 if toLoadCheckpoint:
                     loadCheckpoint(PATH, model)
+                customTrain(model)
                 outputs = model(images)
                 if toLoadCheckpoint:
                     loadCheckpoint(PATH2, model)

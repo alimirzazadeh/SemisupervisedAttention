@@ -66,7 +66,11 @@ class GuidedBackpropReLUModel:
             print('warning: using CPU')
             target_category = np.argmax(output.cpu().data.numpy())
 
-        loss = output[0, target_category]
+        try:
+            loss = output[0, target_category]
+        except:
+            loss = output.logits[0, target_category]
+
         # loss.backward(retain_graph=True)
         output = torch.autograd.grad(loss,input_img,create_graph=True)
         # print(input_img.grad.cpu().data.shape)

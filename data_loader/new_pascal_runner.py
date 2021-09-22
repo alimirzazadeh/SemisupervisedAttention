@@ -63,13 +63,18 @@ def encode_labels(target):
 # useNewUnsupervised: if set to True, will only include images not in supervised set, if False only uses images in supervised set
 # unsupDatasetSize: if not None, sets the size of the unsupervised dataset
 def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, batch_size=4, unsup_batch_size=12, fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None):
+    resNetOrInception = 0
+    if resNetOrInception == 0:
+        imgSize = 256
+    else:
+        imgSize = 299
 
     transformations = transforms.Compose([
-        #transforms.Resize((256, 256)),
+        #transforms.Resize((299,299)),
         #transforms.RandomRotation(10),
         #transforms.RandomHorizontalFlip(0.5),
         #transforms.RandomVerticalFlip(0.5),
-	transforms.RandomResizedCrop(256),
+	transforms.RandomResizedCrop(imgSize),
         transforms.RandomHorizontalFlip(),
         transforms.ColorJitter(.4,.4,.4),
         transforms.ToTensor(),
@@ -78,7 +83,7 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
     ])
 
     transformations_valid = transforms.Compose([
-        transforms.Resize((256, 256)),
+        transforms.Resize((imgSize, imgSize)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
                              0.229, 0.224, 0.225])

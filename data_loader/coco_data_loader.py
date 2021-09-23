@@ -7,6 +7,7 @@ from os import path
 import pickle
 import numpy as np
 import nltk
+# from data_loader.objcat import obj_cat
 from PIL import Image
 from pycocotools.coco import COCO
 
@@ -23,21 +24,30 @@ class CocoData(torch.utils.data.Dataset):
         img_id = self.ids[index]
         ann_ids = coco.getAnnIds(imgIds=img_id)
         coco_annotation = coco.loadAnns(ann_ids)
+        # print("")
+        # print(coco_annotation)
+        if coco_annotation:
+            index = coco_annotation[0]['category_id']
+        # print(index)
+        if index > 90:
+            index = 90
         path = coco.loadImgs(img_id)[0]['file_name']
-        img = Image.open(os.path.join(self.root, path))
+        image = Image.open(os.path.join(self.root, path)).convert('RGB')
 
-        num_objs = len(coco_annotation)
-        labels = torch.ones((num_objs,), dtype=torch.int64)
+        num_objs = 90
+        labels = torch.zeros((num_objs,), dtype=torch.int64)
+        labels[index-1] = 1
+        # print(labels)
         img_id = torch.tensor([img_id])
 
-        my_annotation = {}
-        my_annotation["labels"] = labels
-        my_annotation["image_id"] = img_id
-
-        if self.transforms is not None:
-            img = self.transforms(img)
-
-        return img, my_annotation["labels"]
+        # tokens = nltk.tokenize.word_tokenize(str(caption).lower())
+        # caption = []
+        # caption.append(vocab('<start>'))
+        # caption.extend([vocab(token) for token in tokens])
+        # caption.append(vocab('<end>'))
+        # target = torch.Tensor(caption)
+        # print(target)
+        return image, img_id, labels
 
     def __len__(self):
         return len(self.ids)
@@ -67,6 +77,9 @@ def loadCocoData(numImagesPerClass, batch_size=4, unsup_batch_size=12, fullyBala
     dataset_train_orig = CocoData(root="./data_dir/coco/images/train2017",
                                   annotation="./data_dir/coco/annotations/instances_train2017.json",
                                   transforms=transformations)
+    print(dataset_train_orig[1])
+    print(dataset_train_orig[5])
+    print(dataset_train_orig[10])
 
     dataset_val_orig = CocoData(root="./data_dir/coco/images/val2017",
                                 annotation="./data_dir/coco/annotations/instances_val2017.json",
@@ -91,11 +104,11 @@ def loadCocoData(numImagesPerClass, batch_size=4, unsup_batch_size=12, fullyBala
         dataset_val_orig, list(range(0, 500)))
 
     # Data Loader
-    train_loader = torch.utils.Data.DataLoader(
+    train_loader = data.DataLoader(
         dataset_train, batch_size=batch_size, num_workers=4, shuffle=True)
-    unsup_loader = torch.utils.Data.DataLoader(
+    unsup_loader = data.DataLoader(
         unsup_train, batch_size=unsup_batch_size, num_workers=4, shuffle=True)
-    valid_loader = torch.utils.Data.DataLoader(
+    valid_loader = data.DataLoader(
         dataset_valid_new, batch_size=batch_size, num_workers=4)
 
     return train_loader, unsup_loader, valid_loader

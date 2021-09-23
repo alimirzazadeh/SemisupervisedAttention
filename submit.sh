@@ -9,10 +9,10 @@
 #SBATCH --output=/dev/null 
 #SBATCH --error=/dev/null
 
-export BATCH_DIRECTORY=sup1_2img_class
+export BATCH_DIRECTORY=test4
 export TO_LOAD_CHECKPOINT=False
 export NUM_FIGURES_TO_CREATE=None
-export TO_TRAIN=True
+export TO_TRAIN=False
 export TO_EVALUATE=False
 export WHICH_TRAINING=supervised
 export LEARNING_RATE=0.000005

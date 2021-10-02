@@ -117,7 +117,6 @@ if __name__ == '__main__':
     suptrainloader, unsuptrainloader, validloader = loadCocoData(
         numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size,
         useNewUnsupervised=useNewUnsupervised, unsupDatasetSize=unsupDatasetSize)
-    # trainloader, valloader = loadCocoData()
 
     model = models.resnet50(pretrained=True)
 

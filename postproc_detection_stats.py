@@ -9,10 +9,14 @@ from sklearn.metrics import average_precision_score, matthews_corrcoef
 from ipdb import set_trace as bp
 
 
+
 # define paths
 PATH_EXPERIMENTS = '/scratch/groups/rubin/fdubost/project_ali/experiments'
-FIRST_EXP = '48'
-SECOND_EXP = '49'
+FIRST_EXP = '128'
+SECOND_EXP = '134'
+COMPUTE_CLASSWISE = True
+COMPUTE_MMCC = False
+F1_RANGE = [0.001, 1]
 
 def compute_F1(val_target,val_predict):
     val_target = val_target.astype('bool')
@@ -145,6 +149,10 @@ if __name__ == '__main__':
     df2 = df2.rename(dict((c_name, c_name + '_2') for c_name in df2.columns), axis='columns')
     df = pd.concat([df1, df2], axis=1, join='inner')
 
+    # compute difference of consitency
+    df['consistency_dff']= df['consistency_2']-df['consistency_1']
+    df.to_csv(os.path.join(save_path, 'all_stats.csv'))
+
     # selecting DF of interest
     df_tp_union = df[(df['TP_1'] == 1) & (df['TP_2'] == 1)]
     df_FN1_FP2 = df[(df['TP_1'] != 1) & (df['TP_2'] == 1)]
@@ -153,15 +161,19 @@ if __name__ == '__main__':
     df_TP2 = df2[df2['TP_2'] == 1]
     df_FN2 = df2[df2['TP_2'] != 1]
 
+
+    # save dfs
+    df_FN1_FP2.to_csv(os.path.join(save_path, 'df_FN1_FP2_stats.csv'))
+
     # define dfs to loop over
-    df_of_interest = [df_tp_union, df_FN1_FP2, df_TP1, df_FN1, df_TP2, df_FN2]
-    df_of_interest_names = ['df_tp_union', 'df_FN1_FP2', 'df_TP1', 'df_FN1', 'df_TP2', 'df_FN2']
-    corresponding_models = [[1,2], [1,2], [1], [1], [2], [2]]
+    df_of_interest = [df_tp_union] #[df_FN1_FP2, df_TP1, df_FN1, df_TP2, df_FN2]
+    df_of_interest_names = ['df_tp_union'] #['df_tp_union', 'df_FN1_FP2', 'df_TP1', 'df_FN1', 'df_TP2', 'df_FN2']
+    corresponding_models = [[1,2]] #[[1,2], [1,2], [1], [1], [2], [2]]
 
     # print all metrics
-    metrics = ['consistency', 'surface_bbox', 'overlap_gradcam_bbox',
-               'overlap_guidedbackprop_bbox', 'overlap_mask_bbox',
-               'overlap_gradcam_bbox/surface_bbox', 'overlap_bbox_gb_bbox', 'BCE']
+    metrics = [] #'overlap_gradcam_bbox', 'overlap_bbox_gb_bbox'] #['consistency', 'surface_bbox', 'overlap_gradcam_bbox',
+               #'overlap_guidedbackprop_bbox', 'overlap_mask_bbox',
+               #'overlap_gradcam_bbox/surface_bbox', 'overlap_bbox_gb_bbox', 'BCE']
     for idx, df_current in enumerate(df_of_interest):
         # print len
         print(df_of_interest_names[idx])
@@ -173,7 +185,7 @@ if __name__ == '__main__':
                 print(df_current[metric + '_' + str(model)].mean())
                 # if we can compare both model, make stat test
                 if corresponding_models[idx] == [1,2]:
-                    print(bstrap.bootstrap(np.mean,df_current[metric + '_1'],df_current[metric + '_2'], nbr_runs=1000))
+                    print(bstrap.bootstrap(np.mean,df_current[metric + '_1'],df_current[metric + '_2'], nbr_runs=10000))
             print('')
 
     # class-wise metrics
@@ -186,7 +198,7 @@ if __name__ == '__main__':
         df_class_wise = df_class_wise.append(df_current,ignore_index=True)
     df_class_wise.to_csv(os.path.join(save_path, 'class_wise_metrics_union_TP.csv'))
     # save summary of df_class_wise (faster to inspect), and compute stat test for selected columns
-    selected_columns = ['overlap_gradcam_bbox', 'overlap_bbox_gb_bbox']
+    selected_columns = [] #'overlap_gradcam_bbox', 'overlap_bbox_gb_bbox']
     df_class_wise_summary = df_class_wise[['class']+[column + '_'+ str(method) for method in [1,2] for column in selected_columns]]
     for column in selected_columns:
         p_value_list = []
@@ -210,7 +222,7 @@ if __name__ == '__main__':
     plot_hist(df2, 'consistency_2', 'TP_2', 0.9, 100, 'alt_hist')
 
     # show false negative with high consistency
-    columns_of_interest = ['gt_class_names','pred_class_name','consistency','overlap_bbox_gb_bbox']
+    columns_of_interest = ['gt_class_names','pred_class_name','consistency'] #,'overlap_bbox_gb_bbox']
     df_FN1 = df_FN1.sort_values(by=['consistency_1'], ascending=False)
     df_FN2 = df_FN2.sort_values(by=['consistency_2'], ascending=False)
     print('Baseline')
@@ -242,11 +254,12 @@ if __name__ == '__main__':
     data_method2 = pd.concat([gt, predictions_method2], axis=1)
 
     # 4. compare method 1 and 2 (same code as example 1)
-    stats_method1, stats_method2, p_value = bstrap.bootstrap(compute_mMCC, data_method1, data_method2, nbr_runs=100)
-    print('mMCC')
-    print(stats_method1)
-    print(stats_method2)
-    print(p_value)
+    if COMPUTE_MMCC:
+        stats_method1, stats_method2, p_value = bstrap.bootstrap(compute_mMCC, data_method1, data_method2, nbr_runs=100)
+        print('mMCC')
+        print(stats_method1)
+        print(stats_method2)
+        print(p_value)
 
     stats_method1, stats_method2, p_value = bstrap.bootstrap(compute_mAP, data_method1, data_method2, nbr_runs=100)
     print('mAP')
@@ -261,35 +274,66 @@ if __name__ == '__main__':
     print(p_value)
 
     # class-wise AP and F1
-    df_f1 = pd.DataFrame()
-    nbr_classes = len(gt.columns)
-    for class_idx in range(nbr_classes):
-            print('class '+str(class_idx))
-            current_gt = gt['gt_'+str(class_idx)]
-            current_pred1 = predictions_method1['pred_'+str(class_idx)]
-            current_pred2 = predictions_method2['pred_'+str(class_idx)]
-            current_gt = current_gt.rename('gt_0')
-            current_pred1 = current_pred1.rename('pred_0')
-            current_pred2 = current_pred2.rename('pred_0')
-            data_method1 = pd.concat([current_gt, current_pred1], axis=1)
-            data_method2 = pd.concat([current_gt, current_pred2], axis=1)
-            stats_method1, stats_method2, p_value = bstrap.bootstrap(compute_mAP, data_method1, data_method2, nbr_runs=100)
-            print('AP')
-            print(stats_method1)
-            print(stats_method2)
-            print(p_value)
-            stats_method1, stats_method2, p_value = bstrap.bootstrap(compute_mF1, data_method1, data_method2, nbr_runs=100)
-            print('F1')
-            df_f1 = df_f1.append({'class': class_idx,
-                                  'F1 method 1': stats_method1['avg_metric'],
-                                  'F1 method 2': stats_method2['avg_metric'],
-                                  'p_value': p_value}, ignore_index=True)
-            print(stats_method1)
-            print(stats_method2)
-            print(p_value)
+    classes_to_keep = []
+    if COMPUTE_CLASSWISE:
+        df_f1 = pd.DataFrame()
+        nbr_classes = len(gt.columns)
+        for class_idx in range(nbr_classes):
+                print('class '+str(class_idx))
+                current_gt = gt['gt_'+str(class_idx)]
+                current_pred1 = predictions_method1['pred_'+str(class_idx)]
+                current_pred2 = predictions_method2['pred_'+str(class_idx)]
+                current_gt = current_gt.rename('gt_0')
+                current_pred1 = current_pred1.rename('pred_0')
+                current_pred2 = current_pred2.rename('pred_0')
+                data_method1 = pd.concat([current_gt, current_pred1], axis=1)
+                data_method2 = pd.concat([current_gt, current_pred2], axis=1)
+                stats_method1, stats_method2, p_value = bstrap.bootstrap(compute_mAP, data_method1, data_method2, nbr_runs=100)
+                print('AP')
+                print(stats_method1)
+                print(stats_method2)
+                print(p_value)
+                stats_method1, stats_method2, p_value = bstrap.bootstrap(compute_mF1, data_method1, data_method2, nbr_runs=100)
+                print('F1')
+                df_f1 = df_f1.append({'class': class_idx,
+                                    'F1 method 1': stats_method1['avg_metric'],
+                                    'F1 method 2': stats_method2['avg_metric'],
+                                    'p_value': p_value}, ignore_index=True)
+                print(stats_method1)
+                print(stats_method2)
+                print(p_value)
 
-    # save df f1
-    df_f1.to_csv(os.path.join(save_path, 'F1.csv'))
+                # select classes for which F1 falls within a range
+                if F1_RANGE[0] < stats_method1['avg_metric'] < F1_RANGE[1]:
+                    classes_to_keep.append(class_idx)
+
+        # save df f1
+        df_f1.to_csv(os.path.join(save_path, 'F1.csv'))
+
+        # compute F1 only for selected classes
+        gt_list_name = []
+        pred_list_name = []
+        for class_idx in classes_to_keep:
+            gt_list_name.append('gt_'+str(class_idx))
+            pred_list_name.append('pred_'+str(class_idx))
+        
+        current_gt = gt[gt_list_name]
+        current_pred1 = predictions_method1[pred_list_name]
+        current_pred2 = predictions_method2[pred_list_name]
+
+        current_gt = current_gt.rename(columns=dict([(column, 'gt_' + str(idx)) for idx, column in enumerate(current_gt.columns)]))
+        current_pred1 = current_pred1.rename(columns=dict([(column, 'pred_' + str(idx)) for idx, column in enumerate(current_pred1.columns)]))
+        current_pred2 = current_pred2.rename(columns=dict([(column, 'pred_' + str(idx)) for idx, column in enumerate(current_pred2.columns)]))
+        
+        data_method1 = pd.concat([current_gt, current_pred1], axis=1)
+        data_method2 = pd.concat([current_gt, current_pred2], axis=1)
+        stats_method1, stats_method2, p_value = bstrap.bootstrap(compute_mF1, data_method1, data_method2, nbr_runs=100)
+        print('F1 for only target classes')
+        print(stats_method1)
+        print(stats_method2)
+        print(p_value)
+        bp()
+
 
     # save combine dataframe
     df.to_csv(os.path.join(save_path, 'combined_stats.csv'))

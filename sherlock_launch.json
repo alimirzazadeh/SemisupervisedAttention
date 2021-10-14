@@ -1,6 +1,5 @@
 {
 "batch_directory_path": "/scratch/groups/rubin/fdubost/project_ali/experiments/",
-"load_checkpoint_path": "/scratch/groups/rubin/alimirz1/saved_batches/unsup_mb_135sO_aug/saved_checkpoints/model_best_mAP.pt",
 "load_figure_comparison_checkpoint_path": "/scratch/groups/rubin/alimirz1/saved_batches/pascal_sup/saved_checkpoints/model_best.pt"
 
 }

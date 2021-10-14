@@ -4,6 +4,7 @@ from evaluate import evaluate
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from visualizer.visualizer import visualizeImageBatch, show_cam_on_image
 from data_loader.new_pascal_runner import loadPascalData
+from data_loader.new_coco_runner import loadCocoData
 import os
 import numpy as np
 from torch import nn
@@ -21,7 +22,8 @@ sys.path.append("./")
 
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-
+PRINT_IMAGES = True
+PRINT_ATTENTION_MAPS = True
 
 
 if __name__ == '__main__':
@@ -44,6 +46,9 @@ if __name__ == '__main__':
     numImagesPerClass = int(sys.argv[21]) #2
     maskIntensity = int(sys.argv[22]) #8
     INTERACTIVE = bool(sys.argv[23])
+    TEST_MODEL_PATH = sys.argv[24]
+    NETWORK = sys.argv[25]
+    DATASET = sys.argv[26]
     
     try:
         unsupDatasetSize=int(sys.argv[16]) #None
@@ -124,14 +129,23 @@ if __name__ == '__main__':
     print('########################################### \n\n')
 
 
+    if NETWORK == 'resnet':
+        image_size_resize = 256
+    elif NETWORK == 'inception':
+        image_size_resize = 299
 
-
-    suptrainloader, unsuptrainloader, validloader, testloader, evaluationLoader = loadPascalData(
-        numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
-        fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
-        unsupDatasetSize=unsupDatasetSize)
-
-    model = models.resnet50(pretrained=True)
+    if DATASET == 'pascal':
+        suptrainloader, unsuptrainloader, validloader, testloader, evaluationLoader = loadPascalData(
+            numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
+            fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
+            unsupDatasetSize=unsupDatasetSize, image_size_resize=image_size_resize)
+    elif DATASET == 'coco':
+        suptrainloader, unsuptrainloader, validloader, testloader = loadCocoData(numImagesPerClass, batch_size=4, unsup_batch_size=12, fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None)
+    
+    if NETWORK == 'resnet':
+        model = models.resnet50(pretrained=True)
+    elif NETWORK == 'inception':
+        model = models.inception_v3(pretrained=True)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -157,7 +171,7 @@ if __name__ == '__main__':
             epoch = 0
         
     if toLoadCheckpoint:
-        PATH = sherlock_json['load_checkpoint_path']
+        PATH = TEST_MODEL_PATH
         ##wont load path2 unless numFiguresToCreate is not None
         PATH2 = sherlock_json['load_figure_comparison_checkpoint_path']
 
@@ -168,10 +182,26 @@ if __name__ == '__main__':
 
 
     ## WHICH LAYER FOR GRADCAM
-    target_layer = model.layer4[-1]  # this is the layer before the pooling
+    if NETWORK == 'resnet':
+        target_layer = model.layer4[-1]  # this is the layer before the pooling
+    elif NETWORK == 'inception':
+        target_layer = model.Mixed_7c.branch3x3dbl_3b
 
     
-    if reflectPadding:
+    if reflectPadding and NETWORK == 'inception':
+        def _freeze_norm_stats(net):
+            try:
+                for m in net.modules():
+                    if isinstance(m, nn.Conv2d):
+                        m.padding_mode = 'reflect'
+                        # print('ha')
+        
+            except ValueError:  
+                print("errrrrrrrrrrrrrroooooooorrrrrrrrrrrr with instancenorm")
+                return
+        model.apply(_freeze_norm_stats)
+    
+    if reflectPadding and NETWORK == 'resnet':
         model.conv1.padding_mode = 'reflect'
         for x in model.layer1:
             x.conv2.padding_mode = 'reflect'
@@ -260,6 +290,10 @@ if __name__ == '__main__':
         ##load the best checkpoint and evaulate it. 
         checkpoint = torch.load(PATH, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
-        evaluate(model, testloader, evaluationLoader, device, CAMLossInstance, batchDirectory=batchDirectory,
-                 print_images=False, print_attention_maps=False)
+        if DATASET == 'pascal':
+            evaluate(model, evaluationLoader, device, CAMLossInstance, batchDirectory=batchDirectory,
+                    print_images=PRINT_IMAGES, print_attention_maps=PRINT_ATTENTION_MAPS)
+        elif DATASET == 'coco':
+            evaluate(model, testloader, device, CAMLossInstance, batchDirectory=batchDirectory,
+                    print_images=PRINT_IMAGES, print_attention_maps=PRINT_ATTENTION_MAPS, use_bbox=False, dataset=DATASET)
         print("Finished Evaluating")

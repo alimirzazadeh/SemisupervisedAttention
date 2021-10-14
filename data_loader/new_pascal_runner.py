@@ -116,10 +116,11 @@ class PascalVOC_Dataset_Segmentation(voc.VOCSegmentation):
 #                if set to False, because this is multilabel it will include multilabel images in the supervised dataset as well (can go up to 150 per class)
 # useNewUnsupervised: if set to True, will only include images not in supervised set, if False only uses images in supervised set
 # unsupDatasetSize: if not None, sets the size of the unsupervised dataset
-def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, batch_size=4, unsup_batch_size=12, fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None):
+def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, batch_size=4, unsup_batch_size=12, 
+        fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None, image_size_resize=256):
 
     transformations = transforms.Compose([
-        transforms.Resize((256, 256)),
+        transforms.Resize((image_size_resize, image_size_resize)),
         transforms.RandomRotation(10),
         transforms.RandomHorizontalFlip(0.5),
         transforms.RandomVerticalFlip(0.5),
@@ -129,7 +130,7 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
     ])
 
     transformations_valid = transforms.Compose([
-        transforms.Resize((256, 256)),
+        transforms.Resize((image_size_resize, image_size_resize)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
                              0.229, 0.224, 0.225])
@@ -146,7 +147,7 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
 
     dataset_train, large_unsup = balancedMiniDataset(dataset_train_orig, numImagesPerClass, len(dataset_train_orig), fullyBalanced=fullyBalanced)
     
-
+    
     ### useNewUnsupervised determines if the unsupservised data is the same as supervised data or the unused parts of trainset
     if not useNewUnsupervised:
         unsup_train = dataset_train

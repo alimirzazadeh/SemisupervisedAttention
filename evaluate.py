@@ -17,14 +17,17 @@ import matplotlib.patches as patches
 import random
 from ipdb import set_trace as bp
 
-OBJECT_CATEGORIES = ['aeroplane', 'bicycle', 'bird', 'boat',
+
+OBJECT_CATEGORIES_PASCAL = ['aeroplane', 'bicycle', 'bird', 'boat',
                      'bottle', 'bus', 'car', 'cat', 'chair',
                      'cow', 'diningtable', 'dog', 'horse',
                      'motorbike', 'person', 'pottedplant',
                      'sheep', 'sofa', 'train', 'tvmonitor']
+OBJECT_CATEGORIES_COCO = [str(i) for i in range(91)]
 
 TARGET_IMAGE_DIMENSIONS = [256,256]
 THRESHOLD = 0.5
+PLOT_PRED_BBOX = False
 
 def create_bbox_from_map(map):
     bbox = {}
@@ -96,16 +99,16 @@ def compute_overlap(attention_map, bbox_map):
 def create_rect(bbox, color):
     rect = patches.Rectangle((bbox['xmin'], bbox['ymin']), bbox['xmax'] - bbox['xmin'],
                              bbox['ymax'] - bbox['ymin'], linewidth=1, edgecolor=color,
-                             facecolor='none')
+                             facecolor='none', alpha=0.5)
     return rect
 
 
-def evaluate(model, testloader, evaluationLoader, device, CAMLossInstance, batchDirectory = '', print_images=False,
-             print_attention_maps=False):
+def evaluate(model, data_loader, device, CAMLossInstance, batchDirectory = '', print_images=False,
+             print_attention_maps=False, use_bbox=True, dataset='pascal'):
 
     # set model to eval mode
     model.eval()
-
+    
     # set seed to select random bbox when there is no TP
     random.seed(20)
 
@@ -123,7 +126,7 @@ def evaluate(model, testloader, evaluationLoader, device, CAMLossInstance, batch
     stats = pd.DataFrame()
     # loop over dataset
     with torch.set_grad_enabled(False):
-        for image_id, data in enumerate(evaluationLoader, 0):
+        for image_id, data in enumerate(data_loader, 0):
             print(image_id)
             # print every 10
             if image_id % 10 == 0:
@@ -133,24 +136,33 @@ def evaluate(model, testloader, evaluationLoader, device, CAMLossInstance, batch
             plt.figure()
 
             # pass to the network
-            inputs, labels, annotations = data
+            if use_bbox:
+                inputs, labels, _ = data
+            else:
+                inputs, labels = data
             inputs = inputs.to(device)
             labels = labels[0].to(device)
             # get logit
             logits = model(inputs)
             m = nn.Sigmoid()
-            preds = (m(logits) > 0.5).int()
+ 
             # save gt and preds in df
             df_pred = df_pred.append(pd.DataFrame(m(logits).cpu().numpy()))
             df_gt = df_gt.append(pd.DataFrame(labels.cpu().numpy()).T)
 
             # get ground truth classes
             gt_class_ids = np.nonzero(np.array(labels.cpu()))[0]
-            gt_class_names = [OBJECT_CATEGORIES[id] for id in gt_class_ids]
+            if dataset == 'pascal':
+                gt_class_names = [OBJECT_CATEGORIES_PASCAL[id] for id in gt_class_ids]
+            elif dataset == 'coco':
+                gt_class_names = [OBJECT_CATEGORIES_COCO[id] for id in gt_class_ids]
 
             # get predicted class
-            pred_class_id = int(np.argmax(preds.cpu()))
-            pred_class_name = OBJECT_CATEGORIES[pred_class_id]
+            pred_class_id = int(np.argmax(logits.cpu()))
+            if dataset == 'pascal':
+                pred_class_name = OBJECT_CATEGORIES_PASCAL[pred_class_id]
+            elif dataset == 'coco':
+                pred_class_name = OBJECT_CATEGORIES_COCO[pred_class_id]
 
             # compute whether it is a TP
             TP = pred_class_name in gt_class_names
@@ -171,37 +183,44 @@ def evaluate(model, testloader, evaluationLoader, device, CAMLossInstance, batch
             mask = np.moveaxis(mask, 0, -1)
             # binarize attention maps
             gradcam1_bin = binarize_map(gradcam1, THRESHOLD)
+            gradcam2_bin = binarize_map(gradcam2, THRESHOLD)
             guidedbackprop_bin = binarize_map(guidedbackprop, THRESHOLD)
             mask_bin = binarize_map(mask, THRESHOLD)
 
+            # prepare GT bbox
+            if use_bbox:
             # select correct gt bboxes
-            bbox_list = []
-            all_bboxes = data[2][0]['object']
-            # select bbox of the correctly identified class if current samples is TP, otherwise select random bboxes
-            if TP:
-                target_class = pred_class_name
-            else:
-                target_class = all_bboxes[random.randint(0,len(all_bboxes)-1)]['name']
-            # iterate to bboxes
-            for bbox in all_bboxes:
-                if bbox['name'] == target_class:
-                    # cast to int
-                    bbox = cast_bbox_to_int(bbox['bndbox'])
-                    # append to store bboxes
-                    bbox_list.append(bbox)
+                bbox_list = []
+                all_bboxes = data[2][0]['object']
+                # select bbox of the correctly identified class if current samples is TP, otherwise select random bboxes
+                if TP:
+                    target_class = pred_class_name
+                else:
+                    target_class = all_bboxes[random.randint(0,len(all_bboxes)-1)]['name']
+                # iterate to bboxes
+                for bbox in all_bboxes:
+                    if bbox['name'] == target_class:
+                        # cast to int
+                        bbox = cast_bbox_to_int(bbox['bndbox'])
+                        # append to store bboxes
+                        bbox_list.append(bbox)
 
-            # rescale bbox
-            image_size = data[2][0]['size']
-            actual_image_dimension = [int(image_size['width']), int(image_size['height'])]
-            bbox_list_rescaled = []
-            for bbox in bbox_list:
-                bbox_list_rescaled.append(rescale_bbox(TARGET_IMAGE_DIMENSIONS, actual_image_dimension, bbox))
+                # rescale bbox
+                image_size = data[2][0]['size']
+                actual_image_dimension = [int(image_size['width']), int(image_size['height'])]
+                bbox_list_rescaled = []
+                for bbox in bbox_list:
+                    bbox_list_rescaled.append(rescale_bbox(TARGET_IMAGE_DIMENSIONS, actual_image_dimension, bbox))
+
+                # transform list of bbox to binary map
+                bbox_map = create_map_from_bbox_list(bbox_list_rescaled)
 
             # transform attention map into bbox
             bbox_gb = create_bbox_from_map(guidedbackprop_bin)
+            bbox_gradcam1 = create_bbox_from_map(gradcam1_bin)
+            bbox_gradcam2 = create_bbox_from_map(gradcam2_bin)
 
             # transform list of bbox to binary map
-            bbox_map = create_map_from_bbox_list(bbox_list_rescaled)
             bbox_gb_map = create_map_from_bbox_list([bbox_gb])
 
 
@@ -216,12 +235,20 @@ def evaluate(model, testloader, evaluationLoader, device, CAMLossInstance, batch
                 fig, ax = plt.subplots()
                 ax.imshow(image)
                 # plot all gt bboxes on image
-                for bbox in bbox_list_rescaled:
-                    rect = create_rect(bbox, 'r')
+                if use_bbox:
+                    for bbox in bbox_list_rescaled:
+                        rect = create_rect(bbox, 'g')
+                        ax.add_patch(rect)
+                if PLOT_PRED_BBOX:
+                    ## plot gb bbox
+                    rect = create_rect(bbox_gb, 'b')
                     ax.add_patch(rect)
-                # plot gb bbox
-                rect = create_rect(bbox_gb, 'b')
-                ax.add_patch(rect)
+                    # plot gradcam1 bbox
+                    rect = create_rect(bbox_gradcam1, 'b')
+                    ax.add_patch(rect)
+                    # plot gradcam1 bbox
+                    rect = create_rect(bbox_gradcam2, 'r')
+                    ax.add_patch(rect)
                 # save to disk
                 plt.axis('off')
                 plt.savefig(os.path.join(path_save_images, str(image_id) + "_image.jpeg"), bbox_inches='tight',
@@ -231,8 +258,11 @@ def evaluate(model, testloader, evaluationLoader, device, CAMLossInstance, batch
             # print attention maps
             if print_attention_maps:
                 # save Grad-CAM
-                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_GradCAM.jpeg"), gradcam1)
-                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_GradCAM_bin.jpeg"), gradcam1_bin)
+                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_GradCAM1.jpeg"), gradcam1)
+                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_GradCAM1_bin.jpeg"), gradcam1_bin)
+                # save Grad-CAM 2
+                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_GradCAM2.jpeg"), gradcam2)
+                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_GradCAM2_bin.jpeg"), gradcam2_bin)
                 # save guided backprop
                 matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_GuidedBackprop.jpeg"), guidedbackprop)
                 matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_GuidedBackprop_bin.jpeg"), guidedbackprop_bin)
@@ -240,37 +270,56 @@ def evaluate(model, testloader, evaluationLoader, device, CAMLossInstance, batch
                 matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_mask.jpeg"), mask)
                 matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_mask_bin.jpeg"), mask_bin)
                 # save bbox maps
-                matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_bbox_map.jpeg"), bbox_map)
+                if use_bbox:
+                    matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_bbox_map.jpeg"), bbox_map)
                 matplotlib.image.imsave(os.path.join(path_save_images, str(image_id) + "_bbox_gb_map.jpeg"), bbox_gb_map)
 
             # compute overlap attention maps with annotations
-            # Grad-CAM
-            overlap_gradcam_bbox = compute_overlap(gradcam1_bin, bbox_map)
-            # guided-backprop
-            overlap_guidedbackprop_bbox = compute_overlap(guidedbackprop_bin, bbox_map)
-            overlap_bbox_gb_bbox = compute_overlap(bbox_gb_map, bbox_map)
-            # mask
-            overlap_mask_bbox = compute_overlap(mask_bin, bbox_map)
+            if use_bbox:
+                # Grad-CAM
+                overlap_gradcam_bbox = compute_overlap(gradcam1_bin, bbox_map)
+                # guided-backprop
+                overlap_guidedbackprop_bbox = compute_overlap(guidedbackprop_bin, bbox_map)
+                overlap_bbox_gb_bbox = compute_overlap(bbox_gb_map, bbox_map)
+                # mask
+                overlap_mask_bbox = compute_overlap(mask_bin, bbox_map)
+                # compute overlap between guided and gradcam bbox
+                overlap_gradcam_guidedbackprop = compute_overlap(gradcam1_bin, guidedbackprop_bin)
+                overlap_gradcam_guidedbackprop_bbox = compute_overlap(gradcam1_bin, bbox_gb_map)
 
-            # compute surface of the bounding box
-            surface_bbox = np.count_nonzero(bbox_map)
 
-            # store in dataframe
-            stats = stats.append({'image_id':image_id,
-                                  'gt_class_ids':gt_class_ids,
-                                  'gt_class_names':gt_class_names,
-                                  'pred_class_id':pred_class_id,
-                                  'pred_class_name':pred_class_name,
-                                  'TP':TP,
-                                  'consistency':-consistency_loss[0],
-                                  'BCE':float(BCE),
-                                  'surface_bbox':surface_bbox,
-                                  'overlap_gradcam_bbox':overlap_gradcam_bbox,
-                                  'overlap_guidedbackprop_bbox':overlap_guidedbackprop_bbox,
-                                  'overlap_bbox_gb_bbox': overlap_bbox_gb_bbox,
-                                  'overlap_mask_bbox':overlap_mask_bbox,
-                                  'overlap_gradcam_bbox/surface_bbox':overlap_gradcam_bbox/surface_bbox},
-                                  ignore_index=True)
+                # compute surface of the bounding box
+                surface_bbox = np.count_nonzero(bbox_map)
+
+                # store in dataframe
+                stats = stats.append({'image_id':image_id,
+                                    'gt_class_ids':gt_class_ids,
+                                    'gt_class_names':gt_class_names,
+                                    'pred_class_id':pred_class_id,
+                                    'pred_class_name':pred_class_name,
+                                    'TP':TP,
+                                    'consistency':-consistency_loss[0],
+                                    'BCE':float(BCE),
+                                    'surface_bbox':surface_bbox,
+                                    'overlap_gradcam_bbox':overlap_gradcam_bbox,
+                                    'overlap_guidedbackprop_bbox':overlap_guidedbackprop_bbox,
+                                    'overlap_bbox_gb_bbox': overlap_bbox_gb_bbox,
+                                    'overlap_mask_bbox':overlap_mask_bbox,
+                                    'overlap_gradcam_bbox/surface_bbox':overlap_gradcam_bbox/surface_bbox,
+                                    'overlap_gradcam_guidedbackprop':overlap_gradcam_guidedbackprop,
+                                    'overlap_gradcam_guidedbackprop_bbox':overlap_gradcam_guidedbackprop_bbox},
+                                    ignore_index=True)
+            else:
+                # store in dataframe
+                stats = stats.append({'image_id':image_id,
+                                    'gt_class_ids':gt_class_ids,
+                                    'gt_class_names':gt_class_names,
+                                    'pred_class_id':pred_class_id,
+                                    'pred_class_name':pred_class_name,
+                                    'TP':TP,
+                                    'consistency':-consistency_loss[0],
+                                    'BCE':float(BCE)},
+                                    ignore_index=True)
 
             # clear figures
             plt.close('all')

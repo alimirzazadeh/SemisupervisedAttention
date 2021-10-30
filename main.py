@@ -15,6 +15,7 @@ import sys
 import json
 import distutils.util
 from shutil import copyfile
+import shutil
 sys.path.append("./")
 
 
@@ -41,6 +42,8 @@ if __name__ == '__main__':
     reflectPadding = bool(distutils.util.strtobool(sys.argv[18])) #True
     numImagesPerClass = int(sys.argv[21]) #2
     maskIntensity = int(sys.argv[22]) #8
+    attentionMethod = int(sys.argv[23]) #0
+    theta = float(sys.argv[24]) #0.8
     
     try:
         unsupDatasetSize=int(sys.argv[16]) #None
@@ -73,12 +76,13 @@ if __name__ == '__main__':
 
 
     CHECK_FOLDER = os.path.isdir(batchDirectory)
-    if not CHECK_FOLDER:
-        os.makedirs(batchDirectory)
+    if CHECK_FOLDER:
+        shutil.rmtree(batchDirectory)
+    os.makedirs(batchDirectory)
     
-    log = open(batchDirectory + "log.out", "a")
-    sys.stdout = log
-    sys.stderr = log
+    # log = open(batchDirectory + "log.out", "a")
+    # sys.stdout = log
+    # sys.stderr = log
     
     print('############## Run Settings: ###############')
 
@@ -116,6 +120,8 @@ if __name__ == '__main__':
     print('Evaluating Per How Many Batches (Per Epoch if None): ', perBatchEval)
     print('Saving Recurring Checkpoints (Only best checkpoints if None): ', saveRecurringCheckpoint)
     print('Mask Intensity: ', maskIntensity)
+    print('Attention Method: ', attentionMethod)
+    print('Theta: ', theta)
 
     print('########################################### \n\n')
 
@@ -127,7 +133,7 @@ if __name__ == '__main__':
         fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
         unsupDatasetSize=unsupDatasetSize)
 
-    resNetorDenseNetorInception = 2
+    resNetorDenseNetorInception = 0
     if resNetorDenseNetorInception == 0:
         model = models.resnet50(pretrained=True)
     elif resNetorDenseNetorInception == 1:
@@ -144,10 +150,6 @@ if __name__ == '__main__':
         model.classifier = nn.Linear(int(model.classifier.in_features), numOutputClasses)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-
-    # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, 12, eta_min=0, last_epoch=-1)
-
 
     scheduler = None
 
@@ -180,7 +182,10 @@ if __name__ == '__main__':
 
     ## WHICH LAYER FOR GRADCAM
     if resNetorDenseNetorInception == 0:
-        target_layer = model.layer4[-1]  # this is the layer before the pooling
+        if attentionMethod == 4:
+            target_layer = [model.layer4[-1], model.layer4[-2]]
+        else:
+            target_layer = model.layer4[-1]  # this is the layer before the pooling
     elif resNetorDenseNetorInception == 1:
         target_layer = model.features.denseblock4[-1]
     elif resNetorDenseNetorInception == 2:
@@ -201,26 +206,15 @@ if __name__ == '__main__':
                 print("errrrrrrrrrrrrrroooooooorrrrrrrrrrrr with instancenorm")
                 return
         model.apply(_freeze_norm_stats)
-        
-        
-        # model.conv1.padding_mode = 'reflect'
-        # for x in model.layer1:
-        #     x.conv2.padding_mode = 'reflect'
-        # for x in model.layer2:
-        #     x.conv2.padding_mode = 'reflect'
-        # for x in model.layer3:
-        #     x.conv2.padding_mode = 'reflect'
-        # for x in model.layer4:
-        #     x.conv2.padding_mode = 'reflect'
-
-
 
     use_cuda = torch.cuda.is_available()
     # load a few images from CIFAR and save
     if numFiguresToCreate is not None:
+        if attentionMethod == 4:
+            raise Exception("Visualization is not supported for layer wise attention")
         from model.loss import CAMLoss        
         CAMLossInstance = CAMLoss(
-            model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity)
+            model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity, attentionMethod)
         dataiter = iter(validloader)
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
@@ -232,8 +226,6 @@ if __name__ == '__main__':
             images, labels = dataiter.next()
             images = images.to(device)
             labels = labels.to(device)
-            # images.to("cpu")
-            # model.to(device)
             with torch.no_grad():
                 # calculate outputs by running images through the network
                 if toLoadCheckpoint:
@@ -251,7 +243,6 @@ if __name__ == '__main__':
                 predicted = predicted.tolist()
                 predicted2 = predicted2.tolist()
                 print(predicted, predicted2)
-                # if predicted != predicted2:
 
                 predictedNames = [idx2label[p] for p in predicted]
                 labels = labels.cpu().numpy()
@@ -260,7 +251,6 @@ if __name__ == '__main__':
                 predictedNames2 = [idx2label[p] for p in predicted2]
                 actualLabels2 = [labels[p, predicted2[p]]
                                 for p in range(len(predicted2))]
-                # print("DIFFERING!", actualLabels, actualLabels2)
                 print("\n\n Val: ", val, val2, "\n\n")
                 print("\n\n Mean: ", mean, mean2, "\n\n")
                     
@@ -286,8 +276,9 @@ if __name__ == '__main__':
     if toTrain:
         print('Beginning Training')
         train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
-              similarityMetric, alpha, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size, 
-              unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval, saveRecurringCheckpoint=saveRecurringCheckpoint, maskIntensity=maskIntensity)
+              similarityMetric, alpha, theta, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size, 
+              unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval, saveRecurringCheckpoint=saveRecurringCheckpoint, maskIntensity=maskIntensity, 
+              attentionMethod=attentionMethod)
         print("Training Complete.")
 
     if toEvaluate:

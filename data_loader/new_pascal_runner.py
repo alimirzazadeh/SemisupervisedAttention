@@ -62,14 +62,13 @@ def encode_labels(target):
 #                if set to False, because this is multilabel it will include multilabel images in the supervised dataset as well (can go up to 150 per class)
 # useNewUnsupervised: if set to True, will only include images not in supervised set, if False only uses images in supervised set
 # unsupDatasetSize: if not None, sets the size of the unsupervised dataset
-def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, batch_size=4, unsup_batch_size=12, fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None):
+def loadPascalData(numImagesPerClass, data_dir='/home/groups/rubin/fdubost/project_ali/code/data', download_data=False, batch_size=4, unsup_batch_size=12, fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None):
 
     transformations = transforms.Compose([
         transforms.Resize((256, 256)),
         transforms.RandomRotation(10),
         transforms.RandomHorizontalFlip(0.5),
         transforms.RandomVerticalFlip(0.5),
-        #transforms.RandomResizedCrop(256),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[
                              0.229, 0.224, 0.225])
@@ -121,9 +120,7 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
                                       transform=transformations_valid,
                                       target_transform=encode_labels)
 
-    # valid_dataset_split = 500
     dataset_valid_new = torch.utils.data.Subset(dataset_val_orig, list(range(0, 500)))
-    # dataset_test = torch.utils.data.Subset(dataset_valid, list(range(valid_dataset_split,len(dataset_valid))))
 
     train_loader = DataLoader(
         dataset_train, batch_size=batch_size, num_workers=4, shuffle=True)
@@ -134,16 +131,22 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
     test_loader = DataLoader(
         dataset_test, batch_size=1, num_workers=4)
 
+
     return train_loader, unsup_loader, valid_loader, test_loader
 
 
 def balancedMiniDataset(trainset, size, limit, fullyBalanced=True):
+    """
+    Rebalances dataset so that there are same number of samples per class
+    Returns: 
+    - balanced dataset
+    - Unused portion of the dataset that was not included in the balanced portion
+    """
     counter = np.zeros(len(trainset[0][1]))
     iterating = True
     step = 500
     subsetToInclude = []
     subsetToNotInclude = []
-    #subsetToNotInclude += list(range(step))
     while iterating and step < limit:
         label = trainset[step][1].numpy()
         if np.all(counter + label <= size) and (not fullyBalanced or np.sum(label).item() == 1):

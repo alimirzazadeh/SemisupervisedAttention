@@ -21,9 +21,6 @@ class BaseCAM:
         self.reshape_transform = reshape_transform
         self.activations_and_grads = ActivationsAndGradients(self.model, 
             target_layer, reshape_transform)
-        # f = open("Data/imagenet_class_index.json",)
-        # class_idx = json.load(f)
-        # self.idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
 
     def forward(self, input_img):
         return self.model(input_img)
@@ -70,13 +67,8 @@ class BaseCAM:
             target_category = [target_category] * input_tensor.size(0)
 
         if target_category is None:
-            # print("Category shapes: ", output.cpu().data.numpy().shape)
             out_output = output.data.cpu().numpy()
             target_category = np.argmax(out_output, axis=-1)
-            # print("Target Category: ", target_category)
-            # print(target_category)
-            # print("Labels: ", self.idx2label[target_category[0]])
-            # print(target_category)
         else:
             assert(len(target_category) == input_tensor.size(0))
 
@@ -85,30 +77,19 @@ class BaseCAM:
         
         
         torch.autograd.grad(loss,input_tensor,create_graph=True)
-        # loss.backward(retain_graph=True)
 
         activations = self.activations_and_grads.activations[-1]
         grads = self.activations_and_grads.gradients[-1]
 
         cam = self.get_cam_image(input_tensor, target_category, 
             activations, grads, eigen_smooth)
-        # print("cam shape!")
-        # print(cam)
         cam = torch.max(cam, 0)
-        # print(cam)
         result = []
         img = cam[0]
-        # print(input_tensor.shape[-2:][::-1])
-        # img = cv2.resize(img, input_tensor.shape[-2:][::-1])
-        # print(img.shape)
         img = img.reshape((1,1,img.shape[0],img.shape[1]))
         if upSample:
             img = torch.nn.functional.upsample_bilinear(img.double(),size=list(input_tensor.shape[-2:][::-1]))
-        # print(img.shape)
-        # img = img - torch.min(img)
-        # img = img / torch.max(img)
         result = img[0,0,:,:]
-        # result = np.float32(result)
         if returnTarget:
             target_categories = out_output.argsort()[0][-3:][::-1]
             target_weight = out_output[:,target_category].squeeze()

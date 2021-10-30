@@ -11,13 +11,14 @@ import torch
 import numpy as np
 import torchvision.models as models
 from model.loss import CAMLoss
+from model.layer_attention_loss import LayerAttentionLoss
 import pandas as pd
 import random
 from torch import nn
 
-from metrics.SupervisedMetrics import Evaluator
+from metrics.SupervisedMetrics import Evaluator, removeHooks, registerHooks, calculateLoss
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
-# Testssss
+
 def customTrain(model):
     def _freeze_norm_stats(net):
         try:
@@ -30,41 +31,24 @@ def customTrain(model):
             return
     model.train()
     model.apply(_freeze_norm_stats)
-            
 
 def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, 
-    target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, 
+    target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, theta, 
     training='alternating', batchDirectory='', scheduler=None, batch_size=4, 
-    unsup_batch_size=12, perBatchEval=None, saveRecurringCheckpoint=None, maskIntensity=8):
-    print('alpha: ', alpha)
-
-    CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity)
+    unsup_batch_size=12, perBatchEval=None, saveRecurringCheckpoint=None, maskIntensity=8, attentionMethod=0):
+    lossInstance = None
+    if attentionMethod == 4:
+        lossInstance = LayerAttentionLoss(model, target_layer, use_cuda, maskIntensity, theta)
+    else: 
+        lossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity, attentionMethod)
     LossEvaluator = Evaluator()
-    CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
+    removeHooks(lossInstance, attentionMethod)
     device = torch.device("cuda:0" if use_cuda else "cpu")
     model.to(device)
-    
-    
-    # def criteron(pred_label, target_label):
-    #     m = nn.Softmax(dim=1)
-    #     pred_label = m(pred_label)
-    #     return (-pred_label.log() * target_label).sum(dim=1).mean()
-    # def criteron(pred_label, target_label):
-    #     m = nn.BCEWithLogitsLoss()
-    #     return m(pred_label, target_label)
-    # weight = torch.tensor([0.87713311, 1.05761317, 0.73638968, 1.11496746, 0.78593272, 1.33506494,
-    #                        0.4732965, 0.514, 0.47548566, 1.9469697, 0.97348485, 0.43670348,
-    #                        1.15765766, 1.06639004, 0.13186249, 1.05544148, 1.71906355, 1.04684318,
-    #                        1.028, 0.93624772])
-    # weight = weight.to(device)
-    # criteron = nn.MultiLabelSoftMarginLoss(weight=weight)
-        
-    
-    # criteron = torch.nn.CrossEntropyLoss()
     criteron = nn.BCEWithLogitsLoss()
     print('pretraining evaluation...')
     model.eval()
-    LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #unsupervised=training!='supervised')
+    LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, lossInstance, device, optimizer, attentionMethod, unsupervised=True, batchDirectory=batchDirectory) #unsupervised=training!='supervised')
     LossEvaluator.plotLosses(batchDirectory=batchDirectory)
     print('finished evaluating')
         
@@ -93,12 +77,6 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     
     
     for epoch in range(numEpochs):
-        
-        # if scheduler:
-        #     scheduler.step()        
-        # running_corrects = 0
-        # running_loss = 0.0
-
         supiter = iter(suptrainloader)
         unsupiter = iter(unsuptrainloader)
         supiter_reloaded = 0
@@ -126,9 +104,6 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         elif training == 'combining':
             alternating = False
             combining = True
-
-        # for i, data in enumerate(trainloader, 0):
-        #print('starting iterations...')
         for i in range(totalDatasetSize):
 
             if alternating:
@@ -136,24 +111,20 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                     try:
                         data = supiter.next()
                         supervised = True
-                        # print(str(i),' s')
                     except StopIteration:
                         supiter = iter(suptrainloader)
                         supiter_reloaded += 1
                         data = supiter.next()
-                        supervised = True  
-                        # print(str(i),' -s')                  
+                        supervised = True                 
                 else:
                     try:
                         data = unsupiter.next()
                         supervised = False
-                        # print(str(i),' u')
                     except StopIteration:
                         unsupiter = iter(unsuptrainloader)
                         unsupiter_reloaded += 1
                         data = unsupiter.next()
                         supervised = False
-                        # print(str(i),' -u')
             elif combining:
                 data = supiter.next()
                 try:
@@ -165,7 +136,6 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                 inputs_u, labels_u = data_u
             elif supervised:
                 data = supiter.next()
-                #print('s')
             elif not supervised:
                 data = unsupiter.next()
 
@@ -180,23 +150,22 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                 if combining or supervised:
                     model.train()
                     optimizer.zero_grad()
-                    CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
+                    removeHooks(lossInstance, attentionMethod)
                     inputs = inputs.to(device)
                     labels = labels.to(device)
                     outputs = model(inputs) 
                     l1 = criteron(outputs, labels)
                     _, preds = torch.max(outputs, 1)
-                    # for pred in range(preds.shape[0]):
-                    #     running_corrects += labels[pred, int(preds[pred])]
                 if combining or not supervised:
                     customTrain(model)
                     optimizer.zero_grad()
-                    # print('unsupervised')
-                    CAMLossInstance.cam_model.activations_and_grads.register_hooks()
+                    registerHooks(lossInstance, attentionMethod)
                     if combining:
-                        l2 = CAMLossInstance(inputs_u, target_category)
+                        l2 = calculateLoss(lossInstance, inputs_u, target_category, torch.argmax(labels, dim=1), attentionMethod)
+                        # l2 = lossInstance(inputs_u, target_category)
                     else:
-                        l1 = CAMLossInstance(inputs, target_category)
+                        l1 = calculateLoss(lossInstance, inputs, target_category, torch.argmax(labels, dim=1), attentionMethod)
+                        # l1 = lossInstance(inputs, target_category)
                     
                 optimizer.zero_grad()
                 if combining:
@@ -209,13 +178,13 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                 print('Epoch {} counter {}'.format(epoch, counter))
                 model.eval()
                 optimizer.zero_grad()
-                LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
+                LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, lossInstance, device, optimizer, attentionMethod, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
                 LossEvaluator.plotLosses(batchDirectory=batchDirectory)
         if perBatchEval == None:
             print('Epoch {} of {}'.format(epoch, numEpochs))
             model.eval()
             optimizer.zero_grad()
-            LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
+            LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, lossInstance, device, optimizer, attentionMethod, unsupervised=True, batchDirectory=batchDirectory) #training!='supervised')
             LossEvaluator.plotLosses(batchDirectory=batchDirectory)
 
     print('\n \n BEST SUP LOSS OVERALL: ', LossEvaluator.bestSupSum, '\n\n')

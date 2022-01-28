@@ -148,8 +148,8 @@ if __name__ == '__main__':
             # wont load path2 unless numFiguresToCreate is not None
             PATH2 = sherlock_json['load_figure_comparison_checkpoint_path']
         else:
-            PATH = "/scratch/groups/rubin/krish05m/AttentionMap/cifar_exp/2img_class/saved_checkpoints/model_best.pt"
-            PATH2 = "/scratch/groups/rubin/krish05m/AttentionMap/cifar_exp/2img_class/saved_checkpoints/model_best_f1.pt"
+            PATH = "/scratch/groups/rubin/krish05m/AttentionMap/svhn_exp/2img_class/saved_checkpoints/model_best.pt"
+            PATH2 = "/scratch/groups/rubin/krish05m/AttentionMap/svhn_exp/2img_class/saved_checkpoints/model_best_f1.pt"
 
         print(model.fc.weight)
         loadCheckpoint(PATH, model)
@@ -179,7 +179,7 @@ if __name__ == '__main__':
         dataiter = iter(validloader)
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
-        idx2label = ['1','2','3','4','5','6','7','8','9']
+        idx2label = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
 
         for i in range(numFiguresToCreate):
             images, labels = dataiter.next()

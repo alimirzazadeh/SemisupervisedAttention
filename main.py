@@ -2,7 +2,7 @@ import torch.optim as optim
 from train import train
 from evaluate import evaluate
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
-from data_loader.cifar_data_loader import loadCifarData
+from SemiSupervisedAttention.data_loader.svhn_loader import loadSVHNdata
 import os
 import numpy as np
 from torch import nn
@@ -21,12 +21,11 @@ sys.path.append("./")
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
-
 if __name__ == '__main__':
     toLoadCheckpoint = bool(distutils.util.strtobool(sys.argv[1]))
     toTrain = bool(distutils.util.strtobool(sys.argv[3]))
-    toEvaluate = bool(distutils.util.strtobool(sys.argv[4])) #True
-    whichTraining = sys.argv[5] #alternating
+    toEvaluate = bool(distutils.util.strtobool(sys.argv[4]))  # True
+    whichTraining = sys.argv[5]  # alternating
     batchDirectoryFile = sys.argv[6]
     learning_rate = float(sys.argv[7])  # 0.00001
     numEpochs = int(sys.argv[8])  # 400
@@ -34,56 +33,53 @@ if __name__ == '__main__':
     resolutionMatch = int(sys.argv[10])  # 2
     similarityMetric = int(sys.argv[11])  # 2
     alpha = float(sys.argv[12])  # 2
-    unsup_batch_size = int(sys.argv[13]) #12
-    fullyBalanced = bool(distutils.util.strtobool(sys.argv[14])) #True
-    useNewUnsupervised=bool(distutils.util.strtobool(sys.argv[15])) #True
-    numOutputClasses = int(sys.argv[17]) #10
-    reflectPadding = bool(distutils.util.strtobool(sys.argv[18])) #True
-    numImagesPerClass = int(sys.argv[21]) #2
-    maskIntensity = int(sys.argv[22]) #8
-    
-    try:
-        unsupDatasetSize=int(sys.argv[16]) #None
-    except:
-        unsupDatasetSize=None
-    try:
-        numFiguresToCreate=int(sys.argv[2]) #None
-    except:
-        numFiguresToCreate=None
-    try:
-        perBatchEval=int(sys.argv[19]) #None to do per epoch eval
-    except:
-        perBatchEval=None
-    try:
-        saveRecurringCheckpoint=int(sys.argv[20])
-    except:
-        saveRecurringCheckpoint=None
+    unsup_batch_size = int(sys.argv[13])  # 12
+    fullyBalanced = bool(distutils.util.strtobool(sys.argv[14]))  # True
+    useNewUnsupervised = bool(distutils.util.strtobool(sys.argv[15]))  # True
+    numOutputClasses = int(sys.argv[17])  # 10
+    reflectPadding = bool(distutils.util.strtobool(sys.argv[18]))  # True
+    numImagesPerClass = int(sys.argv[21])  # 2
+    maskIntensity = int(sys.argv[22])  # 8
 
+    try:
+        unsupDatasetSize = int(sys.argv[16])  # None
+    except:
+        unsupDatasetSize = None
+    try:
+        numFiguresToCreate = int(sys.argv[2])  # None
+    except:
+        numFiguresToCreate = None
+    try:
+        perBatchEval = int(sys.argv[19])  # None to do per epoch eval
+    except:
+        perBatchEval = None
+    try:
+        saveRecurringCheckpoint = int(sys.argv[20])
+    except:
+        saveRecurringCheckpoint = None
 
-    #json contains the paths required to launch on sherlock
+    # json contains the paths required to launch on sherlock
     with open('./sherlock_launch.json') as f:
         sherlock_json = json.load(f)
 
-    #checks if on sherlock, otherwise creates folder in the batchDirectory in home repo (usually when running on cpu)
+    # checks if on sherlock, otherwise creates folder in the batchDirectory in home repo (usually when running on cpu)
     if os.path.isdir('/scratch/'):
         batchDirectory = sherlock_json['batch_directory_path'] + \
             batchDirectoryFile + '/'
     else:
         batchDirectory = batchDirectoryFile + '/'
 
-
     CHECK_FOLDER = os.path.isdir(batchDirectory)
     if not CHECK_FOLDER:
         os.makedirs(batchDirectory)
-    
+
     log = open(batchDirectory + "log.out", "a")
     sys.stdout = log
     sys.stderr = log
-    
+
     print('############## Run Settings: ###############')
 
     print(sherlock_json)
-
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
     if not CHECK_FOLDER:
@@ -92,8 +88,6 @@ if __name__ == '__main__':
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_checkpoints")
     if not CHECK_FOLDER:
         os.makedirs(batchDirectory + "saved_checkpoints")
-
-
 
     print('Loading Checkpoint: ', toLoadCheckpoint)
     print('Training: ', toTrain)
@@ -115,34 +109,29 @@ if __name__ == '__main__':
     print('UnsupervisedDatasetSize (Everything if None): ', unsupDatasetSize)
     print('Number of Figures to create: ', numFiguresToCreate)
     print('Evaluating Per How Many Batches (Per Epoch if None): ', perBatchEval)
-    print('Saving Recurring Checkpoints (Only best checkpoints if None): ', saveRecurringCheckpoint)
+    print('Saving Recurring Checkpoints (Only best checkpoints if None): ',
+          saveRecurringCheckpoint)
     print('Mask Intensity: ', maskIntensity)
 
     print('########################################### \n\n')
 
-
-
-    suptrainloader, unsuptrainloader, validloader, testloader = loadCifarData(
-        numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
+    suptrainloader, unsuptrainloader, validloader, testloader = loadSVHNdata(
+        numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size,
         useNewUnsupervised=useNewUnsupervised, unsupDatasetSize=unsupDatasetSize)
 
     model = models.resnet50(pretrained=True)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    
-    
+
     model.fc = nn.Linear(int(model.fc.in_features), numOutputClasses)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-
     # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, 12, eta_min=0, last_epoch=-1)
-
 
     scheduler = None
 
     epoch = 0
-
 
     def loadCheckpoint(path, model):
         checkpoint = torch.load(path, map_location=device)
@@ -152,11 +141,11 @@ if __name__ == '__main__':
             epoch = checkpoint['epoch']
         except:
             epoch = 0
-        
+
     if toLoadCheckpoint:
         if os.path.isdir('/scratch/'):
             PATH = sherlock_json['load_checkpoint_path']
-            ##wont load path2 unless numFiguresToCreate is not None
+            # wont load path2 unless numFiguresToCreate is not None
             PATH2 = sherlock_json['load_figure_comparison_checkpoint_path']
         else:
             PATH = "/scratch/groups/rubin/krish05m/AttentionMap/cifar_exp/2img_class/saved_checkpoints/model_best.pt"
@@ -164,14 +153,12 @@ if __name__ == '__main__':
 
         print(model.fc.weight)
         loadCheckpoint(PATH, model)
-        ## Sanity check to make sure the loaded weights are different after loading chekcpoint
+        # Sanity check to make sure the loaded weights are different after loading chekcpoint
         print(model.fc.weight)
 
-
-    ## WHICH LAYER FOR GRADCAM
+    # WHICH LAYER FOR GRADCAM
     target_layer = model.layer4[-1]  # this is the layer before the pooling
 
-    
     if reflectPadding:
         model.conv1.padding_mode = 'reflect'
         for x in model.layer1:
@@ -183,19 +170,16 @@ if __name__ == '__main__':
         for x in model.layer4:
             x.conv2.padding_mode = 'reflect'
 
-
-
     use_cuda = torch.cuda.is_available()
-    # load a few images from CIFAR and save
+
     if numFiguresToCreate is not None:
-        from model.loss import CAMLoss        
+        from model.loss import CAMLoss
         CAMLossInstance = CAMLoss(
             model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity)
         dataiter = iter(validloader)
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
-        idx2label = ['plane', 'car', 'bird', 'cat','deer', 'dog', 'frog', 'horse', 'ship', 'truck']
-
+        idx2label = ['1','2','3','4','5','6','7','8','9']
 
         for i in range(numFiguresToCreate):
             images, labels = dataiter.next()
@@ -214,7 +198,7 @@ if __name__ == '__main__':
                 mean = torch.mean(outputs.data, 1)
                 val2, predicted2 = torch.max(outputs2.data, 1)
                 mean2 = torch.mean(outputs2.data, 1)
-                
+
                 predicted = predicted.tolist()
                 predicted2 = predicted2.tolist()
                 print(predicted, predicted2)
@@ -232,12 +216,12 @@ if __name__ == '__main__':
                                 for p in range(len(predicted))]
                 predictedNames2 = [idx2label[p] for p in predicted2]
                 actualLabels2 = [labels[p]
-                                for p in range(len(predicted2))]
+                                 for p in range(len(predicted2))]
                 # print("DIFFERING!", actualLabels, actualLabels2)
                 print("\n\n Val: ", val, val2, "\n\n")
                 print("\n\n Mean: ", mean, mean2, "\n\n")
-                    
-            ### To only create figures with differing predictions, wrap the following lines with if predicted != predicted2:
+
+            # To only create figures with differing predictions, wrap the following lines with if predicted != predicted2:
             loadCheckpoint(PATH, model)
             imgTitle = "which_0_epoch_" + str(epoch) + "_batchNum_" + str(i)
             visualizeLossPerformance(
@@ -247,24 +231,22 @@ if __name__ == '__main__':
             visualizeLossPerformance(
                 CAMLossInstance, images, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2)
 
-
     target_category = None
 
-    
     if whichTraining not in ['supervised', 'unsupervised', 'alternating', 'combining']:
         print('invalid Training. Choose between supervised, unsupervised, alternating')
         sys.exit()
     if toTrain:
         print('Beginning Training')
         train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
-              similarityMetric, alpha, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size, 
+              similarityMetric, alpha, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size,
               unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval, saveRecurringCheckpoint=saveRecurringCheckpoint, maskIntensity=maskIntensity)
         print("Training Complete.")
 
     if toEvaluate and toTrain:
-        checkpoint = torch.load(batchDirectory + "saved_checkpoints/model_best.pt", map_location=device)
+        checkpoint = torch.load(
+            batchDirectory + "saved_checkpoints/model_best.pt", map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
     if toEvaluate:
         model.to(device)
         evaluate(model, testloader, device, batchDirectory=batchDirectory)
-        

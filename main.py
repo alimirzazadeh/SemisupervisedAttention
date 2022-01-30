@@ -2,7 +2,7 @@ import torch.optim as optim
 from train import train
 from evaluate import evaluate
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
-from SemiSupervisedAttention.data_loader.svhn_loader import loadSVHNdata
+from data_loader.svhn_loader import loadSVHNdata
 import os
 import numpy as np
 from torch import nn
@@ -57,7 +57,7 @@ if __name__ == '__main__':
         saveRecurringCheckpoint = int(sys.argv[20])
     except:
         saveRecurringCheckpoint = None
-
+        
     # json contains the paths required to launch on sherlock
     with open('./sherlock_launch.json') as f:
         sherlock_json = json.load(f)
@@ -72,6 +72,7 @@ if __name__ == '__main__':
     CHECK_FOLDER = os.path.isdir(batchDirectory)
     if not CHECK_FOLDER:
         os.makedirs(batchDirectory)
+  
 
     log = open(batchDirectory + "log.out", "a")
     sys.stdout = log

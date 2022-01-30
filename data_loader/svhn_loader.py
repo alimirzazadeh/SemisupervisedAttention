@@ -13,7 +13,7 @@ import os
 from pdb import set_trace as bp
 
 
-def loadSVHNdata(numImagesPerClass, data_dir="./data", download_data=True, batch_size=4, unsup_batch_size=12, fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None):
+def loadSVHNdata(numImagesPerClass, data_dir="./data", download_data=False, batch_size=4, unsup_batch_size=12, fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None):
     VALSET_SIZE = 500
 
     # Data augmentation
@@ -48,7 +48,7 @@ def loadSVHNdata(numImagesPerClass, data_dir="./data", download_data=True, batch
 
     # Create validation and test
     random.seed(10)
-    dataset_test = torchvision.datasets.CIFAR10(
+    dataset_test = torchvision.datasets.SVHN(
         root=data_dir, split="test", download=download_data, transform=transformations_valid)
     randomlist = random.sample(range(0, len(dataset_test)), VALSET_SIZE)
     dataset_valid = torch.utils.data.Subset(dataset_test, randomlist)

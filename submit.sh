@@ -8,14 +8,14 @@
 #SBATCH --output=/dev/null 
 #SBATCH --error=/dev/null
 
-export BATCH_DIRECTORY=unsup4_4img_class
-export TO_LOAD_CHECKPOINT=True
+export BATCH_DIRECTORY=test
+export TO_LOAD_CHECKPOINT=False
 export NUM_FIGURES_TO_CREATE=None
 export TO_TRAIN=True
 export TO_EVALUATE=True
-export WHICH_TRAINING=unsupervised
-export LEARNING_RATE=0.000002
-export NUM_EPOCHS=40
+export WHICH_TRAINING=supervised
+export LEARNING_RATE=0.0001
+export NUM_EPOCHS=500
 export BATCH_SIZE=4
 export RESOLUTION_MATCH=2
 export SIMILARITY_METRIC=0

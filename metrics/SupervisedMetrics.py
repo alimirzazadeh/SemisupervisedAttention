@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import sklearn
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.metrics import average_precision_score
 
 class Evaluator:
     def __init__(self):
@@ -18,8 +17,6 @@ class Evaluator:
         self.accuracies = []
         self.unsupervised_losses = []
         self.f1_scoresum = []
-        self.mAPs = []
-        self.bestmAP = 0
         self.bestF1Sum = 0
         self.bestSupSum = 999999
         self.counter = 0
@@ -30,15 +27,8 @@ class Evaluator:
         tp = None
         fp = None
         fn = None
-
-        firstTime = True
-        allTrueLabels = None
-        allPredLabels = None
-
         datasetSize = len(testloader.dataset)
-
         with torch.set_grad_enabled(False):
-            m = nn.Sigmoid()
             for i, data in enumerate(testloader, 0):
                 optimizer.zero_grad()
                 inputs, labels = data
@@ -46,14 +36,6 @@ class Evaluator:
                 labels = labels.to(device)
                 outputs = model(inputs)
                 l1 = criteron(outputs, labels)
-
-                if firstTime:
-                    allTrueLabels = labels.cpu().detach().numpy()
-                    allPredLabels = m(outputs).cpu().detach().numpy()
-                    firstTime = False
-                else:
-                    allTrueLabels = np.append(allTrueLabels, labels.cpu().detach().numpy(), axis=0)
-                    allPredLabels = np.append(allPredLabels, outputs.cpu().detach().numpy(), axis=0)
 
                 _, preds = torch.max(outputs, 1)
                 running_loss += l1.item()
@@ -71,24 +53,14 @@ class Evaluator:
                         fp[preds[i].item()] += 1
                         fn[labels[i].item()] += 1
 
-            mAP = average_precision_score(allTrueLabels,allPredLabels,average='weighted')
-            print('\n Test Model mAP: %.3f' % mAP)
-
             acc = float(running_corrects.item() / datasetSize)
             print('\n Test Model Accuracy: %.3f' % acc)
-
             supervised_loss = float(running_loss / datasetSize)
             print('\n Test Model Supervised Loss: %.3f' % supervised_loss)
-
             f1_score = self.calculateF1score(tp, fp, fn)
             self.counter += 1
             f1_sum = np.nansum(f1_score.data.cpu().numpy()) / numClasses
 
-            if mAP > self.bestmAP:
-                self.bestmAP = mAP
-                print("\n Best mAP so far: ", self.bestmAP)
-                self.saveCheckpoint(model, optimizer, batchDirectory = batchDirectory, f1orsup=0)
-                
             if f1_sum > self.bestF1Sum:
                 self.bestF1Sum = f1_sum
                 print("\n Best F1 Score so far: ", self.bestF1Sum)
@@ -103,7 +75,6 @@ class Evaluator:
                 self.supervised_losses.append(round(supervised_loss, 5))
                 self.accuracies.append(round(acc, 5))
                 self.f1_scoresum.append(round(f1_sum, 5))
-                self.mAPs.append(round(f1_sum, 5))
 
     def evaluateModelUnsupervisedPerformance(self, model, testloader, CAMLossInstance, device, optimizer, target_category=None, storeLoss=True):
         # model.eval()
@@ -132,12 +103,11 @@ class Evaluator:
         results['Supervised Loss'] = self.supervised_losses
         results['Unsupervised Loss'] = self.unsupervised_losses
         results['F1 score'] = self.f1_scoresum
-        results['mAPs'] = self.mAPs 
         results.to_csv(batchDirectory+'saved_figs/results.csv', header=True)
 
     def plotLosses(self, batchDirectory=''):
         plt.clf()
-        fig, axs = plt.subplots(2, 3)
+        fig, axs = plt.subplots(2, 2)
         axs[0, 0].plot(self.supervised_losses, label="Supervised Loss")
         axs[0, 0].set_title('Supervised Loss')
         # plt.savefig(batchDirectory+'saved_figs/SupervisedLossPlot.png')
@@ -152,11 +122,6 @@ class Evaluator:
         # plt.clf()
         axs[1, 1].plot(self.accuracies, label="Accuracy")
         axs[1, 1].set_title('Accuracy')
-        # plt.savefig(batchDirectory+'saved_figs/TotalLossPlot.png')
-        # plt.clf()
-        axs[1, 2].plot(self.mAPs, label="mAP")
-        axs[1, 2].set_title('mAP')
-
         plt.savefig(batchDirectory+'saved_figs/AllPlots.png')
         plt.close()
         # plt.legend()

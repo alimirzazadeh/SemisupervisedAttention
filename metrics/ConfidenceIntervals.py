@@ -1,42 +1,20 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jul 27 15:22:20 2021
-
 @author: alimi
 """
 
 import pandas as pd
 import numpy as np
 import os
-import torch
 
 #RUN WITH PYTHON 3
 
 #Efron, B. and Tibshirani, R.J., 1994. An introduction to the bootstrap. CRC press.
 #Bootstrap hypothesis testing
 
-def custom_metric_CCEloss(data_methodx):
-    criteron = torch.nn.CrossEntropyLoss()
-    allData = data_methodx.to_numpy()
-    runningLoss = 0
-    size = allData.shape[0]
-    
-    for preds in allData:
-        
-        labels = torch.tensor([preds[0]])
-        pred_logits = torch.tensor(preds[1:]).unsqueeze(0)
-        # print(labels, pred_logits)
-        
-        # labels = labels.float()
-        labels = labels.cpu()
-        pred_logits = pred_logits.float()
-        pred_logits = pred_logits.cpu()
-        thisLoss = criteron(pred_logits, labels)
-        runningLoss += thisLoss
-    return runningLoss / size
-    
-    
-def custom_metric_F1(data_methodx):
+
+def custom_metric(data_methodx):
     def calculateF1score(tp, fp, fn):
         recall = tp / (tp + fn)
         precision = tp / (tp + fp)
@@ -48,7 +26,7 @@ def custom_metric_F1(data_methodx):
     
     for preds in data_methodx.to_numpy():
         
-        labels = preds[:int(len(preds) / 2)]
+        labels = preds[:int(len(preds) / 2)].astype("int")
         pred_logits = preds[int(len(preds) / 2):]
         if tp == None:
             tp = np.sum((pred_logits + labels > 1))
@@ -78,7 +56,7 @@ def boostrapping_CI(data,nbr_runs=1000):
         data_bootstrapped = data.iloc[ind]
         
         #compute metrics
-        metric = custom_metric_CCEloss(data_bootstrapped)
+        metric = custom_metric(data_bootstrapped)
         list_metric.append(metric)
         
     #store variable in dictionary
@@ -87,7 +65,7 @@ def boostrapping_CI(data,nbr_runs=1000):
     metric_stats['metric_ci_lb'] = np.percentile(list_metric,5)
     metric_stats['metric_ci_ub'] = np.percentile(list_metric,95)
 
-    print("RESULT OF CONFIDENCE INTERVAL: ", metric_stats)
+    print(metric_stats)
     return metric_stats
 
 
@@ -98,8 +76,8 @@ def boostrapping_hypothesisTesting(data_method1,data_method2,nbr_runs=100):
     total = n+m
 
     #compute the metric for both method    
-    metric_method1 = custom_metric_CCEloss(data_method1)
-    metric_method2 = custom_metric_CCEloss(data_method2)
+    metric_method1 = custom_metric(data_method1)
+    metric_method2 = custom_metric(data_method2)
     
     #compute statistic t
     t = abs(metric_method1 - metric_method2)
@@ -121,8 +99,8 @@ def boostrapping_hypothesisTesting(data_method1,data_method2,nbr_runs=100):
         data_bootstrapped_y = data_bootstrapped[n:]
 
         #compute metric for both groups
-        metric_x = custom_metric_CCEloss(data_bootstrapped_x)
-        metric_y = custom_metric_CCEloss(data_bootstrapped_y)
+        metric_x = custom_metric(data_bootstrapped_x)
+        metric_y = custom_metric(data_bootstrapped_y)
         
         #compute bootstrap statistic
         t_boot = abs(metric_x - metric_y)
@@ -163,4 +141,3 @@ if __name__ == '__main__':
     
     #compare method 1 and 2
     pvalue = boostrapping_hypothesisTesting(data_method1,data_method2) 
-    

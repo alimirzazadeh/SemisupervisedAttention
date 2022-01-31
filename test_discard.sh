@@ -3,31 +3,31 @@
 #
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1
-#SBATCH -p gpu
+#SBATCH -p owners
 #SBATCH --gres=gpu:1
 #SBATCH --output=/dev/null 
 #SBATCH --error=/dev/null
-export BATCH_DIRECTORY=ablation_s4_comb
-export TO_LOAD_CHECKPOINT=/scratch/groups/rubin/alimirz1/saved_batches/mAP_bench4_s4_aug/saved_checkpoints/model_best.pt
+export BATCH_DIRECTORY=TEST_LOADCHECKPOINT
+export TO_LOAD_CHECKPOINT=/scratch/groups/rubin/fdubost/project_ali/experiments/109/model_best.pth
 export NUM_FIGURES_TO_CREATE=None
 export TO_TRAIN=True
 export TO_EVALUATE=True
-export WHICH_TRAINING=combining
-export LEARNING_RATE=0.000002
-export NUM_EPOCHS=400
+export WHICH_TRAINING=supervised
+export LEARNING_RATE=0.00008
+export NUM_EPOCHS=500
 export BATCH_SIZE=4
 export RESOLUTION_MATCH=2
 export SIMILARITY_METRIC=0
-export ALPHA=.2
+export ALPHA=8
 export UNSUP_BATCH_SIZE=4
 export FULLY_BALANCED=True
 export USE_NEW_UNSUPERVISED=False
 export UNSUP_DATASET_SIZE=None
-export NUM_OUTPUT_CLASSES=20
+export NUM_OUTPUT_CLASSES=10
 export REFLECT_PADDING=True
 export PER_BATCH_EVAL=None
 export SAVE_RECURRING_CHECKPOINT=None
-export NUM_IMAGES_PER_CLASS=4
+export NUM_IMAGES_PER_CLASS=80
 export MASK_INTENSITY=40
 ml python/3.9.0
 ml opencv/4.5.2

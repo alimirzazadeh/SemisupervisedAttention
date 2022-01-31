@@ -3,6 +3,9 @@ from train import train
 from evaluate import evaluate
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from data_loader.new_pascal_runner import loadPascalData
+from data_loader.new_coco_runner import loadCocoData
+from data_loader.new_imagenette_runner import loadImagenetteData
+from model.laso import LaSO, LaSOLoss
 import os
 import numpy as np
 from torch import nn
@@ -120,13 +123,21 @@ if __name__ == '__main__':
 
     print('########################################### \n\n')
 
-    copyfile("script3.sh", batchDirectory + "script3.sh")
+    copyfile("script_resnet.sh", batchDirectory + "script_resnet.sh")
 
-
-    suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(
+    #suptrainloader, unsuptrainloader, validloader, testloader = loadImagenetteData(
+    #    numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
+    #    fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
+    #    unsupDatasetSize=unsupDatasetSize)
+    suptrainloader, unsuptrainloader, validloader, testloader = loadCocoData(
         numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
         fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
         unsupDatasetSize=unsupDatasetSize)
+    #bp()
+    #suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(
+    #    numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
+    #    fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
+    #    unsupDatasetSize=unsupDatasetSize)
 
     resNetorDenseNetorInception = 0
     if resNetorDenseNetorInception == 0:
@@ -135,6 +146,8 @@ if __name__ == '__main__':
         model = models.densenet161(pretrained=True)
     elif resNetorDenseNetorInception == 2:
         model = models.inception_v3(pretrained=True)
+    elif resNetorDenseNetorInception == 3:
+        model = LaSO()
 
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -157,13 +170,16 @@ if __name__ == '__main__':
 
     def loadCheckpoint(path, model):
         checkpoint = torch.load(path, map_location=device)
-        model.load_state_dict(checkpoint['model_state_dict'])
+        try:
+            model.load_state_dict(checkpoint)
+        except:
+            model.load_state_dict(checkpoint['model_state_dict'])
         # optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         try:
             epoch = checkpoint['epoch']
         except:
             epoch = 0
-        
+    #bp()
     if toLoadCheckpoint:
         if os.path.isdir('/scratch/'):
             #PATH = sherlock_json['load_checkpoint_path']

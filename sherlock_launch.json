@@ -1,6 +1,6 @@
 {
 "batch_directory_path": "/scratch/groups/rubin/alimirz1/saved_batches/",
-"load_checkpoint_path": "/scratch/groups/rubin/alimirz1/saved_batches/mAP_bench4_s2_aug/saved_checkpoints/model_best_mAP.pt",
-"load_figure_comparison_checkpoint_path": "/scratch/users/alimirz1/saved_batches/hot_bench_150s_saved/saved_checkpoints/model_best.pt"
+"load_checkpoint_path": "blank",
+"load_figure_comparison_checkpoint_path": "/scratch/groups/rubin/alimirz1/saved_batches/denseNet_v5_s135_aug/saved_checkpoints/model_best_mAP.pt"
 
 }

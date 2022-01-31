@@ -16,6 +16,7 @@ import random
 from torch import nn
 from ipdb import set_trace as bp
 
+#from metrics.SupervisedMetricsImageNette import Evaluator
 from metrics.SupervisedMetrics import Evaluator
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 
@@ -61,7 +62,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     # criteron = nn.MultiLabelSoftMarginLoss(weight=weight)
         
     
-    # criteron = torch.nn.CrossEntropyLoss()
+    #criteron = torch.nn.CrossEntropyLoss()
     criteron = nn.BCEWithLogitsLoss()
     print('pretraining evaluation...')
     model.eval()

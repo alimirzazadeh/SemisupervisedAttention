@@ -129,7 +129,7 @@ def loadPascalData(numImagesPerClass, data_dir='../data/', download_data=False, 
                                       target_transform=encode_labels)
 
     # valid_dataset_split = 500
-    dataset_valid_new = torch.utils.data.Subset(dataset_val_orig, list(range(0, 500)))
+    dataset_valid_new = torch.utils.data.Subset(dataset_train_orig, list(range(0, 500)))
     # dataset_test = torch.utils.data.Subset(dataset_valid, list(range(valid_dataset_split,len(dataset_valid))))
 
     train_loader = DataLoader(

@@ -19,6 +19,8 @@ from ipdb import set_trace as bp
 #from metrics.SupervisedMetricsImageNette import Evaluator
 from metrics.SupervisedMetrics import Evaluator
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
+from model.laso import LaSO, LaSOLoss
+
 
 def customTrain(model):
     def _freeze_norm_stats(net):
@@ -40,9 +42,10 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     unsup_batch_size=12, perBatchEval=None, saveRecurringCheckpoint=None, maskIntensity=8):
     print('alpha: ', alpha)
 
-    CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity)
+    #CAMLossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity)
+    CAMLossInstance = None
     LossEvaluator = Evaluator()
-    CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
+    #CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
     device = torch.device("cuda:0" if use_cuda else "cpu")
     model.to(device)
     
@@ -63,7 +66,9 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
         
     
     #criteron = torch.nn.CrossEntropyLoss()
-    criteron = nn.BCEWithLogitsLoss()
+    #criteron = nn.BCEWithLogitsLoss()
+    from torch.nn.modules.loss import BCEWithLogitsLoss, MSELoss
+    criteron = LaSOLoss(BCEWithLogitsLoss(), MSELoss())
     print('pretraining evaluation...')
     model.eval()
     LossEvaluator.evaluateUpdateLosses(model, validloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=batchDirectory) #unsupervised=training!='supervised')
@@ -182,16 +187,17 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                 if combining or supervised:
                     model.train()
                     optimizer.zero_grad()
-                    CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
+                    #CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
                     inputs = inputs.to(device)
                     labels = labels.to(device)
-                    outputs = model(inputs) 
-                    try: 
-                        l1 = criteron(outputs, labels)
-                        _, preds = torch.max(outputs, 1)
-                    except:
-                        l1 = criteron(outputs.logits, labels)
-                        _, preds = torch.max(outputs.logits, 1)
+                    outputs = model(inputs)
+                    #bp() 
+                    #try: 
+                    l1 = criteron(outputs, labels)
+                    _, preds = torch.max(torch.cat((outputs[2],outputs[3]),0), 1)
+                    #except:
+                    #    l1 = criteron(outputs.logits, labels)
+                    #    _, preds = torch.max(outputs.logits, 1)
                     
                     # for pred in range(preds.shape[0]):
                     #     running_corrects += labels[pred, int(preds[pred])]

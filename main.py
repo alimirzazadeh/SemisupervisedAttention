@@ -129,17 +129,17 @@ if __name__ == '__main__':
     #    numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
     #    fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
     #    unsupDatasetSize=unsupDatasetSize)
-    suptrainloader, unsuptrainloader, validloader, testloader = loadCocoData(
-        numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
-        fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
-        unsupDatasetSize=unsupDatasetSize)
-    #bp()
-    #suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(
+    #suptrainloader, unsuptrainloader, validloader, testloader = loadCocoData(
     #    numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
     #    fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
     #    unsupDatasetSize=unsupDatasetSize)
+    #bp()
+    suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(
+        numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
+        fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
+        unsupDatasetSize=unsupDatasetSize)
 
-    resNetorDenseNetorInception = 0
+    resNetorDenseNetorInception = 3
     if resNetorDenseNetorInception == 0:
         model = models.resnet50(pretrained=True)
     elif resNetorDenseNetorInception == 1:
@@ -152,10 +152,10 @@ if __name__ == '__main__':
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    try:
-        model.fc = nn.Linear(int(model.fc.in_features), numOutputClasses)
-    except:
-        model.classifier = nn.Linear(int(model.classifier.in_features), numOutputClasses)
+    #try:
+    #    model.fc = nn.Linear(int(model.fc.in_features), numOutputClasses)
+    #except:
+    #    model.classifier = nn.Linear(int(model.classifier.in_features), numOutputClasses)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -204,7 +204,8 @@ if __name__ == '__main__':
         target_layer = model.features.denseblock4.denselayer24
     elif resNetorDenseNetorInception == 2:
         target_layer = model.Mixed_7c.branch3x3dbl_3b
-        
+    else:
+        target_layer = None
     
 
     

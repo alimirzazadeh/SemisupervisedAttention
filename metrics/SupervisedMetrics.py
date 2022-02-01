@@ -40,7 +40,6 @@ class Evaluator:
         datasetSize = len(testloader.dataset)
         
 
-
         with torch.set_grad_enabled(False):
             m = nn.Sigmoid()
             for i, data in enumerate(testloader, 0):
@@ -61,14 +60,15 @@ class Evaluator:
                 # _, preds = torch.max(outputs, 1)
                 
                 running_loss += l1.item()
-                
+                #bp()
                 if firstTime:
                     allTrueLabels = labels.cpu().detach().numpy()
-                    allPredLabels = m(outputs).cpu().detach().numpy()
+                    allPredLabels = m(torch.cat((outputs[2],outputs[3]),0)).cpu().detach().numpy()
                     firstTime = False
                 else:
                     allTrueLabels = np.append(allTrueLabels, labels.cpu().detach().numpy(), axis=0)
-                    allPredLabels = np.append(allPredLabels, outputs.cpu().detach().numpy(), axis=0)
+                    
+                    allPredLabels = np.append(allPredLabels, torch.cat((outputs[2],outputs[3]),0).cpu().detach().numpy(), axis=0)
 
                     
                     
@@ -150,17 +150,17 @@ class Evaluator:
         if storeLoss:
             self.unsupervised_losses.append(float(running_loss / datasetSize))
     def evaluateUpdateLosses(self, model, testloader, criteron, CAMLossInstance, device, optimizer, unsupervised=True, batchDirectory=''):
-        if unsupervised:
+        if False:
             #print('evaluating unsupervised performance')
             CAMLossInstance.cam_model.activations_and_grads.register_hooks()
             self.evaluateModelUnsupervisedPerformance(model, testloader, CAMLossInstance, device, optimizer, storeLoss = True)
         #print('evaluating supervised performance')
-        CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
+        #CAMLossInstance.cam_model.activations_and_grads.remove_hooks()
         self.evaluateModelSupervisedPerformance(model, testloader, criteron, device, optimizer, storeLoss = True, batchDirectory= batchDirectory)
         results = pd.DataFrame()        
         # results['Accuracy'] = self.accuracies       
         results['Supervised Loss'] = self.supervised_losses     
-        results['Unsupervised Loss'] = self.unsupervised_losses     
+        #results['Unsupervised Loss'] = self.unsupervised_losses     
         results['mAPs'] = self.mAPs      
         results.to_csv(batchDirectory+'saved_figs/results.csv', header=True)
     def plotLosses(self, batchDirectory=''):

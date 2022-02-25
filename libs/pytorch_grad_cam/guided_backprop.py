@@ -63,7 +63,7 @@ class GuidedBackpropReLUModel:
         # print('After: GPU Usage in GB: ', torch.cuda.memory_allocated(0) / 1e9)
 
         if target_category is None:
-            print('warning: using CPU')
+            # print('warning: using CPU')
             target_category = np.argmax(output.cpu().data.numpy())
 
         loss = output[0, target_category]

@@ -27,8 +27,8 @@ class IntegratedGradientsModel:
         input_imgs = input_imgs.requires_grad_(True)
         logits = self.forward(input_imgs)
         self.model.zero_grad()
+        out_output = logits.data.cpu().numpy()
         if target_category is None:
-            out_output = logits.data.cpu().numpy()
             target_category = logits.mean(dim=1).argmax()
         probs = F.softmax(logits, dim=0)[:, target_category]
         output = torch.autograd.grad(outputs=probs, inputs=input_imgs, create_graph=True, grad_outputs=torch.ones_like(probs))
@@ -37,7 +37,7 @@ class IntegratedGradientsModel:
         target_weight[target_weight < 0] = 0
         return output[0], target_categories, target_weight
 
-    def __call__(self, input_img, target_category=None, m_steps=5):
+    def __call__(self, input_img, target_category=None, m_steps=5, returnTarget=False):
         input_img = input_img.cpu()
         # 1. Generate alphas.
         alphas = torch.linspace(start=0.0, end=1.0, steps=m_steps+1)
@@ -54,7 +54,9 @@ class IntegratedGradientsModel:
         integrated_gradient = integrated_gradient.squeeze(0).permute(1, 2, 0)
         if self.cuda:
             integrated_gradient = integrated_gradient.cuda()
-        return integrated_gradient, target_categories, target_weight
+        if returnTarget:  
+            return integrated_gradient, target_categories, target_weight
+        return integrated_gradient
 
 # import torch
 # import torch.nn.functional as F

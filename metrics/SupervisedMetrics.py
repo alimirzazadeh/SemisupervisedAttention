@@ -10,25 +10,32 @@ import torch.nn as nn
 import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score
+from model.layer_attention_loss import isLayerWiseAttention
+from model.transformer_loss import isTransformer
+from ipdb import set_trace as bp
 
 def removeHooks(lossInstance, attentionMethod):
-    if attentionMethod == 4:
+    if isLayerWiseAttention(attentionMethod):
         lossInstance.outer_gradcam.activations_and_grads.remove_hooks() 
         lossInstance.inner_gradcam.activations_and_grads.remove_hooks() 
+    elif isTransformer(attentionMethod):
+        pass
     else:
         lossInstance.cam_model.activations_and_grads.remove_hooks()
 
 def registerHooks(lossInstance, attentionMethod):
-    if attentionMethod == 4:
+    if isLayerWiseAttention(attentionMethod):
         lossInstance.outer_gradcam.activations_and_grads.register_hooks() 
-        lossInstance.inner_gradcam.activations_and_grads.register_hooks() 
+        lossInstance.inner_gradcam.activations_and_grads.register_hooks()
+    elif isTransformer(attentionMethod):
+        pass 
     else:
         lossInstance.cam_model.activations_and_grads.register_hooks()
 
-def calculateLoss(lossInstance, inputs, target_category, labels, attentionMethod):
-    if attentionMethod == 4:
-        return lossInstance(inputs, labels)
-    return lossInstance(inputs, target_category)
+def calculateLoss(lossInstance, inputs, target_category, labels, attentionMethod, visualize=False):
+    if isLayerWiseAttention(attentionMethod):
+        return lossInstance(inputs, labels, visualize=visualize)
+    return lossInstance(inputs, target_category, visualize=visualize)
 
 class Evaluator:
     def __init__(self):

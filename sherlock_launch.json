@@ -1,6 +1,6 @@
 {
 "batch_directory_path": "/scratch/groups/rubin/mpike27/saved_batches/",
-"load_checkpoint_path": "/scratch/groups/rubin//mpike27/saved_batches/s1/saved_checkpoints/model_best.pt",
-"load_figure_comparison_checkpoint_path": "/scratch/groups/rubin/mpike27/saved_batches/"
+"load_checkpoint_path": "/scratch/groups/rubin/mpike27/saved_batches/u426/saved_checkpoints/model_best_mAP.pt",
+"load_figure_comparison_checkpoint_path": "/scratch/groups/rubin/alimirz1/saved_batches/mAP_bench4_s2_aug/saved_checkpoints/model_best_mAP.pt"
 
 }

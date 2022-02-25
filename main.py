@@ -1,6 +1,6 @@
 import torch.optim as optim
 from train import train
-from evaluate import evaluate
+from evaluate import evaluate, visualizeTransformerMasking
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
 from data_loader.new_pascal_runner import loadPascalData
 import os
@@ -16,6 +16,9 @@ import json
 import distutils.util
 from shutil import copyfile
 import shutil
+from model.layer_attention_loss import isLayerWiseAttention
+from model.transformer_loss import isTransformer, TransformerLoss
+from pytorch_pretrained_vit import ViT
 sys.path.append("./")
 
 
@@ -44,6 +47,16 @@ if __name__ == '__main__':
     maskIntensity = int(sys.argv[22]) #8
     attentionMethod = int(sys.argv[23]) #0
     theta = float(sys.argv[24]) #0.8
+    REDIRECT_OUTPUT = bool(distutils.util.strtobool(sys.argv[25]))
+    batch_directory_path = sys.argv[26]
+    load_checkpoint_path = sys.argv[27]
+    load_figure_comparison_checkpoint_path = sys.argv[28]
+    print_images = sys.argv[29]
+    print_attention_maps = sys.argv[30]
+    ig_steps = sys.argv[31]
+    randomized_split = sys.argv[32]
+    model_type = int(sys.argv[33])
+
     
     try:
         unsupDatasetSize=int(sys.argv[16]) #None
@@ -69,7 +82,7 @@ if __name__ == '__main__':
 
     #checks if on sherlock, otherwise creates folder in the batchDirectory in home repo (usually when running on cpu)
     if os.path.isdir('/scratch/'):
-        batchDirectory = sherlock_json['batch_directory_path'] + \
+        batchDirectory = batch_directory_path + \
             batchDirectoryFile + '/'
     else:
         batchDirectory = batchDirectoryFile + '/'
@@ -80,13 +93,14 @@ if __name__ == '__main__':
         shutil.rmtree(batchDirectory)
     os.makedirs(batchDirectory)
     
-    # log = open(batchDirectory + "log.out", "a")
-    # sys.stdout = log
-    # sys.stderr = log
+    if REDIRECT_OUTPUT:
+        log = open(batchDirectory + "log.out", "a")
+        sys.stdout = log
+        sys.stderr = log
     
     print('############## Run Settings: ###############')
 
-    print(sherlock_json)
+    # print(sherlock_json)
 
 
     CHECK_FOLDER = os.path.isdir(batchDirectory + "saved_figs")
@@ -122,27 +136,40 @@ if __name__ == '__main__':
     print('Mask Intensity: ', maskIntensity)
     print('Attention Method: ', attentionMethod)
     print('Theta: ', theta)
+    print('Redirect output: ', REDIRECT_OUTPUT)
+    print('batch_directory_path: ', batch_directory_path)
+    print('load_checkpoint_path: ', load_checkpoint_path)
+    print('load_figure_comparison_checkpoint_path: ', load_figure_comparison_checkpoint_path)
+    print('print_images: ', print_images)
+    print('print_attention_maps: ', print_attention_maps)
+    print('ig_steps: ', ig_steps)
+    print('randomized_split: ', randomized_split)
+    print('model_type: ', model_type)
 
     print('########################################### \n\n')
 
     copyfile("script3.sh", batchDirectory + "script3.sh")
 
+    if model_type == 0:
+        model = models.resnet50(pretrained=True)
+    elif model_type == 1:
+        model = models.densenet161(pretrained=False)
+    elif model_type == 2:
+        model = models.inception_v3(pretrained=False)
+    elif model_type == 3:
+        model = ViT('B_16', pretrained=True)
+        attentionMethod = 7 #indicator for a transformer
 
-    suptrainloader, unsuptrainloader, validloader, testloader = loadPascalData(
+    image_size_resize = 224 if isTransformer(attentionMethod) else 256
+
+    suptrainloader, unsuptrainloader, validloader, testloader, evaluationLoader = loadPascalData(
         numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
         fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
-        unsupDatasetSize=unsupDatasetSize)
-
-    resNetorDenseNetorInception = 0
-    if resNetorDenseNetorInception == 0:
-        model = models.resnet50(pretrained=True)
-    elif resNetorDenseNetorInception == 1:
-        model = models.densenet161(pretrained=False)
-    elif resNetorDenseNetorInception == 2:
-        model = models.inception_v3(pretrained=False)
+        unsupDatasetSize=unsupDatasetSize, randomized=randomized_split, image_size_resize=image_size_resize)
 
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cpu")
 
     try:
         model.fc = nn.Linear(int(model.fc.in_features), numOutputClasses)
@@ -167,9 +194,9 @@ if __name__ == '__main__':
         
     if toLoadCheckpoint:
         if os.path.isdir('/scratch/'):
-            PATH = sherlock_json['load_checkpoint_path']
+            PATH = load_checkpoint_path
             ##wont load path2 unless numFiguresToCreate is not None
-            PATH2 = sherlock_json['load_figure_comparison_checkpoint_path']
+            PATH2 = load_figure_comparison_checkpoint_path
         else:
             PATH = 'saved_checkpoints/hot_bench_150s_model_best.pt'
             PATH2 = 'saved_checkpoints/hot_bench_150s_model_best.pt'
@@ -181,18 +208,17 @@ if __name__ == '__main__':
 
 
     ## WHICH LAYER FOR GRADCAM
-    if resNetorDenseNetorInception == 0:
-        if attentionMethod == 4:
-            target_layer = [model.layer4[-1], model.layer4[-2]]
+    if model_type == 0:
+        if isLayerWiseAttention(attentionMethod):
+            target_layer = [model.layer4[-1].conv3, model.layer4[-2].conv3]
         else:
             target_layer = model.layer4[-1]  # this is the layer before the pooling
-    elif resNetorDenseNetorInception == 1:
+    elif model_type == 1:
         target_layer = model.features.denseblock4[-1]
-    elif resNetorDenseNetorInception == 2:
+    elif model_type == 2:
         target_layer = model.Mixed_7c.branch3x3dbl_3b
-        
-    
-
+    else:
+        target_layer = None
     
     if reflectPadding:
         def _freeze_norm_stats(net):
@@ -208,26 +234,54 @@ if __name__ == '__main__':
         model.apply(_freeze_norm_stats)
 
     use_cuda = torch.cuda.is_available()
+    # use_cuda = False
+
+    target_category = None
+
+    if toTrain and whichTraining not in ['supervised', 'unsupervised', 'alternating', 'combining']:
+        print('invalid Training. Choose between supervised, unsupervised, alternating')
+        sys.exit()
+    if toTrain:
+        print('Beginning Training')
+        train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
+              similarityMetric, alpha, theta, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size, 
+              unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval, saveRecurringCheckpoint=saveRecurringCheckpoint, maskIntensity=maskIntensity, 
+              attentionMethod=attentionMethod, ig_steps=ig_steps)
+        print("Training Complete.")
+
+    # if isTransformer(attentionMethod) and toEvaluate: #Temporary to visualize impact of masking on transformer preds
+    #     lossInstance = TransformerLoss(model, use_cuda)
+    #     visualizeTransformerMasking(model, evaluationLoader, device, lossInstance, batchDirectory=batchDirectory, print_images=True)
+    #     exit()
+    # elif isTransformer(attentionMethod): #Transformer Loss not implemented fully yet, so cannot evaluate or create figures
+    #     print("Evaluation is not yet implemented for Visual Transformer")
+    #     exit()
+
     # load a few images from CIFAR and save
-    if numFiguresToCreate is not None:
-        if attentionMethod == 4:
-            raise Exception("Visualization is not supported for layer wise attention")
+    if numFiguresToCreate is not None or toEvaluate:
+        # if isLayerWiseAttention(attentionMethod):
+        #     from model.layer_attention_loss import LayerAttentionLoss
+        #     lossInstance = LayerAttentionLoss(model, target_layer, use_cuda, maskIntensity, theta, attentionMethod)
+        # else:
         from model.loss import CAMLoss        
-        CAMLossInstance = CAMLoss(
-            model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity, attentionMethod)
+        lossInstance = CAMLoss(
+            model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity, attentionMethod, ig_steps=ig_steps)
+    
+    if numFiguresToCreate is not None:
         dataiter = iter(validloader)
         device = torch.device("cuda:0" if use_cuda else "cpu")
         model.eval()
         idx2label = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus',
                      'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse',
                      'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
-
+        # breakpoint()
         for i in range(numFiguresToCreate):
             images, labels = dataiter.next()
             images = images.to(device)
             labels = labels.to(device)
             with torch.no_grad():
                 # calculate outputs by running images through the network
+                # print('1: ', torch.cuda.memory_allocated(0) / 1e9)
                 if toLoadCheckpoint:
                     loadCheckpoint(PATH, model)
                 outputs = model(images)
@@ -258,33 +312,25 @@ if __name__ == '__main__':
             if toLoadCheckpoint:
                 loadCheckpoint(PATH, model)
             imgTitle = "which_0_epoch_" + str(epoch) + "_batchNum_" + str(i)
-            visualizeLossPerformance(
-                CAMLossInstance, images, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames, batchDirectory=batchDirectory)
+            _, fig1 = visualizeLossPerformance(
+                lossInstance, images, attentionMethod, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames, batchDirectory=batchDirectory, saveFig=False)
             if toLoadCheckpoint:
                 loadCheckpoint(PATH2, model)
             imgTitle = "which_1_epoch_" + str(epoch) + "_batchNum_" + str(i)
-            visualizeLossPerformance(
-                CAMLossInstance, images, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2, batchDirectory=batchDirectory)
-
-
-    target_category = None
-
-    
-    if whichTraining not in ['supervised', 'unsupervised', 'alternating', 'combining']:
-        print('invalid Training. Choose between supervised, unsupervised, alternating')
-        sys.exit()
-    if toTrain:
-        print('Beginning Training')
-        train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, target_layer, target_category, use_cuda, resolutionMatch,
-              similarityMetric, alpha, theta, training=whichTraining, batchDirectory=batchDirectory, batch_size=batch_size, 
-              unsup_batch_size=unsup_batch_size, perBatchEval=perBatchEval, saveRecurringCheckpoint=saveRecurringCheckpoint, maskIntensity=maskIntensity, 
-              attentionMethod=attentionMethod)
-        print("Training Complete.")
+            _, fig2 = visualizeLossPerformance(
+                lossInstance, images, attentionMethod, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2, batchDirectory=batchDirectory, saveFig=False)
+            diff = np.abs(fig1 - fig2).sum()
+            # diff = cv2.resize(diff, dsize=(6,4), interpolation=cv2.INTER_NEAREST)
+            print(diff)
 
     if toEvaluate:
         print("Evaluating on Test Set...")
         ##load the best checkpoint and evaulate it. 
-        checkpoint = torch.load(batchDirectory + "saved_checkpoints/model_best.pt", map_location=device)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        evaluate(model, testloader, device, batchDirectory=batchDirectory)
-        print("Finished Evaluating")
+        if toTrain:
+            checkpoint = torch.load(batchDirectory + "saved_checkpoints/model_best.pt", map_location=device)
+            model.load_state_dict(checkpoint['model_state_dict'])
+        else: 
+            loadCheckpoint(PATH, model)
+        evaluate(model, evaluationLoader, device, lossInstance, batchDirectory=batchDirectory,
+                    print_images=print_images, print_attention_maps=print_attention_maps)
+    print("Successfully Completed. Good bye!")

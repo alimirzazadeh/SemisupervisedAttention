@@ -11,10 +11,12 @@ import torch
 import numpy as np
 import torchvision.models as models
 from model.loss import CAMLoss
-from model.layer_attention_loss import LayerAttentionLoss
+from model.layer_attention_loss import LayerAttentionLoss, isLayerWiseAttention
+from model.transformer_loss import isTransformer, TransformerLoss
 import pandas as pd
 import random
 from torch import nn
+from ipdb import set_trace as bp
 
 from metrics.SupervisedMetrics import Evaluator, removeHooks, registerHooks, calculateLoss
 from metrics.UnsupervisedMetrics import visualizeLossPerformance
@@ -35,12 +37,14 @@ def customTrain(model):
 def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optimizer, 
     target_layer, target_category, use_cuda, resolutionMatch, similarityMetric, alpha, theta, 
     training='alternating', batchDirectory='', scheduler=None, batch_size=4, 
-    unsup_batch_size=12, perBatchEval=None, saveRecurringCheckpoint=None, maskIntensity=8, attentionMethod=0):
+    unsup_batch_size=12, perBatchEval=None, saveRecurringCheckpoint=None, maskIntensity=8, attentionMethod=0, ig_steps=5):
     lossInstance = None
-    if attentionMethod == 4:
-        lossInstance = LayerAttentionLoss(model, target_layer, use_cuda, maskIntensity, theta)
+    if isLayerWiseAttention(attentionMethod):
+        lossInstance = LayerAttentionLoss(model, target_layer, use_cuda, maskIntensity, theta, attentionMethod=attentionMethod)
+    # elif isTransformer(attentionMethod):
+    #     lossInstance = TransformerLoss(model, use_cuda)
     else: 
-        lossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity, attentionMethod)
+        lossInstance = CAMLoss(model, target_layer, use_cuda, resolutionMatch, similarityMetric, maskIntensity, attentionMethod, ig_steps=ig_steps)
     LossEvaluator = Evaluator()
     removeHooks(lossInstance, attentionMethod)
     device = torch.device("cuda:0" if use_cuda else "cpu")
@@ -166,6 +170,7 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                     else:
                         l1 = calculateLoss(lossInstance, inputs, target_category, torch.argmax(labels, dim=1), attentionMethod)
                         # l1 = lossInstance(inputs, target_category)
+                    
                     
                 optimizer.zero_grad()
                 if combining:

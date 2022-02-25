@@ -8,13 +8,21 @@ Created on Sat May 29 12:04:39 2021
 from model.loss import CAMLoss
 import matplotlib.pyplot as plt
 import numpy as np
+import cv2
 
 from visualizer.visualizer import visualizeImageBatch
+from metrics.SupervisedMetrics import calculateLoss
 
 
-def visualizeLossPerformance(CAMLossInstance, inputs, labels=['sentinel'], imgLabels=[], imgTitle="epoch_0_batchNum_0", use_cuda=False, target_category=None, saveFig=True, batchDirectory=''):
-    l1, fig = CAMLossInstance(inputs, target_category, visualize=True)
-    # breakpoint()
+def visualizeLossPerformance(lossInstance, inputs, attentionMethod, labels=['sentinel'], imgLabels=[], imgTitle="epoch_0_batchNum_0", use_cuda=False, target_category=None, saveFig=True, batchDirectory=''):
+    # l1, fig = lossInstance(inputs, target_category, visualize=True)
+    l1, final_img, final_firsts, final_correlates, final_mask, final_maskimg, final_seconds = \
+        lossInstance(inputs, target_category, visualize=True)
+    # l1, final_img, final_firsts, final_correlates, final_mask, final_maskimg, final_seconds = \
+    #     calculateLoss(lossInstance, inputs, target_category, labels, attentionMethod, visualize=True)
+    fig = np.array(cv2.vconcat([final_img.astype(
+        'float64'), final_firsts.astype('float64'), final_correlates.astype('float64')
+        , final_mask.astype('float64'), final_maskimg.astype('float64'), final_seconds.astype('float64')]))
     def arrToStr(s):
             str1 = " "  
             return (str1.join(s))

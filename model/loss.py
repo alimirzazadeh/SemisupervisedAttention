@@ -11,6 +11,7 @@ from libs.pytorch_grad_cam.integrated_gradients import IntegratedGradientsModel
 from libs.pytorch_grad_cam.utils.image import deprocess_image, preprocess_image
 from libs.pytorch_grad_cam.masked_attention import MaskedAttention
 from libs.pytorch_grad_cam.vit_rollout import VITAttentionRollout
+from libs.pytorch_grad_cam.vit_grad_rollout import VITAttentionGradRollout
 from model.transformer_loss import isTransformer
 import libs.pytorch_ssim as pytorch_ssim
 import torch.nn as nn
@@ -28,9 +29,11 @@ class CAMLoss(nn.Module):
         self.use_cuda = use_cuda
         self.device = torch.device("cuda:0" if self.use_cuda else "cpu")
         self.model = model
-        if isTransformer(attentionMethod):
+        if attentionMethod == 7:
             # self.masked_attention = MaskedAttention(model, use_cuda=use_cuda)
             self.vit_rollout = VITAttentionRollout(model, attention_layer_name='attn.drop')
+        elif attentionMethod == 8:
+            self.vit_grad_rollout = VITAttentionGradRollout(model, attention_layer_name='attn.drop')
         else:
             self.cam_model = GradCAM(
                 model=model, target_layer=target_layer, use_cuda=use_cuda)
@@ -164,17 +167,16 @@ class CAMLoss(nn.Module):
                     firstCompare = standardize(cam_result)
                     secondCompare = standardize(new_cam_result)
                     # print(torch.cuda.memory_allocated(0) / 1e9)
-                elif attentionMethod == 7:
-                    # breakpoint()
-                    # attn_map, topClass = self.masked_attention(
-                    #     input_tensor=thisImgPreprocessed, returnTarget=True)
-                    attn_map = self.vit_rollout(thisImgPreprocessed)
-                    # if target_category == None:
-                    #     target_category = topClass
-                    # correlate = self.gb_model(
-                    #     thisImgPreprocessed, target_category=target_category)
+                elif isTransformer(attentionMethod):
+                    # print(torch.cuda.memory_allocated(0) / 1e9)
+                    if attentionMethod == 7:
+                        attn_map = self.vit_rollout(thisImgPreprocessed)
+                    elif attentionMethod == 8:
+                        attn_map, topClass = self.vit_grad_rollout(thisImgPreprocessed)
+                        if target_category == None:
+                            target_category = int(topClass[whichTargetCategory])
                     correlate = self.gb_model(
-                        thisImgPreprocessed, target_category=None)
+                        thisImgPreprocessed, target_category=target_category)
                     correlate = processGB(correlate)
                     ww = -1 * self.maskIntensity
                     sigma = torch.mean(correlate) + \
@@ -185,9 +187,10 @@ class CAMLoss(nn.Module):
                     TAc = torch.repeat_interleave(TAc, 3, dim=0)
                     newImgTensor = TAc * thisImgTensor
                     newImgPreprocessed = newImgTensor.unsqueeze(0)
-                    # new_attn_map = self.masked_attention(
-                    #     input_tensor=newImgPreprocessed, target_category=target_category)
-                    new_attn_map = self.vit_rollout(newImgPreprocessed)
+                    if attentionMethod == 7:
+                        new_attn_map = self.vit_rollout(newImgPreprocessed)
+                    elif attentionMethod == 8:
+                        new_attn_map, _ = self.vit_grad_rollout(newImgPreprocessed)
                     firstCompare = standardize(attn_map)
                     secondCompare = standardize(new_attn_map)
                     
@@ -207,7 +210,7 @@ class CAMLoss(nn.Module):
                     imgs.append(normalize(thisImgTensor.detach().cpu().numpy()))
                     masks.append(normalize(TAc.detach().cpu().numpy()))
                     maskimgs.append(normalize(newImgTensor.detach().cpu().numpy()))
-                    correlates.append(4 * reshapeNormalize(correlate.detach().cpu().numpy()))
+                    correlates.append(10 * reshapeNormalize(correlate.detach().cpu().numpy()))
 
                 if similarityMetric == 0:
                     firstCompare = sigmoidIt(firstCompare)
@@ -282,5 +285,6 @@ class CAMLoss(nn.Module):
             SecondCompare
             """
             return correlations, final_img, final_firsts, final_correlates, final_mask, final_maskimg, final_seconds
+
 
         return correlation_pearson  / input_tensor.shape[0]

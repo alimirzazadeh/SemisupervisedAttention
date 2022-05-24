@@ -56,6 +56,7 @@ if __name__ == '__main__':
     ig_steps = sys.argv[31]
     randomized_split = sys.argv[32]
     model_type = int(sys.argv[33])
+    num_workers = int(sys.argv[34])
 
     
     try:
@@ -145,6 +146,7 @@ if __name__ == '__main__':
     print('ig_steps: ', ig_steps)
     print('randomized_split: ', randomized_split)
     print('model_type: ', model_type)
+    print('num_workers: ', num_workers)
 
     print('########################################### \n\n')
 
@@ -158,14 +160,13 @@ if __name__ == '__main__':
         model = models.inception_v3(pretrained=False)
     elif model_type == 3:
         model = ViT('B_16', pretrained=True)
-        attentionMethod = 7 #indicator for a transformer
 
     image_size_resize = 224 if isTransformer(attentionMethod) else 256
 
     suptrainloader, unsuptrainloader, validloader, testloader, evaluationLoader = loadPascalData(
         numImagesPerClass, batch_size=batch_size, unsup_batch_size=unsup_batch_size, 
         fullyBalanced=fullyBalanced, useNewUnsupervised=useNewUnsupervised, 
-        unsupDatasetSize=unsupDatasetSize, randomized=randomized_split, image_size_resize=image_size_resize)
+        unsupDatasetSize=unsupDatasetSize, randomized=randomized_split, image_size_resize=image_size_resize, num_workers=num_workers)
 
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -274,7 +275,7 @@ if __name__ == '__main__':
         idx2label = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus',
                      'car', 'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse',
                      'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor']
-        # breakpoint()
+        
         for i in range(numFiguresToCreate):
             images, labels = dataiter.next()
             images = images.to(device)
@@ -307,21 +308,18 @@ if __name__ == '__main__':
                                 for p in range(len(predicted2))]
                 print("\n\n Val: ", val, val2, "\n\n")
                 print("\n\n Mean: ", mean, mean2, "\n\n")
-                    
+            
             ### To only create figures with differing predictions, wrap the following lines with if predicted != predicted2:
             if toLoadCheckpoint:
                 loadCheckpoint(PATH, model)
             imgTitle = "which_0_epoch_" + str(epoch) + "_batchNum_" + str(i)
-            _, fig1 = visualizeLossPerformance(
-                lossInstance, images, attentionMethod, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames, batchDirectory=batchDirectory, saveFig=False)
+            visualizeLossPerformance(
+                lossInstance, images, attentionMethod, labels=actualLabels, imgTitle=imgTitle, imgLabels=predictedNames, batchDirectory=batchDirectory)
             if toLoadCheckpoint:
                 loadCheckpoint(PATH2, model)
             imgTitle = "which_1_epoch_" + str(epoch) + "_batchNum_" + str(i)
-            _, fig2 = visualizeLossPerformance(
-                lossInstance, images, attentionMethod, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2, batchDirectory=batchDirectory, saveFig=False)
-            diff = np.abs(fig1 - fig2).sum()
-            # diff = cv2.resize(diff, dsize=(6,4), interpolation=cv2.INTER_NEAREST)
-            print(diff)
+            visualizeLossPerformance(
+                lossInstance, images, attentionMethod, labels=actualLabels2, imgTitle=imgTitle, imgLabels=predictedNames2, batchDirectory=batchDirectory)
 
     if toEvaluate:
         print("Evaluating on Test Set...")
@@ -331,6 +329,6 @@ if __name__ == '__main__':
             model.load_state_dict(checkpoint['model_state_dict'])
         else: 
             loadCheckpoint(PATH, model)
-        evaluate(model, evaluationLoader, device, lossInstance, batchDirectory=batchDirectory,
+        evaluate(model, evaluationLoader, device, lossInstance, attentionMethod, batchDirectory=batchDirectory,
                     print_images=print_images, print_attention_maps=print_attention_maps)
     print("Successfully Completed. Good bye!")

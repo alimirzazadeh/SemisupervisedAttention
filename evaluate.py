@@ -17,6 +17,7 @@ import matplotlib.patches as patches
 import random
 from torchvision.utils import save_image
 from collections import defaultdict
+from model.transformer_loss import isTransformer
 
 
 OBJECT_CATEGORIES_PASCAL = ['aeroplane', 'bicycle', 'bird', 'boat',
@@ -27,12 +28,14 @@ OBJECT_CATEGORIES_PASCAL = ['aeroplane', 'bicycle', 'bird', 'boat',
 OBJECT_CATEGORIES_COCO = [str(i) for i in range(91)]
 
 TARGET_IMAGE_DIMENSIONS = [256,256]
+TARGET_IMAGE_DIMENSIONS_TRANSFORMER = [224,224]
 THRESHOLD = 0.5
 PLOT_PRED_BBOX = False
 
-def create_bbox_from_map(map):
+def create_bbox_from_map(map, attentionMethod):
     bbox = {}
     # initialize
+    transformer = isTransformer(attentionMethod)
     bbox['xmin'] = TARGET_IMAGE_DIMENSIONS[0]
     bbox['ymin'] = TARGET_IMAGE_DIMENSIONS[1]
     bbox['xmax'] = 0
@@ -104,7 +107,7 @@ def create_rect(bbox, color):
     return rect
 
 
-def evaluate(model, data_loader, device, lossInstance, batchDirectory = '', print_images=False,
+def evaluate(model, data_loader, device, lossInstance, attentionMethod, batchDirectory = '', print_images=False,
              print_attention_maps=False, use_bbox=True, dataset='pascal'):
 
     # set model to eval mode
@@ -212,9 +215,9 @@ def evaluate(model, data_loader, device, lossInstance, batchDirectory = '', prin
                 bbox_map = create_map_from_bbox_list(bbox_list_rescaled)
 
             # transform attention map into bbox
-            bbox_gb = create_bbox_from_map(guidedbackprop_bin)
-            bbox_gradcam1 = create_bbox_from_map(gradcam1_bin)
-            bbox_gradcam2 = create_bbox_from_map(gradcam2_bin)
+            bbox_gb = create_bbox_from_map(guidedbackprop_bin, attentionMethod)
+            bbox_gradcam1 = create_bbox_from_map(gradcam1_bin, attentionMethod)
+            bbox_gradcam2 = create_bbox_from_map(gradcam2_binattentionMethod)
 
             # transform list of bbox to binary map
             bbox_gb_map = create_map_from_bbox_list([bbox_gb])

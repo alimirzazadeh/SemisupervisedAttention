@@ -118,7 +118,7 @@ class PascalVOC_Dataset_Segmentation(voc.VOCSegmentation):
 # useNewUnsupervised: if set to True, will only include images not in supervised set, if False only uses images in supervised set
 # unsupDatasetSize: if not None, sets the size of the unsupervised dataset
 def loadPascalData(numImagesPerClass, data_dir='/home/groups/rubin/fdubost/project_ali/code/data', download_data=False, batch_size=4, unsup_batch_size=12, 
-        fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None, image_size_resize=256, randomized=False):
+        fullyBalanced=True, useNewUnsupervised=True, unsupDatasetSize=None, image_size_resize=256, randomized=False, num_workers=0):
     
     transformations = transforms.Compose([
         transforms.Resize((image_size_resize, image_size_resize)),
@@ -179,13 +179,13 @@ def loadPascalData(numImagesPerClass, data_dir='/home/groups/rubin/fdubost/proje
     # dataset_test = torch.utils.data.Subset(dataset_valid_total, list(range(valid_dataset_split,len(dataset_valid_total))))
 
     train_loader = DataLoader(
-        dataset_train, batch_size=batch_size, num_workers=4, shuffle=True)
+        dataset_train, batch_size=batch_size, num_workers=num_workers, shuffle=True)
     unsup_loader = DataLoader(
-        unsup_train, batch_size=unsup_batch_size, num_workers=4, shuffle=True)
+        unsup_train, batch_size=unsup_batch_size, num_workers=num_workers, shuffle=True)
     valid_loader = DataLoader(
-        dataset_valid, batch_size=batch_size, num_workers=4)
+        dataset_valid, batch_size=batch_size, num_workers=num_workers)
     test_loader = DataLoader(
-        dataset_test, batch_size=4, num_workers=4)
+        dataset_test, batch_size=batch_size, num_workers=num_workers) #Was 4, changed on 5/2 for debugging
 
 
     # create bbox evaluation dataloader
@@ -196,7 +196,7 @@ def loadPascalData(numImagesPerClass, data_dir='/home/groups/rubin/fdubost/proje
                                  transform=transformations_valid,
                                  target_transform=None)
     #evaluation_dataset = torch.utils.data.Subset(evaluation_dataset, list(range(0, 30)))
-    evaluation_loader = DataLoader(evaluation_dataset, batch_size=1, num_workers=1, collate_fn=my_collate)
+    evaluation_loader = DataLoader(evaluation_dataset, batch_size=1, num_workers=num_workers, collate_fn=my_collate)
 
     return train_loader, unsup_loader, valid_loader, test_loader, evaluation_loader
 

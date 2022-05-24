@@ -75,17 +75,14 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
     
     print("Total Dataset: ", totalDatasetSize)
     
-
     ##Custom model.train that freezes the batch norm layers and only keeps others in train mode
     customTrain(model)
-    
     
     for epoch in range(numEpochs):
         supiter = iter(suptrainloader)
         unsupiter = iter(unsuptrainloader)
         supiter_reloaded = 0
         unsupiter_reloaded = 0
-        
 
         if saveRecurringCheckpoint is not None and epoch % saveRecurringCheckpoint == saveRecurringCheckpoint - 1:
            saveCheckpoint(epoch, model, optimizer, batchDirectory=batchDirectory)
@@ -170,7 +167,6 @@ def train(model, numEpochs, suptrainloader, unsuptrainloader, validloader, optim
                     else:
                         l1 = calculateLoss(lossInstance, inputs, target_category, torch.argmax(labels, dim=1), attentionMethod)
                         # l1 = lossInstance(inputs, target_category)
-                    
                     
                 optimizer.zero_grad()
                 if combining:

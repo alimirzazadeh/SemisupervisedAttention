@@ -5,7 +5,7 @@ import torch.nn as nn
 from libs.pytorch_grad_cam.guided_backprop import GuidedBackpropReLUModel
 
 def isTransformer(attentionMethod):
-    return attentionMethod == 7
+    return attentionMethod == 7 or attentionMethod == 8
 
 class TransformerLoss(nn.Module):
     def __init__(self, model, use_cuda):

@@ -52,8 +52,6 @@ class Evaluator:
         allPredLabels = None
         
         datasetSize = len(testloader.dataset)
-        
-
 
         with torch.set_grad_enabled(False):
             m = nn.Sigmoid()
@@ -62,6 +60,15 @@ class Evaluator:
                 inputs, labels = data
                 inputs = inputs.to(device)
                 labels = labels.to(device)
+
+                # start checking linux system - Chris debug code
+                # from subprocess import Popen, PIPE
+                # cmd_list = ['free']
+                # process = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
+                # stdout,stderr = process.communicate()
+                # print(stdout)
+                # print(f"stderr: {stderr}")
+
                 outputs = model(inputs) 
                 l1 = criteron(outputs, labels)
                 

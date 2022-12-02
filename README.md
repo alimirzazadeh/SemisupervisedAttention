@@ -1,9 +1,15 @@
-# Project Description
+# ATCON: Attention Consistency for Vision Models
 
-**Goal**: This is a semi-supervised learning approach to improving video classification performance for hospital video. <br>
-**Current Progress**: Working on using this for video data, outperforms supervised benchmark on Pascal/CIFAR
+Attention--or attribution--maps methods are methods designed to highlight regions of the model’s input that were discriminative for its predictions. However, different attention maps methods can highlight different regions of the input, with sometimes contradictory explanations for a prediction. This effect is exacerbated when the training set is small. This indicates that either the model learned incorrect representations or that the attention maps methods did not accurately estimate the model’s representations. We propose an unsupervised fine-tuning method that optimizes the consistency of attention maps and show that it improves both classification performance and the quality of attention maps. We propose an implementation for two state-of-the-art attention computation methods, Grad-CAM and Guided Backpropagation, which relies on an input masking technique. We also show results on Grad-CAM and Integrated Gradients in an ablation study. We evaluate this method on our own dataset of event detection in continuous video recordings of hospital patients aggregated and curated for this work. As a sanity check, we also evaluate the proposed method on PASCAL VOC and SVHN. With the proposed method, with small training sets, we achieve a 6.6 points lift of F1 score over the baselines on our video dataset, a 2.9 point lift of F1 score on PASCAL, and a 1.8 points lift of mean Intersection over Union over Grad-CAM for weakly supervised detection on PASCAL. Those improved attention maps may help clinicians better understand vision model predictions and ease the deployment of machine learning systems into clinical care.
 
-# Description of Running Ali's code #
+For more information about ATCON, please read the following [paper](https://arxiv.org/pdf/2210.09705.pdf):
+
+    Mirzazadeh, A., Dubost, F., Pike, M., Maniar, K., Zuo, M., Lee-Messer, C. and Rubin, D., 2022. 
+    ATCON: Attention Consistency for Vision Models. WACV.
+
+Please also cite this paper if you are using nnU-Net for your research!
+
+# Description of the code #
 
 ## Batch Script ##
 
